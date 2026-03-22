@@ -1,0 +1,13 @@
+# VeldrixAI SDK examples — install the extras you need:
+#
+#   pip install veldrixai                    # core (basic_usage.py)
+#   pip install veldrixai[openai]            # quickstart_openai.py, quickstart_async.py
+#   pip install veldrixai[anthropic]         # quickstart_anthropic.py
+#   pip install veldrixai[langchain]         # quickstart_langchain.py
+#   pip install veldrixai[litellm]           # quickstart_litellm.py
+#   pip install veldrixai[all]               # everything
+#
+# For ASGI middleware example (quickstart_asgi.py):
+#   pip install veldrixai fastapi uvicorn
+
+veldrixai>=1.0.0

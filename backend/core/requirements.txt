@@ -1,0 +1,22 @@
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.10.0
+python-jose[cryptography]>=3.3.0
+python-multipart>=0.0.6
+
+# ── NVIDIA NIM async HTTP client ───────────────────────────────────────────────
+# All five inference pillars call NVIDIA NIM via httpx.AsyncClient (non-blocking).
+# Local model dependencies (transformers, torch, presidio, spacy) have been
+# removed — inference is fully delegated to NVIDIA NIM hosted endpoints.
+# Configure NIM models via environment variables; see .env.example.
+httpx>=0.27.0
+
+# ── Testing ────────────────────────────────────────────────────────────────────
+# pytest-asyncio: async coroutine test runner
+# respx:          httpx request mock/intercept (no live NIM API calls in tests)
+# pytest-mock:    general mock/patch utilities
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+respx>=0.21.0
+pytest-mock>=3.14.0

@@ -1,0 +1,142 @@
+version: "3.9"
+
+# VeldrixAI — Runtime Trust Infrastructure for AI Systems
+# Run all services: docker compose up -d
+# Stop all services: docker compose down
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: veldrix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-veldrix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veldrix_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-veldrix_auth}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veldrix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veldrix-net
+
+  # ── Auth Service (FastAPI, port 8000) ────────────────────────────────────────
+  veldrix-auth:
+    build:
+      context: ./backend/auth
+      dockerfile: Dockerfile
+    container_name: veldrix-auth
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
+      VELDRIX_VAULT_KEY: ${VELDRIX_VAULT_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - veldrix-net
+
+  # ── Core Trust Engine (FastAPI stateless, port 8001) ─────────────────────────
+  veldrix-core:
+    build:
+      context: ./backend/core
+      dockerfile: Dockerfile
+    container_name: veldrix-core
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - NVIDIA_API_BASE_URL=${NVIDIA_API_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      - VELDRIX_PILLAR_CONTENT_MODEL=${VELDRIX_PILLAR_CONTENT_MODEL:-meta/llama-guard-4-12b}
+      - VELDRIX_PILLAR_HALLUCINATION_MODEL=${VELDRIX_PILLAR_HALLUCINATION_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_BIAS_MODEL=${VELDRIX_PILLAR_BIAS_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_POLICY_MODEL=${VELDRIX_PILLAR_POLICY_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_LEGAL_MODEL=${VELDRIX_PILLAR_LEGAL_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_NIM_TIMEOUT_MS=${VELDRIX_NIM_TIMEOUT_MS:-8000}
+      - VELDRIX_INTERNAL_API_KEY=${VELDRIX_INTERNAL_API_KEY}
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - veldrix-net
+
+  # ── Connectors / Analytics (FastAPI + PostgreSQL, port 8002) ─────────────────
+  veldrix-connectors:
+    build:
+      context: ./backend/connectors
+      dockerfile: Dockerfile
+    container_name: veldrix-connectors
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      veldrix-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - veldrix-net
+
+  # ── Frontend (Next.js, port 5000) ────────────────────────────────────────────
+  veldrix-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: veldrix-ui
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      VELDRIX_AUTH_API_URL: http://veldrix-auth:8000
+      VELDRIX_CORE_API_URL: http://veldrix-core:8001
+      VELDRIX_CONNECTORS_API_URL: http://veldrix-connectors:8002
+    ports:
+      - "5000:5000"
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      veldrix-core:
+        condition: service_healthy
+    networks:
+      - veldrix-net
+
+volumes:
+  postgres_data:
+    name: veldrix_postgres_data
+
+networks:
+  veldrix-net:
+    name: veldrix-network
+    driver: bridge
