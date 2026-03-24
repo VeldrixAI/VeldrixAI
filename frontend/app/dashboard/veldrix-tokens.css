@@ -6,19 +6,19 @@
 :root {
   /* ── VeldrixAI Core Palette ── */
   --vx-violet:      #7c3aed;
-  --vx-violet-lt:   #ede9fe;
+  --vx-violet-lt:   rgba(124, 58, 237, 0.15);
   --vx-violet-dim:  rgba(124, 58, 237, 0.12);
   --vx-indigo:      #4f46e5;
-  --vx-indigo-lt:   #eef2ff;
+  --vx-indigo-lt:   rgba(79, 70, 229, 0.15);
   --vx-cyan:        #06b6d4;
-  --vx-cyan-lt:     #ecfeff;
+  --vx-cyan-lt:     rgba(6, 182, 212, 0.15);
   --vx-emerald:     #10b981;
-  --vx-emerald-lt:  #d1fae5;
+  --vx-emerald-lt:  rgba(16, 185, 129, 0.15);
   --vx-rose:        #f43f5e;
-  --vx-rose-lt:     #fff1f2;
+  --vx-rose-lt:     rgba(244, 63, 94, 0.15);
   --vx-amber:       #f59e0b;
-  --vx-amber-lt:    #fffbeb;
-  --vx-snow:        #f0f2ff;
+  --vx-amber-lt:    rgba(245, 158, 11, 0.15);
+  --vx-snow:        rgba(240, 242, 255, 0.95);
   --vx-void:        #050810;
 
   /* ── Chrome (sidebar + topbar + footer) ── */
@@ -30,26 +30,26 @@
   --vx-nav-active-text:   #c4b5fd;
   --vx-nav-active-border: #7c3aed;
 
-  /* ── Content Canvas ── */
-  --vx-page-bg:           #ffffff;
-  --vx-card-bg:           #fafafe;
-  --vx-card-border:       rgba(124, 58, 237, 0.10);
-  --vx-card-hover-shadow: 0 8px 32px rgba(124, 58, 237, 0.10);
-  --vx-table-head-bg:     #f4f3ff;
-  --vx-divider:           rgba(124, 58, 237, 0.07);
+  /* ── Content Canvas (dark mode) ── */
+  --vx-page-bg:           #0d0f1a;
+  --vx-card-bg:           rgba(15, 13, 31, 0.85);
+  --vx-card-border:       rgba(124, 58, 237, 0.16);
+  --vx-card-hover-shadow: 0 8px 32px rgba(124, 58, 237, 0.22);
+  --vx-table-head-bg:     rgba(255, 255, 255, 0.04);
+  --vx-divider:           rgba(255, 255, 255, 0.06);
 
-  /* ── Text (content area) ── */
-  --vx-text-primary:   #0f0d1f;
-  --vx-text-secondary: #4b5272;
-  --vx-text-muted:     #6b7280;
-  --vx-text-dim:       #9ca3af;
+  /* ── Text (content area — light on dark) ── */
+  --vx-text-primary:   rgba(240, 242, 255, 0.95);
+  --vx-text-secondary: rgba(240, 242, 255, 0.65);
+  --vx-text-muted:     rgba(240, 242, 255, 0.50);
+  --vx-text-dim:       rgba(240, 242, 255, 0.35);
 
   /* ── Backward-compat aliases ── */
-  --vx-surface:       #fafafe;
-  --vx-surface-hover: rgba(124, 58, 237, 0.04);
-  --vx-border:        rgba(124, 58, 237, 0.10);
-  --vx-border-hover:  rgba(124, 58, 237, 0.25);
-  --vx-text:          #0f0d1f;
+  --vx-surface:       rgba(15, 13, 31, 0.85);
+  --vx-surface-hover: rgba(124, 58, 237, 0.08);
+  --vx-border:        rgba(124, 58, 237, 0.16);
+  --vx-border-hover:  rgba(124, 58, 237, 0.30);
+  --vx-text:          rgba(240, 242, 255, 0.95);
 
   /* ── Typography ── */
   --vx-font-display: 'Syne', system-ui, sans-serif;
@@ -876,13 +876,13 @@
 }
 
 .vx-btn-ghost {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(240, 242, 255, 0.60);
 }
 
 .vx-btn-ghost:hover {
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .vx-btn-danger {
@@ -961,9 +961,9 @@
 }
 
 .vx-badge-slate {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(240, 242, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 .vx-status-dot {

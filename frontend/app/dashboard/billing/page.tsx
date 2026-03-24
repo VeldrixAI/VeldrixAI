@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -27,56 +27,22 @@ interface Invoice {
   amount: number;
 }
 
-// ── Mock data ────────────────────────────────────────────────────────────────
+// ── Plan metadata ─────────────────────────────────────────────────────────────
 
-const mockUsage: BillingUsage = { used: 342, quota: 500, resetDate: "Nov 1" };
+interface BillingStatus {
+  plan_tier: string;
+  plan_status: string;
+  eval_count_month: number;
+  billing_period_end: string | null;
+  stripe_customer_id: string | null;
+}
 
-const mockPlan = {
-  name: "Enterprise Pro",
-  priceMonthly: 1450,
-  nextBillingDate: "Nov 24, 2024",
-  amountDue: 1450.0,
-  status: "active" as const,
+const PLAN_META: Record<string, { name: string; price: number; quota: number }> = {
+  free:  { name: "Free",  price: 0,      quota: 500 },
+  grow:  { name: "Grow",  price: 99,     quota: 10000 },
+  scale: { name: "Scale", price: 499,    quota: 100000 },
 };
 
-const mockInvoices: Invoice[] = [
-  { id: "INV-882109", date: "Oct 24, 2024", plan: "Enterprise Pro", status: "paid",    amount: 1450.0 },
-  { id: "INV-881944", date: "Sep 24, 2024", plan: "Enterprise Pro", status: "paid",    amount: 1450.0 },
-  { id: "INV-881521", date: "Aug 24, 2024", plan: "Enterprise Pro", status: "paid",    amount: 1450.0 },
-  { id: "INV-881203", date: "Jul 24, 2024", plan: "Startup Tier",   status: "paid",    amount:  450.0 },
-];
-
-const mock30 = [12,15,8,22,28,24,18,20,34,36,30,25,22,19,12,10,15,24,30,38,35,28,24,20,15,10,8,9,18,26];
-const mock90 = Array.from({ length: 90 }, (_, i) => Math.floor(8 + Math.random() * 35 + Math.sin(i/10)*10));
-const mock365 = Array.from({ length: 52 }, (_, i) => Math.floor(60 + Math.random() * 200 + Math.sin(i/8)*80));
-
-function buildLabels30() {
-  const labels: string[] = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-  }
-  return labels;
-}
-function buildLabels90() {
-  const labels: string[] = [];
-  const now = new Date();
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-  }
-  return labels;
-}
-function buildLabels365() {
-  const labels: string[] = [];
-  const now = new Date();
-  for (let i = 51; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i * 7);
-    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-  }
-  return labels;
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -134,22 +100,73 @@ function VxTooltip({ active, payload, label }: { active?: boolean; payload?: { v
   );
 }
 
+// ── SDK stats type (subset) ───────────────────────────────────────────────────
+
+interface SdkStats {
+  total_requests: number;
+  avg_trust_score: number;
+  avg_latency_ms: number;
+  verdict_breakdown: Record<string, number>;
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function BillingPage() {
-  const usage = mockUsage;
-  const plan = mockPlan;
-
   const [period, setPeriod] = useState<"30d" | "90d" | "1y">("30d");
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [timeseries, setTimeseries] = useState<{ ts: string; requests: number }[]>([]);
+  const [sdkStats, setSdkStats] = useState<SdkStats | null>(null);
 
-  const pct = ((usage.used / usage.quota) * 100);
+  useEffect(() => {
+    fetch("/api/billing/status")
+      .then((r) => r.json())
+      .then((data) => { if (data && !data.error) setBillingStatus(data); })
+      .catch(() => {});
+
+    fetch("/api/sdk-stats?range=30d")
+      .then((r) => r.json())
+      .then((data) => { if (data && !data.error) setSdkStats(data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const rangeParam = period === "1y" ? "365d" : period;
+    fetch(`/api/analytics?path=timeseries&range=${rangeParam}`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setTimeseries(data); })
+      .catch(() => {});
+  }, [period]);
+
+  // Derive usage and plan from real billing status
+  const planMeta = PLAN_META[billingStatus?.plan_tier ?? "free"] ?? PLAN_META.free;
+  const usage: BillingUsage = {
+    used: billingStatus?.eval_count_month ?? 0,
+    quota: planMeta.quota,
+    resetDate: billingStatus?.billing_period_end
+      ? new Date(billingStatus.billing_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : "—",
+  };
+  const plan = {
+    name: planMeta.name,
+    priceMonthly: planMeta.price,
+    nextBillingDate: billingStatus?.billing_period_end
+      ? new Date(billingStatus.billing_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "—",
+    amountDue: planMeta.price,
+    status: (billingStatus?.plan_status ?? "active") as "active",
+  };
+  const currentTier = billingStatus?.plan_tier ?? "free";
+
+  const pct = usage.quota > 0 ? (usage.used / usage.quota) * 100 : 0;
   const pctLabel = pct.toFixed(1);
   const remaining = usage.quota - usage.used;
 
-  // Chart data
-  const rawCounts = period === "90d" ? mock90 : period === "1y" ? mock365 : mock30;
-  const labels = period === "90d" ? buildLabels90() : period === "1y" ? buildLabels365() : buildLabels30();
-  const maxCount = Math.max(...rawCounts);
+  // Chart data — real timeseries only; empty array renders empty state
+  const rawCounts = timeseries.map((d) => d.requests);
+  const labels = timeseries.map((d) =>
+    new Date(d.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  );
+  const maxCount = rawCounts.length > 0 ? Math.max(...rawCounts) : 0;
   const chartData = rawCounts.map((count, i) => ({ date: labels[i], count }));
 
   const fmtCurrency = (n: number) =>
@@ -220,9 +237,9 @@ export default function BillingPage() {
             gap: "6px",
             padding: "10px 20px",
             borderRadius: "10px",
-            background: "#f1f5f9",
-            border: "1px solid #e2e8f0",
-            color: "#64748b",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            color: "rgba(240,242,255,0.60)",
             fontFamily: "var(--vx-font-body)",
             fontWeight: 500,
             fontSize: "9px",
@@ -231,8 +248,8 @@ export default function BillingPage() {
             cursor: "pointer",
             transition: "background 0.2s",
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#e2e8f0"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f1f5f9"; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.10)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)"; }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>download</span>
             Export Invoices
@@ -256,6 +273,18 @@ export default function BillingPage() {
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.86"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+          onClick={async () => {
+            const nextPlan = currentTier === "free" ? "grow" : "scale";
+            try {
+              const res = await fetch("/api/billing/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan: nextPlan, cycle: "monthly" }),
+              });
+              const data = await res.json();
+              if (data.checkout_url) window.location.href = data.checkout_url;
+            } catch { /* silent */ }
+          }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>upgrade</span>
             Upgrade Plan
@@ -286,7 +315,7 @@ export default function BillingPage() {
                 position: "absolute",
                 inset: "14px",
                 borderRadius: "50%",
-                background: "#ffffff",
+                background: "#0d1120",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -368,7 +397,7 @@ export default function BillingPage() {
             <div>
               <SectionLabel>Current Plan</SectionLabel>
               <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "22px", letterSpacing: "-0.5px", color: "var(--vx-text-primary)", marginTop: "6px" }}>
-                {plan.name}
+                {billingStatus ? plan.name : "Loading…"}
               </div>
             </div>
             <span style={{
@@ -377,9 +406,9 @@ export default function BillingPage() {
               gap: "5px",
               padding: "4px 10px",
               borderRadius: "5px",
-              background: "var(--vx-emerald-lt)",
-              color: "var(--vx-emerald)",
-              border: "1px solid rgba(16,185,129,0.25)",
+              background: plan.status === "active" ? "var(--vx-emerald-lt)" : "var(--vx-amber-lt)",
+              color: plan.status === "active" ? "var(--vx-emerald)" : "var(--vx-amber)",
+              border: `1px solid ${plan.status === "active" ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`,
               fontFamily: "var(--vx-font-body)",
               fontWeight: 700,
               fontSize: "9px",
@@ -388,8 +417,8 @@ export default function BillingPage() {
               flexShrink: 0,
               marginTop: "2px",
             }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "var(--vx-emerald)", animation: "vx-blink 2s ease-in-out infinite" }} />
-              Active
+              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: plan.status === "active" ? "var(--vx-emerald)" : "var(--vx-amber)", animation: "vx-blink 2s ease-in-out infinite" }} />
+              {billingStatus?.plan_status ?? "Active"}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: "4px", margin: "16px 0 20px" }}>
@@ -434,20 +463,29 @@ export default function BillingPage() {
             }}>
               Upgrade Plan
             </button>
-            <button style={{
-              width: "100%",
-              padding: "11px 16px",
-              borderRadius: "10px",
-              background: "#f1f5f9",
-              border: "1px solid #e2e8f0",
-              color: "#64748b",
-              fontFamily: "var(--vx-font-body)",
-              fontWeight: 500,
-              fontSize: "10px",
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              cursor: "pointer",
-            }}>
+            <button
+              style={{
+                width: "100%",
+                padding: "11px 16px",
+                borderRadius: "10px",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                color: "rgba(240,242,255,0.60)",
+                fontFamily: "var(--vx-font-body)",
+                fontWeight: 500,
+                fontSize: "10px",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/billing/portal", { method: "POST" });
+                  const data = await res.json();
+                  if (data.portal_url) window.location.href = data.portal_url;
+                } catch { /* silent */ }
+              }}
+            >
               Manage Payment Methods
             </button>
           </div>
@@ -459,14 +497,36 @@ export default function BillingPage() {
           <SectionLabel>Usage Breakdown</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             {[
-              { label: "API Calls Today",  value: "1,204",  sub: "+8.2% vs yesterday", color: "var(--vx-violet)" },
-              { label: "Avg Latency",      value: "14ms",   sub: "P99: 22ms",          color: "#334155" },
-              { label: "Blocked Today",    value: "38",     sub: "Prompt security",    color: "var(--vx-rose)" },
-              { label: "Compliance Score", value: "99.8%",  sub: "SOC2 aligned",       color: "var(--vx-emerald)" },
+              {
+                label: "SDK Requests",
+                value: sdkStats ? sdkStats.total_requests.toLocaleString() : "—",
+                sub: "Last 30 days",
+                color: "var(--vx-violet)",
+              },
+              {
+                label: "Avg Latency",
+                value: sdkStats?.avg_latency_ms ? `${sdkStats.avg_latency_ms}ms` : "—",
+                sub: "Evaluation pipeline",
+                color: "rgba(240,242,255,0.90)",
+              },
+              {
+                label: "Blocked",
+                value: sdkStats ? (sdkStats.verdict_breakdown?.BLOCK ?? 0).toLocaleString() : "—",
+                sub: "Prompt security",
+                color: "var(--vx-rose)",
+              },
+              {
+                label: "Avg Trust Score",
+                value: sdkStats?.avg_trust_score != null
+                  ? `${(sdkStats.avg_trust_score * 100).toFixed(1)}%`
+                  : "—",
+                sub: "Composite pillar score",
+                color: "var(--vx-emerald)",
+              },
             ].map((chip) => (
               <div key={chip.label} style={{
-                background: "#ffffff",
-                border: "1px solid rgba(124,58,237,0.12)",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(124,58,237,0.18)",
                 borderRadius: "10px",
                 padding: "14px 18px",
                 display: "flex",
@@ -494,7 +554,7 @@ export default function BillingPage() {
               Daily request volume across all evaluation pipelines
             </div>
           </div>
-          <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "8px", padding: "3px", gap: "2px" }}>
+          <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "3px", gap: "2px" }}>
             {(["30d", "90d", "1y"] as const).map((p) => (
               <button
                 key={p}
@@ -510,9 +570,9 @@ export default function BillingPage() {
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  background: period === p ? "#ffffff" : "transparent",
-                  color: period === p ? "var(--vx-violet)" : "#6b7280",
-                  boxShadow: period === p ? "0 1px 4px rgba(124,58,237,0.15)" : "none",
+                  background: period === p ? "rgba(124,58,237,0.22)" : "transparent",
+                  color: period === p ? "#c4b5fd" : "rgba(240,242,255,0.40)",
+                  boxShadow: period === p ? "0 1px 8px rgba(124,58,237,0.25)" : "none",
                 }}
               >
                 {p === "30d" ? "30 Days" : p === "90d" ? "90 Days" : "Year"}
@@ -520,7 +580,12 @@ export default function BillingPage() {
             ))}
           </div>
         </div>
-        <div style={{ height: "220px" }}>
+        <div style={{ height: "220px", display: "flex", alignItems: "center", justifyContent: chartData.length === 0 ? "center" : undefined }}>
+          {chartData.length === 0 ? (
+            <p style={{ fontFamily: "var(--vx-font-body)", fontSize: "12px", color: "var(--vx-text-dim)", letterSpacing: "2px", textTransform: "uppercase" }}>
+              No traffic data for this period
+            </p>
+          ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} barCategoryGap="30%">
               <XAxis
@@ -547,6 +612,7 @@ export default function BillingPage() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          )}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px" }}>
           <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "var(--vx-text-dim)" }}>
@@ -605,14 +671,14 @@ export default function BillingPage() {
               </span>
             </div>
             <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "18px", letterSpacing: "-0.3px", color: "#ffffff", marginBottom: "6px" }}>
-              Enterprise Pro
+              {billingStatus ? plan.name : "Loading…"}
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "20px" }}>
-              <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "#ffffff" }}>$1,450</span>
+              <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "#ffffff" }}>${planMeta.price.toLocaleString()}</span>
               <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "rgba(240,242,255,0.40)", marginLeft: "4px" }}>/month</span>
             </div>
             <div style={{ margin: "0 0 20px", display: "flex", flexDirection: "column" }}>
-              {["500 audit requests / month", "All 5 evaluation pillars", "Advanced enforcement rules", "90-day audit log retention", "SLA guarantee — 99.9%", "Dedicated support"].map((f) => (
+              {[`${planMeta.quota.toLocaleString()} audit requests / month`, "All 5 evaluation pillars", "Advanced enforcement rules", "90-day audit log retention", "SLA guarantee — 99.9%", "Dedicated support"].map((f) => (
                 <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-cyan)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                   <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "12px", color: "rgba(240,242,255,0.65)" }}>{f}</span>
@@ -762,17 +828,17 @@ export default function BillingPage() {
                 textTransform: "uppercase",
                 cursor: "pointer",
                 transition: "all 0.2s",
-                background: btn.primary ? "transparent" : "#f1f5f9",
-                color: btn.primary ? "var(--vx-violet)" : "#64748b",
-                border: btn.primary ? "1px solid rgba(124,58,237,0.30)" : "1px solid #e2e8f0",
+                background: btn.primary ? "transparent" : "rgba(255,255,255,0.06)",
+                color: btn.primary ? "var(--vx-violet)" : "rgba(240,242,255,0.60)",
+                border: btn.primary ? "1px solid rgba(124,58,237,0.30)" : "1px solid rgba(255,255,255,0.10)",
               }}
               onMouseEnter={(e) => {
-                if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "var(--vx-violet-lt)";
-                else (e.currentTarget as HTMLButtonElement).style.background = "#e2e8f0";
+                if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "rgba(124,58,237,0.15)";
+                else (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.10)";
               }}
               onMouseLeave={(e) => {
                 if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                else (e.currentTarget as HTMLButtonElement).style.background = "#f1f5f9";
+                else (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
               }}
               >
                 {btn.label}
@@ -838,7 +904,7 @@ export default function BillingPage() {
 
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#f4f3ff" }}>
+            <tr style={{ background: "rgba(255,255,255,0.04)" }}>
               {["Invoice ID", "Billing Date", "Plan", "Status", "Amount", ""].map((h, i) => (
                 <th key={i} style={{
                   padding: "12px 20px",
@@ -847,9 +913,9 @@ export default function BillingPage() {
                   fontSize: "9px",
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "#6b7280",
+                  color: "rgba(240,242,255,0.40)",
                   textAlign: i >= 4 ? "right" : "left",
-                  borderBottom: "1px solid rgba(124,58,237,0.08)",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
                 }}>
                   {h}
                 </th>
@@ -857,52 +923,53 @@ export default function BillingPage() {
             </tr>
           </thead>
           <tbody>
-            {mockInvoices.map((inv, idx) => (
-              <tr
-                key={inv.id}
-                style={{ borderBottom: idx < mockInvoices.length - 1 ? "1px solid rgba(124,58,237,0.05)" : "none", transition: "background 0.15s" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(124,58,237,0.025)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}
-              >
-                <td style={{ padding: "14px 20px", fontFamily: "var(--vx-font-mono)", fontWeight: 500, fontSize: "11px", color: "var(--vx-violet)" }}>
-                  {inv.id}
-                </td>
-                <td style={{ padding: "14px 20px", fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "13px", color: "#374151" }}>
-                  {inv.date}
-                </td>
-                <td style={{ padding: "14px 20px", fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "13px", color: "#374151" }}>
-                  {inv.plan}
-                </td>
-                <td style={{ padding: "14px 20px" }}>
-                  {statusBadge(inv.status)}
-                </td>
-                <td style={{ padding: "14px 20px", fontFamily: "var(--vx-font-display)", fontWeight: 700, fontSize: "14px", color: "var(--vx-text-primary)", textAlign: "right" }}>
-                  {fmtCurrency(inv.amount)}
-                </td>
-                <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                  <button style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: "#9ca3af", transition: "color 0.15s" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--vx-violet)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af"; }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>download</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
+            <tr>
+              <td colSpan={6} style={{ padding: "40px 20px", textAlign: "center" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "rgba(124,58,237,0.40)", display: "block", marginBottom: "10px" }}>receipt_long</span>
+                <div style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "13px", color: "var(--vx-text-muted)" }}>
+                  Invoice history is available in the Stripe Customer Portal.
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/billing/portal", { method: "POST" });
+                      const data = await res.json();
+                      if (data.portal_url) window.location.href = data.portal_url;
+                    } catch { /* silent */ }
+                  }}
+                  style={{
+                    marginTop: "12px",
+                    padding: "8px 18px",
+                    borderRadius: "8px",
+                    background: "var(--vx-violet-lt)",
+                    color: "var(--vx-violet)",
+                    border: "1px solid rgba(124,58,237,0.25)",
+                    fontFamily: "var(--vx-font-body)",
+                    fontWeight: 600,
+                    fontSize: "10px",
+                    letterSpacing: "1.5px",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                  }}
+                >
+                  Open Billing Portal
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
 
         {/* Table footer / pagination */}
         <div style={{
-          background: "#f4f3ff",
-          borderTop: "1px solid rgba(124,58,237,0.07)",
+          background: "rgba(255,255,255,0.04)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
           padding: "14px 24px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}>
-          <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", color: "#9ca3af" }}>
-            Showing 1–{mockInvoices.length} of 24 invoices
+          <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.35)" }}>
+            Invoice history via Stripe Portal
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
             {(["chevron_left", "chevron_right"] as const).map((icon) => (
@@ -910,9 +977,9 @@ export default function BillingPage() {
                 width: "32px",
                 height: "32px",
                 borderRadius: "6px",
-                border: "1px solid rgba(124,58,237,0.15)",
-                background: "#fff",
-                color: "#6b7280",
+                border: "1px solid rgba(124,58,237,0.20)",
+                background: "rgba(255,255,255,0.06)",
+                color: "rgba(240,242,255,0.50)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -927,9 +994,9 @@ export default function BillingPage() {
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = "#fff";
-                el.style.color = "#6b7280";
-                el.style.borderColor = "rgba(124,58,237,0.15)";
+                el.style.background = "rgba(255,255,255,0.06)";
+                el.style.color = "rgba(240,242,255,0.50)";
+                el.style.borderColor = "rgba(124,58,237,0.20)";
               }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>{icon}</span>

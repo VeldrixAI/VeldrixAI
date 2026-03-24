@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
-from src.modules.reports.schemas import GenerateReportRequest, ReportResponse, SignedUrlResponse
+from src.modules.reports.schemas import GenerateReportRequest, ReportResponse
 from src.modules.reports.services.report_service import ReportService
 from src.core.middleware.auth import get_current_user
 from src.db.base import get_db
@@ -104,15 +104,24 @@ async def get_report(
     return ReportService(db).get_report(report_id, user_id)
 
 
-@router.get("/{report_id}/download", response_model=SignedUrlResponse)
-async def get_download_url(
+@router.get("/{report_id}/download")
+async def download_report(
     report_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Re-generate PDF on demand and stream directly to the client."""
     user_id = UUID(current_user["id"])
-    signed_url = ReportService(db).get_signed_url(report_id, user_id)
-    return SignedUrlResponse(report_id=str(report_id), signed_url=signed_url, expires_in=3600)
+    report, pdf_bytes = ReportService(db).regenerate_pdf(report_id, user_id)
+    filename = f"veldrix-{report.vx_report_id or report_id}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(pdf_bytes)),
+        },
+    )
 
 
 @router.delete("/{report_id}")

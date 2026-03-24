@@ -10,7 +10,16 @@ Encoding  : Encrypted values stored as base64(nonce + ciphertext + tag)
 import os
 import base64
 import secrets
+from pathlib import Path
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+if _ENV_FILE.exists():
+    for _line in _ENV_FILE.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _, _v = _line.partition("=")
+            os.environ.setdefault(_k.strip(), _v.strip())
 
 
 _NONCE_BYTES = 12   # 96-bit nonce — GCM standard

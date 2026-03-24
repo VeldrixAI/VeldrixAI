@@ -222,212 +222,277 @@ export default function AuditTrailsPage() {
 
   return (
     <>
-      <div className="vx-content">
-      <div className="vx-page-header">
-        <div>
-          <h1 className="vx-page-title">Audit Logs</h1>
-          <p className="vx-page-desc">Complete action history and SDK trust evaluation log</p>
-        </div>
-        <button className="vx-btn vx-btn-primary" onClick={exportCSV}>Export CSV</button>
-      </div>
+      <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
 
-      <div className="vx-filter-bar">
-        <div className="vx-search-input">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Search action type..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        </div>
-        <div className="vx-filter-item">
-          <label>Action</label>
-          <select value={actionType} onChange={(e) => { setActionType(e.target.value); setPage(1); }}>
-            <option value="">All</option>
-            {ACTION_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {error && <div className="vx-error">{error}</div>}
-
-      <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table className="vx-table vx-table-clickable">
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Action</th>
-                <th>Verdict</th>
-                <th>Trust Score</th>
-                <th>Latency</th>
-                <th>Timestamp</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--vx-text-muted)" }}>Loading...</td></tr>
-              ) : !data || data.records.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--vx-text-muted)" }}>
-                  No audit records yet. SDK analysis calls and actions will appear here automatically.
-                </td></tr>
-              ) : (
-                data.records.map((r) => {
-                  const m = getMeta(r);
-                  const isSdk = r.action_type === "trust_evaluation";
-                  const vs = m.verdict ? VERDICT_STYLE[m.verdict] : null;
-                  const reqId = m.requestId || r.id;
-                  const done = pdfDone.has(reqId);
-
-                  return (
-                    <tr key={r.id} onClick={() => setSelected(r)}>
-                      <td>
-                        {m.requestId ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                            <code style={{ fontSize: "0.78rem", fontFamily: "monospace", color: "var(--vx-violet)" }} title={m.requestId}>
-                              {m.requestId.slice(0, 8)}
-                            </code>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); copyToClipboard(m.requestId!); }}
-                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--vx-text-muted)", padding: "2px", fontSize: "0.7rem" }}
-                              title="Copy full request ID"
-                            >⧉</button>
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: "0.78rem", color: "var(--vx-text-muted)" }}>—</span>
-                        )}
-                      </td>
-                      <td><span className="vx-badge vx-badge-accent">{r.action_type}</span></td>
-                      <td>
-                        {vs && m.verdict ? (
-                          <span style={{
-                            display: "inline-flex", padding: "0.2rem 0.6rem", borderRadius: "50px",
-                            fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em",
-                            background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color,
-                          }}>{m.verdict}</span>
-                        ) : <span style={{ color: "var(--vx-text-muted)", fontSize: "0.82rem" }}>—</span>}
-                      </td>
-                      <td>
-                        {m.overallScore != null ? (
-                          <span style={{ fontWeight: 600, fontFamily: "monospace", fontSize: "0.85rem", color: m.overallScore >= 0.85 ? "var(--vx-emerald)" : m.overallScore >= 0.6 ? "var(--vx-amber)" : "var(--vx-rose)" }}>
-                            {(m.overallScore * 100).toFixed(1)}%
-                          </span>
-                        ) : <span style={{ color: "var(--vx-text-muted)", fontSize: "0.82rem" }}>—</span>}
-                      </td>
-                      <td style={{ fontSize: "0.82rem", color: "var(--vx-text-muted)" }}>
-                        {m.totalLatencyMs != null ? `${m.totalLatencyMs}ms` : "—"}
-                      </td>
-                      <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{fmtShort(r.created_at)}</td>
-                      <td>
-                        <div style={{ display: "flex", gap: "0.35rem" }}>
-                          {isSdk && (
-                            <button
-                              onClick={(e) => generatePdf(r, e)}
-                              disabled={generatingPdf === reqId || done}
-                              style={{
-                                padding: "4px 14px", borderRadius: 8,
-                                border: done ? "1px solid rgba(16,185,129,0.35)" : "1px solid rgba(124,58,237,0.35)",
-                                background: "transparent",
-                                color: done ? "#10b981" : "rgba(167,139,250,0.85)",
-                                fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500,
-                                letterSpacing: "0.08em",
-                                cursor: (generatingPdf === reqId || done) ? "default" : "pointer",
-                                opacity: generatingPdf === reqId ? 0.5 : 1,
-                                transition: "all 0.2s", whiteSpace: "nowrap",
-                              }}
-                            >
-                              {generatingPdf === reqId ? "Generating…" : done ? "Report Ready" : "Generate PDF"}
-                            </button>
-                          )}
-                          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={(e) => { e.stopPropagation(); setSelected(r); }}>View</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {data && data.total > 0 && (
-          <div className="vx-pagination" style={{ padding: "0.85rem 1rem" }}>
-            <span className="vx-pagination-info">
-              {(page - 1) * data.limit + 1}–{Math.min(page * data.limit, data.total)} of {data.total}
-            </span>
-            <div className="vx-pagination-controls">
-              <button className="vx-pagination-btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹</button>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((p) => (
-                <button key={p} className={`vx-pagination-btn ${p === page ? "active" : ""}`} onClick={() => setPage(p)}>{p}</button>
-              ))}
-              <button className="vx-pagination-btn" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>›</button>
+        {/* Page heading */}
+        <div className="section-reveal" style={{ marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px" }}>
+          <div>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "32px", letterSpacing: "-1px", color: "#f0f2ff", marginBottom: "6px" }}>
+              Audit Logs
+            </h2>
+            <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: "14px", color: "rgba(240,242,255,0.45)", maxWidth: "500px", lineHeight: 1.6 }}>
+              Complete governance audit trail — every request, evaluation, and enforcement action logged in real time.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {/* Search */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <svg style={{ position: "absolute", left: "12px", color: "rgba(240,242,255,0.3)", pointerEvents: "none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                style={{ paddingLeft: "36px", paddingRight: "14px", paddingTop: "10px", paddingBottom: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", color: "#f0f2ff", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", width: "180px", transition: "border-color 0.2s" }}
+                onFocus={e => (e.target.style.borderColor = "rgba(124,58,237,0.4)")}
+                onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
+              />
             </div>
+            {/* Action filter */}
+            <div style={{ position: "relative" }}>
+              <select
+                value={actionType}
+                onChange={(e) => { setActionType(e.target.value); setPage(1); }}
+                style={{ padding: "10px 32px 10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", color: "rgba(240,242,255,0.7)", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", appearance: "none", cursor: "pointer", transition: "border-color 0.2s" }}
+                onFocus={e => (e.target.style.borderColor = "rgba(124,58,237,0.4)")}
+                onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
+              >
+                <option value="">All Actions</option>
+                {ACTION_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <svg style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "rgba(240,242,255,0.35)" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <button
+              onClick={exportCSV}
+              className="glass-panel"
+              style={{ padding: "10px 18px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(240,242,255,0.6)", cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: "8px", background: "none", transition: "all 0.2s" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "12px", color: "#f43f5e", fontFamily: "DM Sans, sans-serif", fontSize: "13px", marginBottom: "24px" }}>
+            {error}
           </div>
         )}
-      </div>
-      </div>{/* end vx-content */}
 
-      {/* Detail drawer */}
+        {/* ── Active Audit Stream Table ── */}
+        <div className="section-reveal" style={{ animationDelay: "0.2s", background: "#0d0f1a", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+          {/* Table toolbar */}
+          <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.5)" }}>
+            <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "15px", color: "#f0f2ff" }}>Active Audit Stream</h4>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span className="live-dot" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}/>
+              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", color: "#10b981", fontWeight: 700, letterSpacing: "1.5px" }}>LIVE</span>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", textAlign: "left", fontFamily: "DM Sans, sans-serif", fontSize: "13px", borderCollapse: "collapse" }}>
+              <thead style={{ background: "rgba(255,255,255,0.02)" }}>
+                <tr>
+                  {["Request ID", "Action", "Verdict", "Trust Score", "Latency", "Timestamp", ""].map((col) => (
+                    <th key={col} style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
+                    <svg style={{ display: "inline-block", animation: "evalSpin 0.8s linear infinite", marginBottom: "8px" }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    <div>Loading records…</div>
+                  </td></tr>
+                ) : !data || data.records.length === 0 ? (
+                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
+                    No audit records yet. SDK analysis calls and actions will appear here automatically.
+                  </td></tr>
+                ) : (
+                  data.records.map((r, ri) => {
+                    const m = getMeta(r);
+                    const isSdk = r.action_type === "trust_evaluation";
+                    const vs = m.verdict ? VERDICT_STYLE[m.verdict] : null;
+                    const reqId = m.requestId || r.id;
+                    const done = pdfDone.has(reqId);
+
+                    return (
+                      <tr
+                        key={r.id}
+                        className={`row-in ri-${Math.min(ri + 1, 8)} audit-row`}
+                        onClick={() => setSelected(r)}
+                      >
+                        <td style={{ padding: "14px 20px" }}>
+                          {m.requestId ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                              <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", fontWeight: 700, color: "#7c3aed" }} title={m.requestId}>
+                                {m.requestId.slice(0, 8)}
+                              </code>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); copyToClipboard(m.requestId!); }}
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(240,242,255,0.3)", padding: "2px", fontSize: "11px", transition: "color 0.2s" }}
+                                title="Copy full request ID"
+                                onMouseEnter={e => (e.currentTarget.style.color = "#7c3aed")}
+                                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,242,255,0.3)")}
+                              >⧉</button>
+                            </span>
+                          ) : (
+                            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)", whiteSpace: "nowrap" }}>
+                            {r.action_type.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          {vs && m.verdict ? (
+                            <span style={{ display: "inline-flex", padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color, whiteSpace: "nowrap" }}>
+                              {m.verdict}
+                            </span>
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          {m.overallScore != null ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <div style={{ width: "50px", height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
+                                <div style={{ width: `${m.overallScore * 100}%`, height: "100%", background: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e", borderRadius: "2px" }}/>
+                              </div>
+                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e" }}>
+                                {(m.overallScore * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
+                        </td>
+                        <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.45)", whiteSpace: "nowrap" }}>
+                          {m.totalLatencyMs != null ? `${m.totalLatencyMs}ms` : "—"}
+                        </td>
+                        <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.35)", whiteSpace: "nowrap" }}>
+                          {fmtShort(r.created_at)}
+                        </td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            {isSdk && (
+                              <button
+                                onClick={(e) => generatePdf(r, e)}
+                                disabled={generatingPdf === reqId || done}
+                                className="row-action"
+                                style={{
+                                  padding: "4px 12px", borderRadius: "7px", fontSize: "10px",
+                                  fontFamily: "DM Sans, sans-serif", fontWeight: 600, letterSpacing: "1px",
+                                  border: done ? "1px solid rgba(16,185,129,0.35)" : "1px solid rgba(124,58,237,0.25)",
+                                  background: "transparent",
+                                  color: done ? "#10b981" : "#a78bfa",
+                                  cursor: (generatingPdf === reqId || done) ? "default" : "pointer",
+                                  opacity: generatingPdf === reqId ? 0.5 : 1,
+                                  transition: "all 0.2s", whiteSpace: "nowrap",
+                                }}
+                              >
+                                {generatingPdf === reqId ? "Generating…" : done ? "✓ Ready" : "PDF"}
+                              </button>
+                            )}
+                            <button
+                              className="row-action"
+                              onClick={(e) => { e.stopPropagation(); setSelected(r); }}
+                              style={{ padding: "4px 10px", borderRadius: "7px", fontSize: "10px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)", cursor: "pointer" }}
+                            >
+                              Open ↗
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination footer */}
+          {data && data.total > 0 && (
+            <div style={{ padding: "14px 24px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.3)" }}>
+              <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>
+                Viewing {(page - 1) * data.limit + 1}–{Math.min(page * data.limit, data.total)} of {data.total.toLocaleString()} records
+              </p>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page <= 1 ? "rgba(240,242,255,0.15)" : "rgba(240,242,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((p) => (
+                  <button key={p} onClick={() => setPage(p)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: p === page ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.03)", color: p === page ? "#7c3aed" : "rgba(240,242,255,0.35)", border: p === page ? "1px solid rgba(124,58,237,0.3)" : "1px solid rgba(255,255,255,0.06)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{p}</button>
+                ))}
+                <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page >= totalPages ? "rgba(240,242,255,0.15)" : "rgba(240,242,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page >= totalPages ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>{/* end page container */}
+
+      {/* Detail drawer — dark theme */}
       {selected && (() => {
         const m = getMeta(selected);
         const vs = m.verdict ? VERDICT_STYLE[m.verdict] : null;
         return (
           <>
-            <div className="vx-drawer-overlay" onClick={() => setSelected(null)} />
-            <div className="vx-drawer">
-              <div className="vx-drawer-header">
+            {/* Overlay */}
+            <div
+              onClick={() => setSelected(null)}
+              style={{ position: "fixed", inset: 0, background: "rgba(5,8,16,0.6)", backdropFilter: "blur(4px)", zIndex: 200 }}
+            />
+            {/* Drawer panel */}
+            <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "420px", background: "#0b0d1c", borderLeft: "1px solid rgba(255,255,255,0.07)", zIndex: 201, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+              {/* Drawer header */}
+              <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
                 <div>
-                  <h3 className="vx-modal-title">Audit Detail</h3>
-                  <p style={{ fontSize: "0.82rem", color: "var(--vx-text-muted)", marginTop: "0.2rem" }}>{selected.id}</p>
+                  <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "18px", color: "#f0f2ff", marginBottom: "4px" }}>Audit Detail</h3>
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.3)", letterSpacing: "0.5px" }}>{selected.id.slice(0, 24)}…</p>
                 </div>
-                <button className="vx-modal-close" onClick={() => setSelected(null)}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <button
+                  onClick={() => setSelected(null)}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "rgba(240,242,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
-              <div className="vx-drawer-body">
-                <div className="vx-card">
-                  <div className="vx-detail-row"><span className="vx-detail-key">Action</span><span className="vx-badge vx-badge-accent">{selected.action_type}</span></div>
-                  {m.requestId && (
-                    <div className="vx-detail-row">
-                      <span className="vx-detail-key">Request ID</span>
-                      <span className="vx-detail-value" style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>{m.requestId}</span>
+              {/* Drawer body */}
+              <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Core details card */}
+                <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[
+                    { key: "Action", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}>{selected.action_type.replace(/_/g, " ")}</span> },
+                    m.requestId ? { key: "Request ID", value: <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", wordBreak: "break-all" }}>{m.requestId}</code> } : null,
+                    (vs && m.verdict) ? { key: "Verdict", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color }}>{m.verdict}</span> } : null,
+                    m.overallScore != null ? { key: "Trust Score", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "14px", color: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e" }}>{(m.overallScore * 100).toFixed(1)}%</span> } : null,
+                    m.totalLatencyMs != null ? { key: "Latency", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "rgba(240,242,255,0.7)" }}>{m.totalLatencyMs}ms</span> } : null,
+                    m.sdkVersion ? { key: "SDK Version", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{m.sdkVersion}</span> } : null,
+                    { key: "Timestamp", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{fmtTs(selected.created_at)}</span> },
+                    { key: "IP Address", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{selected.ip_address || "—"}</span> },
+                  ].filter(Boolean).map((row) => row && (
+                    <div key={row.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", flexShrink: 0 }}>{row.key}</span>
+                      <span>{row.value}</span>
                     </div>
-                  )}
-                  {vs && m.verdict && (
-                    <div className="vx-detail-row">
-                      <span className="vx-detail-key">Verdict</span>
-                      <span style={{ padding: "0.2rem 0.6rem", borderRadius: "50px", fontSize: "0.7rem", fontWeight: 600, background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color }}>{m.verdict}</span>
-                    </div>
-                  )}
-                  {m.overallScore != null && (
-                    <div className="vx-detail-row">
-                      <span className="vx-detail-key">Trust Score</span>
-                      <span className="vx-detail-value" style={{ fontWeight: 700, color: m.overallScore >= 0.85 ? "var(--vx-emerald)" : m.overallScore >= 0.6 ? "var(--vx-amber)" : "var(--vx-rose)" }}>
-                        {(m.overallScore * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
-                  {m.totalLatencyMs != null && (
-                    <div className="vx-detail-row"><span className="vx-detail-key">Latency</span><span className="vx-detail-value">{m.totalLatencyMs}ms</span></div>
-                  )}
-                  {m.sdkVersion && (
-                    <div className="vx-detail-row"><span className="vx-detail-key">SDK Version</span><span className="vx-detail-value">{m.sdkVersion}</span></div>
-                  )}
-                  <div className="vx-detail-row"><span className="vx-detail-key">Timestamp</span><span className="vx-detail-value">{fmtTs(selected.created_at)}</span></div>
-                  <div className="vx-detail-row"><span className="vx-detail-key">IP Address</span><span className="vx-detail-value">{selected.ip_address || "—"}</span></div>
+                  ))}
                 </div>
 
                 {/* Pillar scores */}
                 {m.pillarScores && Object.keys(m.pillarScores).length > 0 && (
-                  <div className="vx-card" style={{ marginTop: "1rem" }}>
-                    <h4 style={{ fontSize: "0.85rem", fontWeight: 650, marginBottom: "0.75rem", fontFamily: "var(--vx-font-display)" }}>Pillar Scores</h4>
+                  <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
+                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "16px" }}>Pillar Scores</h4>
                     {Object.entries(m.pillarScores).map(([pillar, score]) => {
                       const pct = score * 100;
-                      const color = pct >= 85 ? "var(--vx-emerald)" : pct >= 60 ? "var(--vx-amber)" : "var(--vx-rose)";
+                      const color = pct >= 85 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
                       return (
-                        <div key={pillar} style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                          <span style={{ fontSize: "0.82rem", color: "var(--vx-text-muted)", minWidth: "110px", textTransform: "capitalize" }}>{pillar.replace("_", " ")}</span>
-                          <div style={{ flex: 1, height: 6, background: "rgba(124,58,237,0.10)", borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3, transition: "width 0.3s" }} />
+                        <div key={pillar} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                          <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "capitalize", color: "rgba(240,242,255,0.4)", minWidth: "110px" }}>{pillar.replace(/_/g, " ")}</span>
+                          <div style={{ flex: 1, height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
+                            <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
                           </div>
-                          <span style={{ fontSize: "0.82rem", fontWeight: 600, color, minWidth: "45px", textAlign: "right" }}>{pct.toFixed(1)}%</span>
+                          <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color, minWidth: "40px", textAlign: "right" }}>{pct.toFixed(1)}%</span>
                         </div>
                       );
                     })}
@@ -436,33 +501,31 @@ export default function AuditTrailsPage() {
 
                 {/* Critical flags */}
                 {m.criticalFlags.length > 0 && (
-                  <div style={{ marginTop: "0.75rem", padding: "0.75rem", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.25)", borderRadius: "8px" }}>
-                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--vx-rose)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Critical Flags</span>
-                    <div style={{ marginTop: "0.35rem", fontSize: "0.82rem", color: "var(--vx-rose)" }}>
+                  <div style={{ padding: "14px 16px", background: "rgba(244,63,94,0.06)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "12px" }}>
+                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#f43f5e", marginBottom: "8px" }}>Critical Flags</div>
+                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(244,63,94,0.8)", lineHeight: 1.6 }}>
                       {m.criticalFlags.join(" · ")}
                     </div>
                   </div>
                 )}
 
-                {/* Generate PDF button in drawer */}
+                {/* PDF button */}
                 {selected.action_type === "trust_evaluation" && m.requestId && (
-                  <div style={{ marginTop: "1rem" }}>
-                    <button
-                      className="vx-btn vx-btn-primary"
-                      style={{ width: "100%" }}
-                      disabled={generatingPdf === m.requestId || pdfDone.has(m.requestId)}
-                      onClick={(e) => generatePdf(selected, e)}
-                    >
-                      {generatingPdf === m.requestId ? "Generating PDF…" : pdfDone.has(m.requestId) ? "✓ Report Ready" : "Generate PDF Report"}
-                    </button>
-                  </div>
+                  <button
+                    disabled={generatingPdf === m.requestId || pdfDone.has(m.requestId)}
+                    onClick={(e) => generatePdf(selected, e)}
+                    style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", background: "linear-gradient(135deg, #9f67ff 0%, #7c3aed 50%, #4f46e5 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "opacity 0.2s", opacity: (generatingPdf === m.requestId) ? 0.6 : 1 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    {generatingPdf === m.requestId ? "Generating PDF…" : pdfDone.has(m.requestId) ? "✓ Report Ready" : "Generate PDF Report"}
+                  </button>
                 )}
 
                 {/* Raw metadata */}
                 {selected.metadata && Object.keys(selected.metadata).length > 0 && (
-                  <div className="vx-card" style={{ marginTop: "1rem" }}>
-                    <h4 style={{ fontSize: "0.85rem", fontWeight: 650, marginBottom: "0.75rem" }}>Raw Metadata</h4>
-                    <pre style={{ fontSize: "0.8rem", color: "var(--vx-text-secondary)", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                  <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
+                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "12px" }}>Raw Metadata</h4>
+                    <pre style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)", whiteSpace: "pre-wrap", wordBreak: "break-all", lineHeight: 1.7 }}>
                       {JSON.stringify(selected.metadata, null, 2)}
                     </pre>
                   </div>
@@ -473,9 +536,12 @@ export default function AuditTrailsPage() {
         );
       })()}
 
-      <div className="vx-toast-container">
+      {/* Toast notifications */}
+      <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "8px", zIndex: 300 }}>
         {toasts.map((t) => (
-          <div key={t.id} className={`vx-toast ${t.type}`}>{t.message}</div>
+          <div key={t.id} style={{ padding: "12px 16px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 500, color: "#f0f2ff", background: t.type === "error" ? "rgba(244,63,94,0.9)" : "rgba(16,185,129,0.9)", backdropFilter: "blur(12px)", border: `1px solid ${t.type === "error" ? "rgba(244,63,94,0.5)" : "rgba(16,185,129,0.5)"}`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", animation: "telRowIn 0.3s ease both" }}>
+            {t.message}
+          </div>
         ))}
       </div>
     </>

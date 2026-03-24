@@ -160,7 +160,7 @@ function SignupForm() {
     setLoading(true);
     try {
       const full_name = `${firstName} ${lastName}`.trim();
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name, email, password }),
@@ -326,6 +326,7 @@ function SignupForm() {
             {/* SSO options */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
               <button
+                suppressHydrationWarning
                 type="button"
                 onClick={() => handleOAuth('google')}
                 onMouseEnter={() => setGoogleHovered(true)}
@@ -336,6 +337,7 @@ function SignupForm() {
                 Google
               </button>
               <button
+                suppressHydrationWarning
                 type="button"
                 onClick={() => handleOAuth('github')}
                 onMouseEnter={() => setGithubHovered(true)}
@@ -361,6 +363,7 @@ function SignupForm() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>Institutional Email</label>
                 <input
+                  suppressHydrationWarning
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -379,6 +382,7 @@ function SignupForm() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>First Name</label>
                   <input
+                    suppressHydrationWarning
                     type="text"
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
@@ -394,6 +398,7 @@ function SignupForm() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>Last Name</label>
                   <input
+                    suppressHydrationWarning
                     type="text"
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
@@ -413,7 +418,8 @@ function SignupForm() {
                 <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>Access Credentials</label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    suppressHydrationWarning
+                  type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     onFocus={() => setPasswordFocused(true)}
@@ -425,6 +431,7 @@ function SignupForm() {
                     style={{ width: '100%', background: '#0a0c15', border: `1px solid ${passwordFocused ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#f0f2ff', borderRadius: '14px', padding: '14px 44px 14px 16px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                   />
                   <button
+                    suppressHydrationWarning
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
                     style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(240,242,255,0.3)', padding: 0, display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
@@ -470,6 +477,7 @@ function SignupForm() {
 
               {/* Submit */}
               <button
+                suppressHydrationWarning
                 type="submit"
                 disabled={loading || success}
                 className="primary-gradient btn-glow"

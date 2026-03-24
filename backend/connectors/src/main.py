@@ -5,6 +5,7 @@ from src.modules.analytics.controller import router as analytics_router
 from src.modules.analytics.audit_controller import router as audit_trails_router
 from src.modules.analytics.latency_controller import router as latency_router
 from src.modules.prompts.controller import router as prompts_router
+from src.modules.models.controller import router as models_router
 
 app = FastAPI(
     title="VeldrixAI Connectors - Reports API",
@@ -27,6 +28,7 @@ app.include_router(analytics_router)
 app.include_router(audit_trails_router)
 app.include_router(latency_router)
 app.include_router(prompts_router)
+app.include_router(models_router)
 
 
 @app.get("/health")

@@ -22,11 +22,27 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const download = searchParams.get("download");
 
-  const url = download
-    ? `${CONNECTORS_API_URL}/api/reports/${id}/download`
-    : `${CONNECTORS_API_URL}/api/reports/${id}`;
+  if (download) {
+    const res = await fetch(`${CONNECTORS_API_URL}/api/reports/${id}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({ detail: "Download failed" }));
+      return NextResponse.json({ error: payload.detail }, { status: res.status });
+    }
+    const pdfBytes = await res.arrayBuffer();
+    return new NextResponse(pdfBytes, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition":
+          res.headers.get("Content-Disposition") ??
+          `attachment; filename="veldrix-report-${id}.pdf"`,
+      },
+    });
+  }
 
-  const res = await fetch(url, {
+  const res = await fetch(`${CONNECTORS_API_URL}/api/reports/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 
 /* ─── Types (kept from original) ─── */
 type TimeRange = "7d" | "14d" | "30d";
@@ -55,53 +54,7 @@ function mapAuditRow(r: AuditRecord) {
   return { ts, id: shortId, action, model, score, riskLabel, status };
 }
 
-/* ─── Ops feed data ─── */
-const feedItems = [
-  { dot: "#7c3aed", title: "Auto-Update Complete", body: "Global Policy v4.2.1 deployed." },
-  { dot: "#10b981", title: "Backup Verified", body: "Hourly snapshot stored securely." },
-  { dot: "#06b6d4", title: "New Audit Started", body: "Finance-Core-LLM scan initiated." },
-  { dot: "#f59e0b", title: "Flagged Request", body: "Prompt injection attempt logged." },
-];
 
-/* ─── Mock audit rows ─── */
-const MOCK_ROWS = [
-  {
-    ts: "09:42:07",
-    id: "AUD-920-X1",
-    action: "PII redaction attempt",
-    model: "Finance-Core-LLM",
-    score: 0.08,
-    riskLabel: "LOW",
-    status: "PASSED",
-  },
-  {
-    ts: "09:41:33",
-    id: "AUD-920-K4",
-    action: "Unauthorized Vector Injection",
-    model: "Internal-RAG-A1",
-    score: 0.94,
-    riskLabel: "CRITICAL",
-    status: "INTERCEPTED",
-  },
-  {
-    ts: "09:40:55",
-    id: "AUD-919-L0",
-    action: "Prompt Injection (Level 2)",
-    model: "Customer-Bot-Prod",
-    score: 0.62,
-    riskLabel: "ELEVATED",
-    status: "FLAGGED",
-  },
-  {
-    ts: "09:39:14",
-    id: "AUD-919-J7",
-    action: "Mass Token Consumption",
-    model: "Developer-Sandbox",
-    score: 0.12,
-    riskLabel: "LOW",
-    status: "PASSED",
-  },
-];
 
 const statusMeta: Record<string, { bg: string; text: string; border: string }> = {
   PASSED:      { bg: "rgba(16,185,129,0.1)",  text: "#10b981", border: "rgba(16,185,129,0.25)" },
@@ -113,25 +66,6 @@ const riskColor: Record<string, string> = {
   LOW: "#10b981", ELEVATED: "#f59e0b", CRITICAL: "#f43f5e",
 };
 
-/* ─── Bar chart data ─── */
-const BAR_DATA = [
-  { h: "40%", op: 0.20, tip: "12k RPS", peak: false },
-  { h: "45%", op: 0.22, tip: null,      peak: false },
-  { h: "55%", op: 0.28, tip: null,      peak: false },
-  { h: "75%", op: 0.38, tip: null,      peak: false },
-  { h: "60%", op: 0.28, tip: null,      peak: false },
-  { h: "85%", op: 0.48, tip: null,      peak: false },
-  { h: "70%", op: 0.38, tip: null,      peak: false },
-  { h: "95%", op: 0.60, tip: "Peak: 24.2k", peak: true },
-  { h: "65%", op: 0.38, tip: null,      peak: false },
-  { h: "50%", op: 0.28, tip: null,      peak: false },
-  { h: "40%", op: 0.20, tip: null,      peak: false },
-  { h: "70%", op: 0.42, tip: null,      peak: false },
-  { h: "60%", op: 0.32, tip: null,      peak: false },
-  { h: "45%", op: 0.24, tip: null,      peak: false },
-  { h: "35%", op: 0.18, tip: null,      peak: false },
-  { h: "50%", op: 0.28, tip: null,      peak: false },
-];
 
 /* ─── Page ─── */
 export default function DashboardPage() {
@@ -144,8 +78,6 @@ export default function DashboardPage() {
   const [auditTotal, setAuditTotal] = useState(0);
   const [feedIdx, setFeedIdx] = useState(0);
   const [feedVisible, setFeedVisible] = useState(true);
-  const [activeFilter, setActiveFilter] = useState(0);
-  const [hovRow, setHovRow] = useState<number | null>(null);
   const prevSummaryRef = useRef<Summary | null>(null);
 
   async function load(r: TimeRange) {
@@ -189,7 +121,7 @@ export default function DashboardPage() {
     const id = setInterval(() => {
       setFeedVisible(false);
       setTimeout(() => {
-        setFeedIdx((i) => (i + 1) % feedItems.length);
+        setFeedIdx((i) => i + 1);
         setFeedVisible(true);
       }, 400);
     }, 3500);
@@ -251,30 +183,30 @@ export default function DashboardPage() {
     ? (summary.total_evaluations >= 1000
       ? (summary.total_evaluations / 1000).toFixed(1) + "k"
       : summary.total_evaluations.toLocaleString())
-    : "428.9k";
-  const violationsDisplay = summary ? summary.failed.toLocaleString() : "1,242";
-  const latencyDisplay = summary?.avg_latency_ms != null ? `${summary.avg_latency_ms}ms` : "14ms";
-  const complianceDisplay = summary ? `${summary.approval_rate.toFixed(1)}%` : "99.8%";
+    : "—";
+  const violationsDisplay = summary ? summary.failed.toLocaleString() : "—";
+  const latencyDisplay = summary?.avg_latency_ms != null ? `${summary.avg_latency_ms}ms` : "—";
+  const complianceDisplay = summary ? `${summary.approval_rate.toFixed(1)}%` : "—";
 
   const latencyOk = summary?.avg_latency_ms == null || summary.avg_latency_ms <= 200;
 
-  // Derive live ops feed from real audit rows, fall back to static items
-  const liveFeedItems = auditRows.length > 0
-    ? auditRows.slice(0, 4).map(mapAuditRow).map((r) => ({
-        dot: r.status === "INTERCEPTED" ? "#f43f5e" : r.status === "FLAGGED" ? "#f59e0b" : "#10b981",
-        title: r.action,
-        body: `${r.model} · ${r.ts}`,
-      }))
-    : feedItems;
-  const feedItem = liveFeedItems[feedIdx % liveFeedItems.length];
+  // Ops feed: only from real audit rows; empty state when no data yet
+  const liveFeedItems = auditRows.slice(0, 4).map(mapAuditRow).map((r) => ({
+    dot: r.status === "INTERCEPTED" ? "#f43f5e" : r.status === "FLAGGED" ? "#f59e0b" : "#10b981",
+    title: r.action,
+    body: `${r.model} · ${r.ts}`,
+  }));
+  const feedItem = liveFeedItems.length > 0
+    ? liveFeedItems[feedIdx % liveFeedItems.length]
+    : null;
 
   // Real latency for HUD
   const hudLatencyMs = sdkStats?.avg_latency_ms ?? summary?.avg_latency_ms ?? null;
   const hudLatencyLabel = hudLatencyMs != null ? `${hudLatencyMs.toFixed(1)}ms` : "—";
   const hudLatencyWidth = hudLatencyMs != null
     ? `${Math.min(Math.max((hudLatencyMs / 300) * 100, 5), 100)}%`
-    : "65%";
-  const hudLatencyColor = hudLatencyMs == null ? "rgba(240,242,255,0.6)"
+    : "0%";
+  const hudLatencyColor = hudLatencyMs == null ? "rgba(240,242,255,0.3)"
     : hudLatencyMs <= 100 ? "#10b981"
     : hudLatencyMs <= 250 ? "#f59e0b"
     : "#f43f5e";
@@ -284,7 +216,7 @@ export default function DashboardPage() {
     (r) => r.status === "INTERCEPTED" || r.riskLabel === "CRITICAL"
   ) ?? null;
 
-  // Bar chart: derive from real timeseries, fall back to static BAR_DATA
+  // Bar chart: only from real timeseries data; no static fallback
   const barData = timeseries.length > 0 ? (() => {
     const pts = timeseries.slice(-16);
     const maxReq = Math.max(...pts.map((p) => p.requests), 1);
@@ -295,19 +227,28 @@ export default function DashboardPage() {
       tip: i === peakIdx ? `Peak: ${p.requests.toLocaleString()}` : null,
       peak: i === peakIdx,
     }));
-  })() : BAR_DATA;
+  })() : [];
 
-  // Filter audit rows by active tab
-  const displayRows = auditRows.map(mapAuditRow).filter((r) => {
-    if (activeFilter === 1) return r.riskLabel === "CRITICAL";
-    if (activeFilter === 2) return r.status === "INTERCEPTED" || r.status === "FLAGGED";
-    return true;
-  });
+  // Trend vs prior period: compare first half vs second half of timeseries
+  function calcTrend(field: "requests" | "approved" | "blocked"): string {
+    if (timeseries.length < 2) return "NO DATA YET";
+    const mid = Math.floor(timeseries.length / 2);
+    const prev = timeseries.slice(0, mid).reduce((s, p) => s + p[field], 0);
+    const curr = timeseries.slice(mid).reduce((s, p) => s + p[field], 0);
+    if (prev === 0) return curr > 0 ? "NEW ACTIVITY" : "NO DATA YET";
+    const pct = ((curr - prev) / prev) * 100;
+    const sign = pct >= 0 ? "+" : "";
+    return `${sign}${pct.toFixed(1)}% VS PRIOR PERIOD`;
+  }
+
+  const totalTrend   = calcTrend("requests");
+  const violationsTrend = summary && summary.failed > 0 ? "REVIEW FLAGGED" : "NO VIOLATIONS";
+  const complianceTrend = summary
+    ? (summary.approval_rate >= 95 ? "STABLE OPERATIONS" : summary.approval_rate >= 80 ? "MONITOR ADVISED" : "ACTION REQUIRED")
+    : "AWAITING DATA";
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start" }}>
-      {/* ── Main column ── */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+    <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Page heading */}
         <div className="section-reveal" style={{ marginBottom: "36px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px" }}>
@@ -355,7 +296,7 @@ export default function DashboardPage() {
             valueColor="#7c3aed"
             trendColor="#10b981"
             trendIcon={<TrendUp />}
-            trendText="+12.4% FROM YESTERDAY"
+            trendText={totalTrend}
             bgIcon={<BigBarChart />}
           />
           {/* Card 2 */}
@@ -367,7 +308,7 @@ export default function DashboardPage() {
             valueColor="#f43f5e"
             trendColor="#f43f5e"
             trendIcon={<TrendAlert />}
-            trendText="CRITICAL ACTION REQ"
+            trendText={violationsTrend}
             bgIcon={<BigAlert />}
           />
           {/* Card 3 */}
@@ -379,7 +320,7 @@ export default function DashboardPage() {
             valueColor={latencyOk ? "rgba(240,242,255,0.8)" : "#f43f5e"}
             trendColor="rgba(240,242,255,0.3)"
             trendIcon={null}
-            trendText="OPTIMIZED PERFORMANCE"
+            trendText={latencyOk ? "OPTIMIZED PERFORMANCE" : "HIGH LATENCY DETECTED"}
             bgIcon={<BigClock />}
           />
           {/* Card 4 */}
@@ -391,7 +332,7 @@ export default function DashboardPage() {
             valueColor="#10b981"
             trendColor="#10b981"
             trendIcon={null}
-            trendText="STABLE OPERATIONS"
+            trendText={complianceTrend}
             bgIcon={<BigShield />}
           />
         </div>
@@ -416,8 +357,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div style={{ height: "220px", display: "flex", alignItems: "flex-end", gap: "5px", position: "relative" }}>
+            <div style={{ height: "220px", display: "flex", alignItems: barData.length === 0 ? "center" : "flex-end", justifyContent: barData.length === 0 ? "center" : undefined, gap: "5px", position: "relative" }}>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(124,58,237,0.06), transparent)", borderRadius: "8px", pointerEvents: "none" }}/>
+              {barData.length === 0 && (
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.2)", letterSpacing: "2px", textTransform: "uppercase", position: "relative" }}>
+                  No traffic data for this period
+                </p>
+              )}
               {barData.map((bar, i) => (
                 <div
                   key={i}
@@ -464,219 +410,97 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Active Audit Stream Table ── */}
-        <div className="section-reveal" style={{ animationDelay: "0.5s", background: "#0d0f1a", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Table toolbar */}
-          <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.5)", flexWrap: "wrap", gap: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-              <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "15px", color: "#f0f2ff", whiteSpace: "nowrap" }}>Active Audit Stream</h4>
-              <div style={{ display: "flex", gap: "6px" }}>
-                {["All Logs", "Critical Only", "Blocked Requests"].map((f, fi) => (
-                  <button key={f} onClick={() => setActiveFilter(fi)} style={{
-                    padding: "5px 12px", borderRadius: "8px", fontSize: "10px",
-                    fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px",
-                    textTransform: "uppercase", cursor: "pointer", transition: "all 0.2s", border: "none",
-                    background: activeFilter === fi ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
-                    color: activeFilter === fi ? "#7c3aed" : "rgba(240,242,255,0.35)",
-                    outline: activeFilter === fi ? "1px solid rgba(124,58,237,0.3)" : "1px solid rgba(255,255,255,0.06)",
-                  }}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Link href="/dashboard/audit-trails" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, color: "#7c3aed", textDecoration: "none" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-              View All
-            </Link>
-          </div>
-
-          {/* Table */}
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", textAlign: "left", fontFamily: "DM Sans, sans-serif", fontSize: "13px", borderCollapse: "collapse" }}>
-              <thead style={{ background: "rgba(255,255,255,0.02)" }}>
-                <tr>
-                  {["Timestamp", "Audit ID", "Action Pattern", "Risk Score", "Status", ""].map((col) => (
-                    <th key={col} style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {displayRows.length === 0 ? (
-                  <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>No audit records found</td></tr>
-                ) : displayRows.map((row, ri) => {
-                  const sm = statusMeta[row.status] ?? statusMeta.PASSED;
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`row-in ri-${ri + 1} audit-row`}
-                      onMouseEnter={() => setHovRow(ri)}
-                      onMouseLeave={() => setHovRow(null)}
-                      style={{ background: hovRow === ri ? "rgba(255,255,255,0.025)" : ri % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}
-                    >
-                      <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.35)", whiteSpace: "nowrap" }}>
-                        {row.ts}
-                      </td>
-                      <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "12px", color: "#7c3aed", whiteSpace: "nowrap" }}>
-                        {row.id}
-                      </td>
-                      <td style={{ padding: "14px 20px", color: "rgba(240,242,255,0.75)" }}>
-                        <div>{row.action}</div>
-                        <div style={{ fontSize: "11px", color: "rgba(240,242,255,0.3)", marginTop: "2px", fontFamily: "JetBrains Mono, monospace" }}>{row.model}</div>
-                      </td>
-                      <td style={{ padding: "14px 20px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "60px", height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
-                            <div style={{ width: `${row.score * 100}%`, height: "100%", background: riskColor[row.riskLabel], borderRadius: "2px" }}/>
-                          </div>
-                          <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: riskColor[row.riskLabel], fontWeight: 600 }}>
-                            {row.score.toFixed(2)} <span style={{ fontSize: "9px", letterSpacing: "1px" }}>{row.riskLabel}</span>
-                          </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: "14px 20px" }}>
-                        <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: sm.bg, color: sm.text, border: `1px solid ${sm.border}`, whiteSpace: "nowrap" }}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: "14px 16px" }}>
-                        <button className="row-action" style={{
-                          padding: "5px 10px", borderRadius: "7px", fontSize: "10px",
-                          fontFamily: "DM Sans, sans-serif", fontWeight: 600,
-                          background: "rgba(124,58,237,0.12)", color: "#a78bfa",
-                          border: "1px solid rgba(124,58,237,0.2)", cursor: "pointer",
-                        }}>
-                          Open ↗
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination footer */}
-          <div style={{ padding: "14px 24px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.3)" }}>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>
-              {auditTotal > 0 ? `Viewing 1–${Math.min(10, auditRows.length)} of ${auditTotal.toLocaleString()} records` : "Viewing audit stream"}
-            </p>
-            <div style={{ display: "flex", gap: "4px" }}>
-              {["‹", "1", "2", "3", "›"].map((p, pi) => (
-                <button key={pi} style={{
-                  width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px",
-                  fontFamily: "DM Sans, sans-serif", fontWeight: 600,
-                  background: p === "1" ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.03)",
-                  color: p === "1" ? "#7c3aed" : "rgba(240,242,255,0.35)",
-                  border: p === "1" ? "1px solid rgba(124,58,237,0.3)" : "1px solid rgba(255,255,255,0.06)",
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Right HUD Panel ── */}
-      <aside style={{
-        width: "280px",
-        flexShrink: 0,
-        display: "flex", flexDirection: "column", gap: "0",
-      }}>
-
-        <h5 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "20px" }}>
-          System Health HUD
-        </h5>
-
-        {/* Health bars */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginBottom: "28px" }}>
-          <HealthBar label="Encryption Engine" value="STABLE" valueColor="#10b981" width="100%" barColor="#10b981" delay="hb-1" />
-          <HealthBar label="Tokenizer Latency" value={hudLatencyLabel} valueColor={hudLatencyColor} width={hudLatencyWidth} barColor={hudLatencyColor} delay="hb-2" />
-          <HealthBar label="Policy Engine" value={summary ? "ACTIVE" : "—"} valueColor="#06b6d4" width={summary ? "88%" : "20%"} barColor="#06b6d4" delay="hb-3" />
-        </div>
-
-        {/* Priority Incident */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "24px", marginBottom: "24px" }}>
-          <h5 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "14px" }}>
-            Priority Incident
-          </h5>
-          {priorityIncident ? (
-            <div className="incident-pulse glass-panel" style={{ padding: "16px", borderRadius: "14px", background: "rgba(244,63,94,0.06)", border: "1px solid rgba(244,63,94,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f43f5e">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13" stroke="white" strokeWidth="2" fill="none"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17" stroke="white" strokeWidth="2" fill="none"/>
-                </svg>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 700, color: "#f43f5e", letterSpacing: "2px", textTransform: "uppercase" }}>
-                  {priorityIncident.status}
-                </span>
-              </div>
-              <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.6)", lineHeight: 1.6, marginBottom: "6px" }}>
-                {priorityIncident.action}
-              </p>
-              <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", color: "rgba(240,242,255,0.35)", marginBottom: "14px" }}>
-                {priorityIncident.model} · {priorityIncident.id}
-              </p>
-              <button style={{ width: "100%", padding: "8px", background: "#f43f5e", color: "white", border: "none", borderRadius: "8px", fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", cursor: "pointer", transition: "opacity 0.2s" }}>
-                Review &rarr;
-              </button>
-            </div>
-          ) : (
-            <div style={{ padding: "16px", borderRadius: "14px", background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)", display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} className="live-dot" />
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.5)" }}>
-                No active threats detected
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Operations Feed */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "24px", marginBottom: "24px" }}>
-          <h5 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "16px" }}>
-            Operations Feed
-          </h5>
-          <div style={{ transition: "opacity 0.4s", opacity: feedVisible ? 1 : 0 }}>
-            <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: feedItem.dot, marginTop: "5px", flexShrink: 0 }} className="live-dot"/>
+        {/* ── System Health HUD (moved from right panel into main content) ── */}
+        <section className="section-reveal" style={{ animationDelay: "0.5s" }}>
+          <div style={{ background: "#0a0c15", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)", padding: "28px 32px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
               <div>
-                <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: "12px", color: "#f0f2ff", marginBottom: "3px" }}>{feedItem.title}</div>
-                <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", color: "rgba(240,242,255,0.45)", lineHeight: 1.5 }}>{feedItem.body}</div>
+                <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "16px", color: "#f0f2ff", marginBottom: "4px" }}>System Health</h4>
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)" }}>Live infrastructure telemetry</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span className="live-dot" style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}/>
+                <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", fontWeight: 700, color: "#10b981", letterSpacing: "2px" }}>{summary ? "OPERATIONAL" : "CONNECTING…"}</span>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "24px", alignItems: "start" }}>
+              {/* Column 1: Engine Status */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: "4px" }}>Engine Status</p>
+                <HealthBar label="Encryption Engine" value="STABLE" valueColor="#10b981" width="100%" barColor="#10b981" delay="hb-1" />
+                <HealthBar label="Tokenizer Latency" value={hudLatencyLabel} valueColor={hudLatencyColor} width={hudLatencyWidth} barColor={hudLatencyColor} delay="hb-2" />
+                <HealthBar label="Policy Engine" value={summary ? "ACTIVE" : "—"} valueColor="#06b6d4" width={summary ? "88%" : "20%"} barColor="#06b6d4" delay="hb-3" />
+                <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", marginTop: "4px" }}>
+                  <div style={{ display: "flex", gap: "3px", alignItems: "flex-end" }}>
+                    {[24, 32, 24, 36, 20].map((h, i) => (
+                      <div key={i} className="hbar-fill" style={{ width: "5px", height: `${h}px`, background: summary ? "#10b981" : "rgba(255,255,255,0.2)", borderRadius: "2px", opacity: [0.4, 1, 0.7, 0.9, 0.5][i], animationDelay: `${0.3 + i * 0.1}s` }}/>
+                    ))}
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", fontWeight: 700, color: summary ? "#10b981" : "rgba(240,242,255,0.3)", letterSpacing: "2px" }}>ALL SYSTEMS</div>
+                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", color: "rgba(240,242,255,0.3)", letterSpacing: "1px", textTransform: "uppercase", marginTop: "2px" }}>Operational</div>
+                  </div>
+                </div>
+              </div>
+              {/* Column 2: Priority Incident */}
+              <div>
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: "16px" }}>Priority Incident</p>
+                {priorityIncident ? (
+                  <div className="glass-panel incident-pulse" style={{ padding: "16px", borderRadius: "14px", background: "rgba(244,63,94,0.05)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#f43f5e">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13" stroke="white" strokeWidth="2" fill="none"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke="white" strokeWidth="2" fill="none"/>
+                      </svg>
+                      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, color: "#f43f5e", letterSpacing: "2px", textTransform: "uppercase" }}>{priorityIncident.status}</span>
+                    </div>
+                    <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.55)", lineHeight: 1.6, marginBottom: "6px" }}>{priorityIncident.action}</p>
+                    <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", color: "rgba(240,242,255,0.35)", marginBottom: "14px" }}>{priorityIncident.model} · {priorityIncident.id}</p>
+                    <button style={{ width: "100%", padding: "8px", background: "#f43f5e", color: "white", border: "none", borderRadius: "8px", fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", cursor: "pointer", transition: "opacity 0.2s" }}
+                      onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+                      onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+                      Review →
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ padding: "16px", borderRadius: "14px", background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} className="live-dot" />
+                    <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.5)" }}>No active threats detected</span>
+                  </div>
+                )}
+              </div>
+              {/* Column 3: Operations Feed */}
+              <div>
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: "16px" }}>Operations Feed</p>
+                {feedItem ? (
+                  <>
+                    <div style={{ transition: "opacity 0.4s", opacity: feedVisible ? 1 : 0 }}>
+                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                        <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: feedItem.dot, marginTop: "5px", flexShrink: 0 }} className="live-dot"/>
+                        <div>
+                          <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: "12px", color: "#f0f2ff", marginBottom: "3px" }}>{feedItem.title}</div>
+                          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", color: "rgba(240,242,255,0.45)", lineHeight: 1.5 }}>{feedItem.body}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "6px", marginTop: "16px" }}>
+                      {liveFeedItems.map((_, fi) => (
+                        <div key={fi} style={{ width: fi === feedIdx % liveFeedItems.length ? "16px" : "6px", height: "6px", borderRadius: "3px", background: fi === feedIdx % liveFeedItems.length ? "#7c3aed" : "rgba(255,255,255,0.1)", transition: "all 0.3s" }}/>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 0" }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(240,242,255,0.15)", flexShrink: 0 }} />
+                    <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.3)" }}>No recent activity</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          {/* Feed dots */}
-          <div style={{ display: "flex", gap: "6px", marginTop: "16px", justifyContent: "center" }}>
-            {liveFeedItems.map((_, fi) => (
-              <div key={fi} style={{ width: fi === feedIdx % liveFeedItems.length ? "16px" : "6px", height: "6px", borderRadius: "3px", background: fi === feedIdx % liveFeedItems.length ? "#7c3aed" : "rgba(255,255,255,0.1)", transition: "all 0.3s" }}/>
-            ))}
-          </div>
-        </div>
-
-        {/* Service status */}
-        <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${summary ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: "16px", padding: "20px", textAlign: "center" }}>
-          <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "14px" }}>
-            Service Status
-          </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "5px", alignItems: "flex-end" }}>
-            {[24, 32, 24, 36, 20].map((h, i) => (
-              <div key={i} className="hbar-fill" style={{ width: "6px", height: `${h}px`, background: summary ? "#10b981" : "rgba(255,255,255,0.2)", borderRadius: "3px", opacity: [0.4, 1, 0.7, 0.9, 0.5][i], animationDelay: `${i * 0.1 + 0.8}s` }}/>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: "12px" }}>
-            {summary && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} className="live-dot" />}
-            <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", fontWeight: 700, color: summary ? "#10b981" : "rgba(240,242,255,0.3)", letterSpacing: "2px" }}>
-              {summary ? "OPERATIONAL" : "CONNECTING…"}
-            </p>
-          </div>
-        </div>
-      </aside>
-    </div>
+        </section>
+      </div>
   );
 }
 

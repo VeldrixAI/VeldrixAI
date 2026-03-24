@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from src.modules.reports.models import TrustReport, ReportStatus, ReportType, ActionType
 from src.modules.reports.schemas import GenerateReportRequest
 from src.modules.reports.services.pdf_service import PDFService
-from src.modules.reports.services.storage_service import S3StorageService
+from src.modules.reports.services.storage_service import compute_checksum
 from src.modules.reports.services.audit_service import AuditService
 from src.modules.reports.services.report_namer import generate_report_name, generate_vx_report_id
 from datetime import datetime
@@ -15,7 +15,6 @@ class ReportService:
     def __init__(self, db: Session):
         self.db = db
         self.pdf_service = PDFService()
-        self.storage_service = S3StorageService()
         self.audit_service = AuditService()
 
     def _unique_report_name(self) -> str:
@@ -98,15 +97,8 @@ class ReportService:
                 vx_report_id=vx_report_id,
             )
 
-            storage_path = self.storage_service.upload_pdf(
-                file_content=pdf_content,
-                report_id=str(report.id),
-                user_id=str(user_id),
-            )
+            checksum = compute_checksum(pdf_content)
 
-            checksum = self.storage_service.compute_checksum(pdf_content)
-
-            report.storage_path = storage_path
             report.checksum_hash = checksum
             report.status = "failed" if is_high_risk else "completed"
             report.output_full_report = {
@@ -132,7 +124,6 @@ class ReportService:
                     "report_name":  report_name,
                     "vx_report_id": vx_report_id,
                     "title":        report.title,
-                    "storage_path": storage_path,
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,
@@ -160,11 +151,22 @@ class ReportService:
             raise HTTPException(status_code=404, detail="Report not found")
         return report
 
-    def get_signed_url(self, report_id: UUID, user_id: UUID) -> str:
+    def regenerate_pdf(self, report_id: UUID, user_id: UUID) -> tuple:
+        """Re-generate PDF bytes on demand from stored report data."""
         report = self.get_report(report_id, user_id)
-        if not report.storage_path:
-            raise HTTPException(status_code=400, detail="Report file not available")
-        return self.storage_service.generate_signed_url(report.storage_path)
+        report_type_value = report.report_type
+        if hasattr(report_type_value, 'value'):
+            report_type_value = report_type_value.value
+        pdf_bytes = self.pdf_service.generate_report_pdf(
+            title=report.title or f"{str(report_type_value).replace('_', ' ').title()} Report",
+            report_type=str(report_type_value),
+            input_payload=report.input_payload or {},
+            output_summary=report.output_summary,
+            created_at=report.created_at,
+            report_name=report.report_name,
+            vx_report_id=report.vx_report_id,
+        )
+        return report, pdf_bytes
 
     def soft_delete_report(
         self,
