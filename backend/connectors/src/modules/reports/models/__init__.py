@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, Enum, CheckConstraint, Boolean
+from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, Enum, CheckConstraint, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 import uuid
@@ -66,6 +66,10 @@ class AuditTrail(Base):
     ip_address = Column(String(45))
     user_agent = Column(Text)
     created_at = Column(TIMESTAMP, default=datetime.utcnow, index=True)
+    # Timezone-aware audit timestamps (added: 2026-03-26)
+    logged_at_utc = Column(DateTime(timezone=True), nullable=True)
+    user_timezone = Column(String(64), nullable=True, server_default="UTC")
+    logged_at_local = Column(String(32), nullable=True)
 
 
 class DeletionLog(Base):

@@ -11,6 +11,18 @@ export async function GET(request: NextRequest) {
   if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
+
+  // Single-record fetch by ID
+  const id = searchParams.get("id");
+  if (id) {
+    const res = await fetch(`${CONNECTORS_API_URL}/api/audit-trails/${id}`, {
+      headers: { Authorization: `Bearer ${t}` },
+    });
+    const payload = await res.json();
+    if (!res.ok) return NextResponse.json({ error: payload.detail }, { status: res.status });
+    return NextResponse.json(payload);
+  }
+
   const params = new URLSearchParams();
   ["page", "limit", "action_type", "search"].forEach((k) => {
     const v = searchParams.get(k);
@@ -55,4 +67,22 @@ export async function POST(request: NextRequest) {
   const payload = await res.json();
   if (!res.ok) return NextResponse.json({ error: payload.detail }, { status: res.status });
   return NextResponse.json(payload, { status: 201 });
+}
+
+export async function DELETE(request: NextRequest) {
+  const t = await token();
+  if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const res = await fetch(`${CONNECTORS_API_URL}/api/audit-trails/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${t}` },
+  });
+
+  if (res.status === 204) return new NextResponse(null, { status: 204 });
+  const payload = await res.json();
+  return NextResponse.json({ error: payload.detail }, { status: res.status });
 }

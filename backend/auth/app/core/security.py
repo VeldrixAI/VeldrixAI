@@ -1,9 +1,19 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from jose import jwt
 import bcrypt
 import secrets
 from app.core.config import settings
+
+
+def validate_timezone(tz: str) -> str:
+    """Validate an IANA timezone string. Returns 'UTC' if invalid or absent."""
+    try:
+        ZoneInfo(tz)
+        return tz
+    except (ZoneInfoNotFoundError, KeyError):
+        return "UTC"
 
 
 def hash_password(password: str) -> str:
@@ -37,12 +47,13 @@ def verify_api_key(plain_key: str, hashed_key: str) -> bool:
     return bcrypt.checkpw(key_bytes, hashed_bytes)
 
 
-def create_access_token(user_id: str, role: str) -> str:
+def create_access_token(user_id: str, role: str, tz: str = "UTC") -> str:
     expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "role": role,
-        "exp": expire
+        "tz": tz,
+        "exp": expire,
     }
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

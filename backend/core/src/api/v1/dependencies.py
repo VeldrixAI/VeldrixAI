@@ -53,15 +53,17 @@ async def require_api_key(
     if not raw_key and x_api_key:
         raw_key = x_api_key
 
+    settings = get_settings()
+
     if not raw_key:
-        settings = get_settings()
         if not settings.VELDRIX_INTERNAL_API_KEY:
-            # Dev mode — no auth required, return anonymous
             logger.warning("No API key provided and VELDRIX_INTERNAL_API_KEY not set; dev mode bypass")
             return {"user_id": None, "email": None}
-        if raw_key == settings.VELDRIX_INTERNAL_API_KEY:
-            return {"user_id": None, "email": None}
         raise HTTPException(status_code=401, detail="Missing API key")
+
+    # Internal key check BEFORE format validation
+    if raw_key == settings.VELDRIX_INTERNAL_API_KEY:
+        return {"user_id": None, "email": None}
 
     if not raw_key.startswith("vx-"):
         raise HTTPException(status_code=401, detail="Invalid API key format")
@@ -79,8 +81,6 @@ async def require_api_key(
         else:
             raise HTTPException(status_code=401, detail="Invalid API key")
     except httpx.HTTPError as e:
-        # Auth service unreachable — check env var fallback
-        settings = get_settings()
         if settings.VELDRIX_INTERNAL_API_KEY and raw_key == settings.VELDRIX_INTERNAL_API_KEY:
             return {"user_id": None, "email": None}
         logger.error("Auth service unreachable: %s", e)

@@ -53,7 +53,7 @@ class VeldrixSDK:
         self._http      = http_client
         self._telemetry = SDKTelemetry()
 
-    async def analyze(self, request: AnalysisRequest, user_id: str | None = None) -> AnalysisResult:
+    async def analyze(self, request: AnalysisRequest, user_id: str | None = None, user_timezone: str = "UTC") -> AnalysisResult:
         """
         Run all five trust pillars in parallel and return a unified AnalysisResult.
         Never raises — all pillar errors are captured as PillarStatus.ERROR.
@@ -112,6 +112,7 @@ class VeldrixSDK:
             prompt_preview=request.prompt[:200] if request.prompt else None,
             response_preview=request.response[:200] if request.response else None,
             user_id=user_id,
+            user_timezone=request.user_timezone or user_timezone,
         )
 
         logger.info(

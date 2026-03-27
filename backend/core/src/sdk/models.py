@@ -38,11 +38,12 @@ class TrustScore(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
-    prompt:    str
-    response:  str
-    context:   Optional[str] = None
-    metadata:  dict          = Field(default_factory=dict)
-    policy_id: Optional[str] = None
+    prompt:         str
+    response:       str
+    context:        Optional[str] = None
+    metadata:       dict          = Field(default_factory=dict)
+    policy_id:      Optional[str] = None
+    user_timezone:  Optional[str] = "UTC"  # IANA timezone from the caller's JWT tz claim
 
 
 class AnalysisResult(BaseModel):

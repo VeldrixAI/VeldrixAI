@@ -40,5 +40,6 @@ async def get_current_user(
     
     return {
         "id": user_id,
-        "role": payload.get("role", "user")
+        "role": payload.get("role", "user"),
+        "tz": payload.get("tz", "UTC"),
     }

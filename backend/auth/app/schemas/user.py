@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, field_validator
 from app.db.models import UserRole
@@ -7,7 +8,7 @@ from app.db.models import UserRole
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
-    
+
     @field_validator('password')
     @classmethod
     def validate_password(cls, v: str) -> str:
@@ -21,6 +22,10 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    # TODO (UI): Pass `timezone: Intl.DateTimeFormat().resolvedOptions().timeZone`
+    # in the login POST body so the server can embed the client's IANA timezone in
+    # the JWT and stamp all subsequent audit entries in the user's local time.
+    timezone: Optional[str] = "UTC"
 
 
 class Token(BaseModel):

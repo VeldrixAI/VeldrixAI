@@ -34,7 +34,11 @@ async def analyze(
     caller:  dict       = Depends(require_api_key),
 ) -> AnalysisResult:
     try:
-        return await sdk.analyze(request, user_id=caller.get("user_id"))
+        return await sdk.analyze(
+            request,
+            user_id=caller.get("user_id"),
+            user_timezone=request.user_timezone or "UTC",
+        )
     except Exception as exc:
         logger.error("analyze endpoint unhandled error: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal analysis error")

@@ -36,7 +36,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
       VELDRIX_VAULT_KEY: ${VELDRIX_VAULT_KEY}
     ports:
       - "8000:8000"
@@ -44,7 +44,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,7 +74,7 @@ services:
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -92,7 +92,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
     ports:
       - "8002:8002"
     depends_on:
@@ -101,7 +101,7 @@ services:
       veldrix-auth:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 30s
       timeout: 10s
       retries: 3

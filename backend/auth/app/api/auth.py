@@ -37,7 +37,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Inactive user"
         )
     
-    access_token = AuthService.generate_token(user)
+    access_token = AuthService.generate_token(user, timezone=credentials.timezone or "UTC")
     return Token(access_token=access_token)
 
 

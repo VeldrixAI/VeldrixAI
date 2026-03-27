@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.db.models import User
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, validate_timezone
 from typing import Optional
 from uuid import UUID
 
@@ -35,8 +35,9 @@ class AuthService:
             return None
 
     @staticmethod
-    def generate_token(user: User) -> str:
-        return create_access_token(str(user.id), user.role.value)
+    def generate_token(user: User, timezone: str = "UTC") -> str:
+        validated_tz = validate_timezone(timezone)
+        return create_access_token(str(user.id), user.role.value, tz=validated_tz)
 
     @staticmethod
     def deactivate_user(db: Session, user_id: str) -> Optional[User]:

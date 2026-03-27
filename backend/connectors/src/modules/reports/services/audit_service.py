@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from src.modules.reports.models import AuditTrail, ActionType
+from src.utils.timezone import build_audit_timestamps
 from typing import Optional, Dict, Any
 from uuid import UUID
 
@@ -14,11 +15,12 @@ class AuditService:
         entity_id: Optional[UUID] = None,
         metadata: Optional[Dict[str, Any]] = None,
         ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
+        user_timezone: str = "UTC",
     ) -> AuditTrail:
         """
-        Log an action to the audit trail
-        
+        Log an action to the audit trail.
+
         Args:
             db: Database session
             user_id: User performing the action
@@ -28,10 +30,12 @@ class AuditService:
             metadata: Additional metadata
             ip_address: Client IP address
             user_agent: Client user agent
-            
+            user_timezone: IANA timezone string from the user's session JWT (tz claim)
+
         Returns:
             Created AuditTrail record
         """
+        ts = build_audit_timestamps(user_timezone)
         audit_entry = AuditTrail(
             user_id=user_id,
             action_type=action_type,
@@ -39,11 +43,14 @@ class AuditService:
             entity_id=entity_id,
             action_metadata=metadata,
             ip_address=ip_address,
-            user_agent=user_agent
+            user_agent=user_agent,
+            logged_at_utc=ts["logged_at_utc"],
+            user_timezone=ts["user_timezone"],
+            logged_at_local=ts["logged_at_local"],
         )
-        
+
         db.add(audit_entry)
         db.commit()
         db.refresh(audit_entry)
-        
+
         return audit_entry

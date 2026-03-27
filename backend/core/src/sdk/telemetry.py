@@ -14,7 +14,7 @@ CONNECTORS_URL = os.getenv("VELDRIX_CONNECTORS_URL", os.getenv("CONNECTORS_URL",
 
 
 class SDKTelemetry:
-    async def record(self, result: AnalysisResult, prompt_preview: str | None = None, response_preview: str | None = None, user_id: str | None = None) -> None:
+    async def record(self, result: AnalysisResult, prompt_preview: str | None = None, response_preview: str | None = None, user_id: str | None = None, user_timezone: str = "UTC") -> None:
         """Persist result to connectors audit trail and push SSE event."""
         # ── Persist to connectors audit trail ─────────────────────────────────
         try:
@@ -25,6 +25,7 @@ class SDKTelemetry:
                         "action_type": "trust_evaluation",
                         "entity_type": "sdk_analysis",
                         "user_id": user_id,
+                        "user_timezone": user_timezone,
                         "metadata": {
                             "request_id": result.request_id,
                             "overall_score": result.trust_score.overall,
