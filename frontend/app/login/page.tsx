@@ -253,6 +253,7 @@ function LoginForm() {
               {/* SSO buttons */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
                 <button
+                  suppressHydrationWarning
                   type="button"
                   onClick={() => handleOAuth('google')}
                   onMouseEnter={() => setGoogleHovered(true)}
@@ -263,6 +264,7 @@ function LoginForm() {
                   Google
                 </button>
                 <button
+                  suppressHydrationWarning
                   type="button"
                   onClick={() => handleOAuth('github')}
                   onMouseEnter={() => setGithubHovered(true)}
@@ -292,6 +294,7 @@ function LoginForm() {
                       <EmailIcon />
                     </div>
                     <input
+                      suppressHydrationWarning
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
@@ -316,6 +319,7 @@ function LoginForm() {
                       <LockIcon />
                     </div>
                     <input
+                      suppressHydrationWarning
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -327,6 +331,7 @@ function LoginForm() {
                       style={{ width: '100%', background: '#070910', border: `1px solid ${passwordFocused ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#f0f2ff', borderRadius: '14px', padding: '14px 44px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                     />
                     <button
+                      suppressHydrationWarning
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
                       style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(240,242,255,0.3)', padding: 0, display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
@@ -357,6 +362,7 @@ function LoginForm() {
 
                 {/* Submit */}
                 <button
+                  suppressHydrationWarning
                   type="submit"
                   disabled={loading}
                   className="primary-gradient btn-glow"

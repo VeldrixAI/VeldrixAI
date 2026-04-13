@@ -86,7 +86,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <p className="muted">
         {isSignup 
           ? "Start securing your AI outputs with enterprise-grade trust orchestration." 
-          : "Sign in to access your AegisAI dashboard and manage your AI governance."}
+          : "Sign in to access your VeldrixAI dashboard and manage your AI governance."}
       </p>
 
       <label>

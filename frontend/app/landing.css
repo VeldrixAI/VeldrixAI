@@ -786,3 +786,75 @@ body {
 @media (min-width: 768px) {
   .lp-footer-bottom { flex-direction: row; justify-content: space-between; align-items: center; }
 }
+
+/* ══════════ PRICING SECTION ══════════ */
+.lp-pricing-section {
+  position: relative;
+  padding: 7rem 0 5rem;
+  overflow: hidden;
+}
+.lp-pricing-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(120px);
+}
+.lp-pricing-orb-1 {
+  width: 600px; height: 600px;
+  top: -100px; left: -200px;
+  background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+}
+.lp-pricing-orb-2 {
+  width: 500px; height: 500px;
+  bottom: 0; right: -150px;
+  background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+}
+
+/* Responsive plan cards — 3 col desktop, 1 col mobile */
+.lp-pricing-cards {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+@media (max-width: 900px) {
+  .lp-pricing-cards {
+    grid-template-columns: 1fr !important;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Feature comparison table — desktop only */
+.lp-pricing-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+}
+@media (max-width: 900px) {
+  .lp-pricing-table-wrap { display: none; }
+}
+
+/* Add-ons grid responsive */
+.lp-addons-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+@media (max-width: 900px) {
+  .lp-addons-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* lp-audit-footer link style */
+.lp-audit-footer a {
+  color: #7c3aed;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.lp-audit-footer a:hover { color: #a78bfa; }
+.lp-usage-btn {
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}

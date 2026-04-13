@@ -1,9 +1,11 @@
 # ── Secrets & Environment ──────────────────────────────────────────────────────
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
 !.env.example
 !.env.local.example
+# Explicit allow for checked-in example files
+!backend/.env.example
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
@@ -19,6 +21,8 @@ build/
 .ruff_cache/
 *.log
 *.db
+*.sqlite
+*.sqlite3
 .venv/
 venv/
 env/
@@ -29,14 +33,33 @@ pyvenv.cfg
 
 # ── Node / Next.js ────────────────────────────────────────────────────────────
 node_modules/
-frontend/.next/
+.next/
+out/
+.vercel/
 frontend/tsconfig.tsbuildinfo
 .turbo/
+
+# ── Playwright / Test Artifacts ───────────────────────────────────────────────
+test-results/
+playwright-report/
+frontend/tests/reports/html/
+frontend/tests/reports/*.xml
+frontend/tests/reports/*.json
+# Allow gitkeep placeholders that preserve empty CI output dirs
+!frontend/frontend/tests/reports/.gitkeep
+!frontend/frontend/tests/screenshots/.gitkeep
+
+# ── Certificates & Keys ───────────────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+*.jks
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 *.zip
 *.tar.gz
 .DS_Store
 Thumbs.db
-*.pem
-*.key

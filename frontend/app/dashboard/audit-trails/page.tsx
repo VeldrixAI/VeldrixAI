@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 type AuditRecord = {
   id: string;
@@ -34,6 +35,7 @@ function fmtShort(ts: string) {
 }
 
 export default function AuditTrailsPage() {
+  const router = useRouter();
   const [data, setData] = useState<PageData | null>(null);
   const [page, setPage] = useState(1);
   const [actionType, setActionType] = useState("");
@@ -44,6 +46,8 @@ export default function AuditTrailsPage() {
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
   const [pdfDone, setPdfDone] = useState<Set<string>>(new Set());
   const [toasts, setToasts] = useState<{ id: number; message: string; type: string }[]>([]);
+  const [systemLogs, setSystemLogs] = useState<AuditRecord[]>([]);
+  const [systemLogsOpen, setSystemLogsOpen] = useState(false);
 
   function showToast(message: string, type = "success") {
     const id = Date.now();
@@ -70,6 +74,23 @@ export default function AuditTrailsPage() {
   }, [page, actionType, search]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Fetch system action logs (REPORT_CREATED, REPORT_DELETED)
+  useEffect(() => {
+    async function loadSystemLogs() {
+      try {
+        const res = await fetch(`/api/audit-trails?limit=50&action_type=create_report`);
+        const res2 = await fetch(`/api/audit-trails?limit=50&action_type=delete_report`);
+        const p1 = res.ok ? await res.json() : { records: [] };
+        const p2 = res2.ok ? await res2.json() : { records: [] };
+        const combined = [...(p1.records || []), ...(p2.records || [])].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setSystemLogs(combined);
+      } catch { /* ignore */ }
+    }
+    loadSystemLogs();
+  }, []);
 
   // SSE: auto-prepend new SDK analysis rows
   useEffect(() => {
@@ -168,8 +189,14 @@ export default function AuditTrailsPage() {
     const result = (m.result as Record<string, unknown>) || {};
     const finalScore = (result.final_score as Record<string, unknown>) || {};
 
-    // SSE rows have flat fields; DB rows nest under .result
-    const requestId = (m.request_id as string) || (result.request_id as string) || null;
+    // SSE rows have flat fields; DB rows nest under .result.
+    // Prefer the authoritative top-level r.request_id returned by the backend
+    // serializer, then fall back to metadata-embedded copies.
+    const requestId =
+      r.request_id ||
+      (m.request_id as string) ||
+      (result.request_id as string) ||
+      null;
 
     // Derive verdict from risk_level if no explicit verdict
     const rawVerdict = (m.verdict as string) || null;
@@ -313,7 +340,18 @@ export default function AuditTrailsPage() {
                     No audit records yet. SDK analysis calls and actions will appear here automatically.
                   </td></tr>
                 ) : (
-                  data.records.map((r, ri) => {
+                  // Deduplicate by request_id: SSE row (id=request_id) and DB row
+                  // (id=uuid) for the same evaluation share a request_id but differ
+                  // in `id`, causing duplicates when load() runs after SSE fires.
+                  (() => {
+                    const seen = new Set<string>();
+                    return data.records.filter((r) => {
+                      const key = r.request_id || r.id;
+                      if (seen.has(key)) return false;
+                      seen.add(key);
+                      return true;
+                    });
+                  })().map((r, ri) => {
                     const m = getMeta(r);
                     const isSdk = r.action_type === "trust_evaluation";
                     const vs = m.verdict ? VERDICT_STYLE[m.verdict] : null;
@@ -324,7 +362,13 @@ export default function AuditTrailsPage() {
                       <tr
                         key={r.id}
                         className={`row-in ri-${Math.min(ri + 1, 8)} audit-row`}
-                        onClick={() => setSelected(r)}
+                        onClick={() => {
+                          if (isSdk && m.requestId) {
+                            router.push(`/dashboard/audit-trails/${m.requestId}`);
+                          } else {
+                            setSelected(r);
+                          }
+                        }}
                       >
                         <td style={{ padding: "14px 20px" }}>
                           {m.requestId ? (
@@ -397,10 +441,17 @@ export default function AuditTrailsPage() {
                             )}
                             <button
                               className="row-action"
-                              onClick={(e) => { e.stopPropagation(); setSelected(r); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isSdk && m.requestId) {
+                                  router.push(`/dashboard/audit-trails/${m.requestId}`);
+                                } else {
+                                  setSelected(r);
+                                }
+                              }}
                               style={{ padding: "4px 10px", borderRadius: "7px", fontSize: "10px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)", cursor: "pointer" }}
                             >
-                              Open ↗
+                              {isSdk ? "Analyse ↗" : "Open ↗"}
                             </button>
                           </div>
                         </td>
@@ -428,6 +479,116 @@ export default function AuditTrailsPage() {
             </div>
           )}
         </div>
+        {/* ── System Action Log ── */}
+        <div className="section-reveal" style={{ animationDelay: "0.4s", marginTop: "24px" }}>
+          <button
+            onClick={() => setSystemLogsOpen((o) => !o)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "14px 20px",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: systemLogsOpen ? "16px 16px 0 0" : "16px",
+              color: "rgba(240,242,255,0.45)",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
+            <span>
+              {systemLogsOpen ? "↑" : "↓"} System Action Log
+              {systemLogs.length > 0 && (
+                <span style={{ marginLeft: 8, padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 6, color: "#f59e0b", fontSize: "10px" }}>
+                  {systemLogs.length}
+                </span>
+              )}
+            </span>
+            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", letterSpacing: "1px", color: "rgba(240,242,255,0.25)" }}>
+              REPORT_CREATED · REPORT_DELETED
+            </span>
+          </button>
+
+          {systemLogsOpen && (
+            <div style={{ background: "rgba(10,12,21,0.6)", border: "1px solid rgba(255,255,255,0.05)", borderTop: "none", borderRadius: "0 0 16px 16px", overflow: "hidden" }}>
+              {systemLogs.length === 0 ? (
+                <div style={{ padding: "32px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.2)" }}>
+                  No system actions recorded yet.
+                </div>
+              ) : (
+                <table style={{ width: "100%", textAlign: "left", fontFamily: "DM Sans, sans-serif", fontSize: "13px", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      {["Type", "Related Request", "Actor", "Timestamp"].map((col) => (
+                        <th key={col} style={{ padding: "10px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.2)", borderBottom: "1px solid rgba(255,255,255,0.04)", whiteSpace: "nowrap" }}>
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {systemLogs.map((r) => {
+                      const isCreate = r.action_type === "create_report";
+                      const borderColor = isCreate ? "#f59e0b" : "#F43F5E";
+                      const relatedId = (r.metadata as Record<string, unknown>)?.source_request_id as string | undefined
+                        || (r.metadata as Record<string, unknown>)?.request_id as string | undefined;
+                      return (
+                        <tr key={r.id} style={{ borderLeft: `3px solid ${borderColor}`, opacity: 0.8 }}>
+                          <td style={{ padding: "12px 20px" }}>
+                            <span style={{
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontSize: "9px",
+                              fontWeight: 700,
+                              letterSpacing: "1px",
+                              textTransform: "uppercase",
+                              color: borderColor,
+                              background: `${borderColor}14`,
+                              border: `1px solid ${borderColor}30`,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                            }}>
+                              {isCreate ? (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                              ) : (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                              )}
+                              {isCreate ? "REPORT CREATED" : "REPORT DELETED"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 20px" }}>
+                            {relatedId ? (
+                              <button
+                                onClick={() => router.push(`/dashboard/audit-trails/${relatedId}`)}
+                                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", padding: 0, textDecoration: "underline", textDecorationColor: "rgba(124,58,237,0.3)" }}
+                              >
+                                {relatedId.slice(0, 12)}…
+                              </button>
+                            ) : (
+                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.2)" }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.4)" }}>
+                            {(r.metadata as Record<string, unknown>)?.actor as string || r.ip_address || "—"}
+                          </td>
+                          <td style={{ padding: "12px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.3)", whiteSpace: "nowrap" }}>
+                            {fmtShort(r.created_at)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>{/* end page container */}
 
       {/* Detail drawer — dark theme */}

@@ -38,20 +38,28 @@ class TrustScore(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
-    prompt:    str
-    response:  str
-    context:   Optional[str] = None
-    metadata:  dict          = Field(default_factory=dict)
-    policy_id: Optional[str] = None
+    prompt:      str
+    response:    str
+    context:     Optional[str]  = None
+    metadata:    dict           = Field(default_factory=dict)
+    policy_id:   Optional[str]  = None
+    # Latency governor options (backward-compatible — default False/None)
+    background:  bool           = False
+    webhook_url: Optional[str]  = None
 
 
 class AnalysisResult(BaseModel):
-    request_id:       str
-    trust_score:      TrustScore
-    pillars:          dict[str, PillarResult]
-    total_latency_ms: int
-    sdk_version:      str
-    timestamp:        float = Field(default_factory=time.time)
+    request_id:          str
+    trust_score:         TrustScore
+    pillars:             dict[str, PillarResult]
+    total_latency_ms:    int
+    sdk_version:         str
+    timestamp:           float           = Field(default_factory=time.time)
+    # Latency governor fields — always present, defaults for backward compat
+    budget_tier:         str             = "STANDARD"
+    degraded:            bool            = False
+    pillars_timed_out:   list[str]       = Field(default_factory=list)
+    per_pillar_ms:       dict[str, int]  = Field(default_factory=dict)
 
 
 class SDKError(Exception):

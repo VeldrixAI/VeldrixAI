@@ -1,5 +1,6 @@
 """AI Safety API controller."""
 
+import asyncio
 import logging
 import os
 import httpx
@@ -17,7 +18,16 @@ from src.domain.types import TrustEvaluationInput, AIOutputMetadata
 from src.utils.request import Timer, set_request_id
 from src.pillars.implementations.ai_safety_pillars import compute_composite_trust_score
 
-CONNECTORS_URL = os.getenv("CONNECTORS_URL", "http://localhost:8002")
+CONNECTORS_URL = os.getenv("VELDRIX_CONNECTORS_URL", os.getenv("CONNECTORS_URL", "http://localhost:8002"))
+
+# Map internal pillar IDs (from PillarMetadata.id) to the frontend-expected keys
+_PILLAR_ID_MAP = {
+    "safety_toxicity": "safety",
+    "hallucination": "hallucination",
+    "bias_fairness": "bias",
+    "prompt_security": "prompt_security",
+    "compliance_policy": "compliance",
+}
 
 
 def _record_latency(user_id: str, latency_ms: float, status_code: int = 200):
@@ -30,6 +40,47 @@ def _record_latency(user_id: str, latency_ms: float, status_code: int = 200):
         )
     except Exception:
         pass  # never block the response
+
+
+async def _record_audit_trail(
+    user_id: str,
+    request_id: str,
+    composite_score: float,
+    report,
+    prompt_preview: str | None = None,
+    response_preview: str | None = None,
+) -> None:
+    """Persist trust evaluation to connectors audit trail (fire-and-forget)."""
+    target_url = f"{CONNECTORS_URL}/api/audit-trails/internal/audit-trail"
+    logger_at = logging.getLogger(__name__)
+    try:
+        # Map internal pillar IDs → frontend keys; normalize scores from 0-100 → 0-1
+        pillar_scores = {}
+        for pillar_id, result in report.pillar_results.items():
+            key = _PILLAR_ID_MAP.get(pillar_id, pillar_id)
+            pillar_scores[key] = round(result.score.value / 100.0, 4) if result.score is not None else None
+        verdict = report.final_score.risk_level.value if report.final_score.risk_level else "unknown"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(
+                target_url,
+                json={
+                    "action_type": "trust_evaluation",
+                    "entity_type": "trust_evaluate",
+                    "user_id": user_id,
+                    "metadata": {
+                        "request_id": request_id,
+                        "overall_score": composite_score,
+                        "verdict": verdict,
+                        "pillar_scores": pillar_scores,
+                        "total_latency_ms": report.execution_time_ms,
+                        "prompt_preview": prompt_preview[:300] if prompt_preview else None,
+                        "response_preview": response_preview[:300] if response_preview else None,
+                    },
+                },
+            )
+        logger_at.warning("audit_trail_record: saved request_id=%s status=%s", request_id, resp.status_code)
+    except Exception as exc:
+        logger_at.error("audit_trail_record failed request_id=%s url=%s: %s", request_id, target_url, exc)
 
 
 logger = logging.getLogger(__name__)
@@ -137,6 +188,13 @@ async def evaluate_trust(
         composite_trust_score,
         report.request_id,
     )
+
+    # Persist to audit trail (non-blocking)
+    asyncio.create_task(_record_audit_trail(
+        user_id, report.request_id, composite_trust_score, report,
+        prompt_preview=request.prompt,
+        response_preview=request.response,
+    ))
 
     return SuccessResponse(
         data=response_data,

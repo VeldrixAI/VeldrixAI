@@ -184,9 +184,9 @@ export const settingsDeveloper: DeveloperSettings = {
     },
   ],
   envVars: [
-    { name: "AEGIS_API_KEY", description: "Your API authentication key", example: "ak_live_xxxxxxxxxxxx" },
-    { name: "AEGIS_BASE_URL", description: "API base URL", example: "https://api.aegisai.com/v1" },
-    { name: "AEGIS_POLICY_ID", description: "Default policy ID for requests", example: "pol_ecs_001" },
-    { name: "AEGIS_LOG_LEVEL", description: "Logging verbosity (debug, info, warn, error)", example: "info" },
+    { name: "VELDRIX_API_KEY", description: "Your API authentication key", example: "vx_live_xxxxxxxxxxxx" },
+    { name: "VELDRIX_BASE_URL", description: "API base URL", example: "https://api.veldrixai.ca/api/v1" },
+    { name: "VELDRIX_POLICY_ID", description: "Default policy ID for requests", example: "pol_ecs_001" },
+    { name: "VELDRIX_LOG_LEVEL", description: "Logging verbosity (debug, info, warn, error)", example: "info" },
   ],
 };

@@ -46,7 +46,7 @@ function BillingPageInner() {
       return;
     }
     if (plan.id === "enterprise") {
-      window.location.href = "mailto:sales@veldrix.ai?subject=Enterprise+Inquiry";
+      window.location.href = "mailto:sales@veldrixai.ca?subject=Enterprise+Inquiry";
       return;
     }
 

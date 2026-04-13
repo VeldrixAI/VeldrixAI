@@ -7,7 +7,7 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 
-load_dotenv(Path(__file__).resolve().parents[4] / ".env")
+load_dotenv(Path(__file__).resolve().parents[5] / ".env")
 
 security = HTTPBearer()
 

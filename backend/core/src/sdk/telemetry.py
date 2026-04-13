@@ -12,19 +12,24 @@ logger = logging.getLogger("veldrix.telemetry")
 
 CONNECTORS_URL = os.getenv("VELDRIX_CONNECTORS_URL", os.getenv("CONNECTORS_URL", "http://localhost:8002"))
 
+logger.info("telemetry: CONNECTORS_URL=%s", CONNECTORS_URL)
+
 
 class SDKTelemetry:
-    async def record(self, result: AnalysisResult, prompt_preview: str | None = None, response_preview: str | None = None, user_id: str | None = None) -> None:
+    async def record(self, result: AnalysisResult, prompt_preview: str | None = None, response_preview: str | None = None, user_id: str | None = None, actor_email: str | None = None) -> None:
         """Persist result to connectors audit trail and push SSE event."""
         # ── Persist to connectors audit trail ─────────────────────────────────
+        target_url = f"{CONNECTORS_URL}/api/audit-trails/internal/audit-trail"
+        logger.info("telemetry.persist: POST %s request_id=%s user_id=%s", target_url, result.request_id, user_id)
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                await client.post(
-                    f"{CONNECTORS_URL}/api/audit-trails/internal/audit-trail",
+                resp = await client.post(
+                    target_url,
                     json={
                         "action_type": "trust_evaluation",
                         "entity_type": "sdk_analysis",
                         "user_id": user_id,
+                        "actor_email": actor_email,
                         "metadata": {
                             "request_id": result.request_id,
                             "overall_score": result.trust_score.overall,
@@ -44,10 +49,10 @@ class SDKTelemetry:
                         },
                     },
                 )
-            logger.debug("telemetry.persisted request_id=%s", result.request_id)
+            logger.info("telemetry.persisted request_id=%s status=%s", result.request_id, resp.status_code)
         except Exception as exc:
             # Persistence failure must NEVER crash the analyze() response
-            logger.error("telemetry.persist_failed request_id=%s: %s", result.request_id, exc)
+            logger.error("telemetry.persist_failed request_id=%s url=%s error=%s", result.request_id, target_url, exc)
 
         # ── SSE broadcast ─────────────────────────────────────────────────────
         try:

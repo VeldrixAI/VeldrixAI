@@ -1,12 +1,15 @@
 """
-AegisAI Core — application startup and graceful shutdown.
+VeldrixAI Core — application startup and graceful shutdown.
 
-On startup: validate NVIDIA_API_KEY and ping all five pillar model endpoints
-via ``await warmup()``.  A missing key raises ``RuntimeError`` immediately so
-the misconfiguration surfaces at boot rather than at first request.
+On startup:
+  - Initialise the inference router (creates pooled HTTP clients for all
+    active providers).
+  - Log the active provider list and their circuit-breaker states.
+  - If NVIDIA NIM is active, a lightweight connectivity probe is logged
+    (actual health is reported via GET /health/providers).
 
-On shutdown: call ``await shutdown()`` to close the shared httpx client and
-release underlying TCP connections cleanly.
+On shutdown:
+  - Close all provider HTTP clients cleanly.
 
 Usage in main.py::
 
@@ -23,55 +26,47 @@ Usage in main.py::
 """
 
 import logging
-from typing import Dict
 
 logger = logging.getLogger(__name__)
 
 
-async def warmup() -> Dict[str, str]:
+async def warmup() -> None:
     """
-    Validate NVIDIA NIM configuration and probe all pillar model endpoints.
+    Initialise the multi-provider inference router and log provider status.
 
-    Triggers lazy ``httpx.AsyncClient`` creation, which validates
-    ``NVIDIA_API_KEY`` and raises ``RuntimeError`` if it is absent.
-
-    Returns:
-        Dict mapping pillar name to ``"ok"``, ``"degraded"``, or
-        ``"unreachable"``.
-
-    Raises:
-        RuntimeError: If ``NVIDIA_API_KEY`` is not set in the environment.
+    No longer raises RuntimeError if NVIDIA_API_KEY is absent — the router
+    will route to the next available provider (Groq, Bedrock, OSS).
     """
     # Import here to avoid circular imports at module level.
-    from src.pillars.implementations.ai_safety_pillars import _registry  # noqa: PLC0415
+    from src.inference.router import initialize_router          # noqa: PLC0415
+    from src.inference.providers import get_active_providers    # noqa: PLC0415
 
-    logger.info("[Startup] Probing NVIDIA NIM endpoints for all pillars...")
-    results = await _registry.health_check()
+    providers = get_active_providers()
 
-    for pillar, status in results.items():
-        if status == "ok":
-            logger.info("[Startup] %-20s → %s", pillar, status)
-        elif status == "degraded":
-            logger.warning("[Startup] %-20s → %s (slow or partial response)", pillar, status)
-        else:
-            logger.error("[Startup] %-20s → %s (check NVIDIA_API_KEY and model slug)", pillar, status)
+    if not providers:
+        logger.error(
+            "[Startup] No inference providers configured. "
+            "Set at least one of: NVIDIA_API_KEY, GROQ_API_KEY, "
+            "BEDROCK_PROXY_URL, OSS_INFERENCE_URL"
+        )
+    else:
+        logger.info(
+            "[Startup] Active inference providers (%d): %s",
+            len(providers),
+            [p.name for p in providers],
+        )
 
-    ok_count = sum(1 for s in results.values() if s == "ok")
-    logger.info(
-        "[Startup] Health check complete — %d/%d pillars reachable",
-        ok_count,
-        len(results),
-    )
-    return results
+    await initialize_router()
+    logger.info("[Startup] VeldrixAI inference router ready.")
 
 
 async def shutdown() -> None:
     """
-    Close the shared NVIDIA NIM ``httpx.AsyncClient`` on application teardown.
+    Close all provider HTTP clients on application teardown.
 
-    Safe to call even if the client was never initialised (no-op in that case).
+    Safe to call even if the router was never initialised (no-op).
     """
-    from src.pillars.implementations.ai_safety_pillars import _registry  # noqa: PLC0415
+    from src.inference.router import close_router  # noqa: PLC0415
 
-    await _registry.close()
-    logger.info("[Shutdown] NVIDIA NIM client closed cleanly")
+    await close_router()
+    logger.info("[Shutdown] Inference router closed cleanly.")

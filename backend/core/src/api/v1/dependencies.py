@@ -6,6 +6,7 @@ that validates against the auth service database.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 from fastapi import Header, HTTPException
@@ -19,8 +20,8 @@ logger = logging.getLogger("veldrix.api")
 # Singleton SDK instance — created once per process
 _sdk: VeldrixSDK | None = None
 
-# Auth service URL (auth runs on port 8000)
-AUTH_SERVICE_URL = "http://localhost:8000"
+# Auth service URL — configurable via VELDRIX_AUTH_URL env var
+AUTH_SERVICE_URL = os.getenv("VELDRIX_AUTH_URL", "http://localhost:8000")
 
 
 async def get_sdk() -> VeldrixSDK:

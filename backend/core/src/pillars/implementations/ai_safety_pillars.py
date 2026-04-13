@@ -1,6 +1,6 @@
-"""AI Safety pillar implementations — NVIDIA NIM API backend for LLM output governance.
+"""AI Safety pillar implementations — multi-provider inference routing for LLM output governance.
 
-Model stack (NVIDIA NIM hosted inference — all configurable via environment variables):
+Model stack (configurable via environment variables):
   Pillar 1 – Content Risk:       VELDRIX_PILLAR_CONTENT_MODEL
   Pillar 2 – Hallucination Risk: VELDRIX_PILLAR_HALLUCINATION_MODEL
   Pillar 3 – Bias & Ethics:      VELDRIX_PILLAR_BIAS_MODEL
@@ -8,28 +8,24 @@ Model stack (NVIDIA NIM hosted inference — all configurable via environment va
   Pillar 5 – Legal Exposure:     VELDRIX_PILLAR_LEGAL_MODEL
 
 Architecture:
-  - NIMClientRegistry singleton: one lazily-initialised httpx.AsyncClient for all pillars
+  - route_inference(): provider-agnostic routing through NVIDIA NIM → Groq → Bedrock → OSS
   - All five pillars execute concurrently via asyncio.gather() — no thread pool needed
-  - Regex fast-paths run before NIM API calls where applicable (< 2 ms)
-  - Exponential backoff retry: 3 attempts, 200 ms base delay, 2 000 ms cap
-  - Retry on: 429, 502, 503, 504 — immediate failure on: 400, 401, 403
+  - Regex fast-paths run before inference calls where applicable (< 2 ms)
+  - Circuit breaker per provider: trips OPEN after CIRCUIT_FAILURE_THRESHOLD failures
   - Degraded PillarResult (score=50, confidence=0.3) returned on any failure — never raises
-  - NVIDIA_API_KEY must be present in env; raises RuntimeError on first client creation otherwise
   - All scores are in the 0–100 range (higher = safer) as required by PillarResult contract
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import httpx
-
+from src.inference.router import route_inference
 from src.pillars.pillar_engine import PillarEngine
 from src.pillars.types import PillarError, PillarMetadata, PillarResult, PillarStatus
 from src.domain.types import TrustEvaluationInput, TrustEvaluationContext
@@ -37,13 +33,11 @@ from src.types.scoring import RiskLevel, SafetyScore
 
 logger = logging.getLogger(__name__)
 
-# ── NVIDIA NIM API configuration ────────────────────────────────────────────────
+# ── Per-pillar model assignments for NVIDIA NIM ──────────────────────────────
+# When NVIDIA NIM is the active provider, these model slugs are forwarded as
+# model_override to route_inference().  Fallback providers (Groq, Bedrock, OSS)
+# use their own configured model and ignore these overrides.
 
-NVIDIA_API_BASE_URL: str = os.environ.get(
-    "NVIDIA_API_BASE_URL", "https://integrate.api.nvidia.com/v1"
-)
-
-# Per-pillar model assignments — override via environment without code changes
 _MODEL_CONTENT: str = os.environ.get(
     "VELDRIX_PILLAR_CONTENT_MODEL",
     "meta/llama-guard-4-12b",
@@ -64,18 +58,6 @@ _MODEL_LEGAL: str = os.environ.get(
     "VELDRIX_PILLAR_LEGAL_MODEL",
     "meta/llama-3.1-8b-instruct",
 )
-
-# ── Retry & timeout constants ────────────────────────────────────────────────────
-
-# Per-request HTTP timeout (ms → seconds for httpx)
-_NIM_REQUEST_TIMEOUT_MS: int = int(os.environ.get("VELDRIX_NIM_TIMEOUT_MS", "8000"))
-_NIM_MAX_RETRIES: int = 3
-_NIM_BASE_DELAY_MS: int = 200   # first backoff interval
-_NIM_MAX_DELAY_MS: int = 2000   # backoff ceiling
-
-# HTTP status codes that trigger/suppress retry
-_NIM_RETRY_STATUSES: frozenset[int] = frozenset({429, 502, 503, 504})
-_NIM_NO_RETRY_STATUSES: frozenset[int] = frozenset({400, 401, 403, 404})
 
 # Input truncation: first-half + last-half strategy preserves both intro and conclusion
 VELDRIX_MAX_INPUT_CHARS: int = int(os.environ.get("VELDRIX_MAX_INPUT_CHARS", "2000"))
@@ -115,118 +97,6 @@ _RE_DEMOGRAPHICS = re.compile(
 # Matches ```json ... ``` or ``` ... ``` code fences in model output
 _RE_JSON_FENCE = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
 
-
-# ── NIMClientRegistry ─────────────────────────────────────────────────────────────
-
-class NIMClientRegistry:
-    """
-    Singleton registry that owns the shared NVIDIA NIM HTTP client.
-
-    The client is initialised lazily on the first call to ``get_client()``,
-    which validates ``NVIDIA_API_KEY`` and raises ``RuntimeError`` if it is
-    absent.  This ensures a clear startup-time error rather than a silent
-    fallback to degraded mode.
-
-    Call ``await close()`` during application shutdown to release the
-    underlying TCP connections cleanly.
-
-    Call ``await health_check()`` from your startup sequence to verify
-    connectivity to every pillar's model endpoint before serving traffic.
-    """
-
-    _instance: Optional["NIMClientRegistry"] = None
-    _client: Optional[httpx.AsyncClient] = None
-
-    def __new__(cls) -> "NIMClientRegistry":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def get_client(self) -> httpx.AsyncClient:
-        """
-        Return the shared async HTTP client, creating it lazily on first call.
-
-        Raises:
-            RuntimeError: If ``NVIDIA_API_KEY`` is not set in the environment.
-        """
-        if self._client is None:
-            api_key: str = os.environ.get("NVIDIA_API_KEY", "")
-            if not api_key:
-                raise RuntimeError(
-                    "NVIDIA_API_KEY environment variable is not set. "
-                    "See aegisai-core/.env.example for setup instructions. "
-                    "Obtain a key at https://build.nvidia.com/"
-                )
-            self._client = httpx.AsyncClient(
-                base_url=NVIDIA_API_BASE_URL,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                timeout=httpx.Timeout(_NIM_REQUEST_TIMEOUT_MS / 1000.0),
-            )
-            logger.info(
-                "[NIMClientRegistry] AsyncClient initialised (base_url=%s)",
-                NVIDIA_API_BASE_URL,
-            )
-        return self._client
-
-    async def close(self) -> None:
-        """Close the underlying httpx client. Call once during application teardown."""
-        if self._client is not None:
-            await self._client.aclose()
-            self._client = None
-            logger.info("[NIMClientRegistry] AsyncClient closed")
-
-    async def health_check(self) -> Dict[str, str]:
-        """
-        Ping each pillar's assigned NIM model endpoint.
-
-        Returns:
-            Dict mapping pillar name to ``"ok"``, ``"degraded"``, or
-            ``"unreachable"``.
-        """
-        pillar_models: Dict[str, str] = {
-            "content_risk": _MODEL_CONTENT,
-            "hallucination_risk": _MODEL_HALLUCINATION,
-            "bias_ethics": _MODEL_BIAS,
-            "policy_violation": _MODEL_POLICY,
-            "legal_exposure": _MODEL_LEGAL,
-        }
-        results: Dict[str, str] = {}
-
-        async def _ping(name: str, model: str) -> None:
-            try:
-                client = self.get_client()
-                resp = await asyncio.wait_for(
-                    client.post(
-                        "/chat/completions",
-                        json={
-                            "model": model,
-                            "messages": [{"role": "user", "content": "ping"}],
-                            "max_tokens": 1,
-                            "temperature": 0.0,
-                        },
-                    ),
-                    timeout=6.0,
-                )
-                results[name] = "ok" if resp.status_code < 500 else "degraded"
-            except (httpx.TimeoutException, asyncio.TimeoutError):
-                results[name] = "degraded"
-                logger.warning("[NIMClientRegistry] Health check timeout for %s", name)
-            except Exception as exc:
-                results[name] = "unreachable"
-                logger.error(
-                    "[NIMClientRegistry] Health check failed for %s: %s", name, exc
-                )
-
-        await asyncio.gather(*[_ping(n, m) for n, m in pillar_models.items()])
-        logger.info("[NIMClientRegistry] Health check complete: %s", results)
-        return results
-
-
-# Module-level singleton — lazily initialised on first request
-_registry = NIMClientRegistry()
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────────
@@ -297,102 +167,14 @@ def _log_latency(pillar_name: str, elapsed_ms: float) -> None:
         logger.debug("[%s] Evaluation completed in %.1f ms", pillar_name, elapsed_ms)
 
 
-# ── NVIDIA NIM API helpers ────────────────────────────────────────────────────────
-
-async def _nim_chat_complete(
-    model: str,
-    messages: List[Dict[str, str]],
-    pillar_name: str,
-) -> Dict[str, Any]:
-    """
-    POST to the NIM ``/chat/completions`` endpoint with exponential-backoff retry.
-
-    Retries on HTTP 429, 502, 503, 504 up to ``_NIM_MAX_RETRIES`` times.
-    Fails immediately (no retry) on 400, 401, 403.
-
-    Args:
-        model: NIM model slug, e.g. ``"nvidia/llama-3.1-nemotron-70b-instruct"``.
-        messages: List of ``{"role": ..., "content": ...}`` dicts.
-        pillar_name: Used in log messages for traceability.
-
-    Returns:
-        Parsed JSON response dict from the NIM API.
-
-    Raises:
-        httpx.HTTPStatusError | httpx.TimeoutException: After all retries are
-        exhausted. Callers should catch and return ``_degraded()``.
-    """
-    client = _registry.get_client()
-    last_exc: Optional[Exception] = None
-
-    for attempt in range(_NIM_MAX_RETRIES):
-        try:
-            resp = await client.post(
-                "/chat/completions",
-                json={
-                    "model": model,
-                    "messages": messages,
-                    "temperature": 0.0,
-                    "max_tokens": 128,
-                },
-            )
-
-            # Hard failures — do not retry
-            if resp.status_code in _NIM_NO_RETRY_STATUSES:
-                resp.raise_for_status()
-
-            # Transient failures — back off and retry
-            if resp.status_code in _NIM_RETRY_STATUSES:
-                delay_s = min(
-                    _NIM_BASE_DELAY_MS * (2 ** attempt), _NIM_MAX_DELAY_MS
-                ) / 1000.0
-                logger.warning(
-                    "[%s] NIM API HTTP %d — retry %d/%d in %.0f ms",
-                    pillar_name,
-                    resp.status_code,
-                    attempt + 1,
-                    _NIM_MAX_RETRIES,
-                    delay_s * 1000,
-                )
-                last_exc = httpx.HTTPStatusError(
-                    f"HTTP {resp.status_code}", request=resp.request, response=resp
-                )
-                await asyncio.sleep(delay_s)
-                continue
-
-            resp.raise_for_status()
-            return resp.json()
-
-        except httpx.TimeoutException as exc:
-            delay_s = min(
-                _NIM_BASE_DELAY_MS * (2 ** attempt), _NIM_MAX_DELAY_MS
-            ) / 1000.0
-            logger.warning(
-                "[%s] NIM API timeout — retry %d/%d",
-                pillar_name,
-                attempt + 1,
-                _NIM_MAX_RETRIES,
-            )
-            last_exc = exc
-            if attempt < _NIM_MAX_RETRIES - 1:
-                await asyncio.sleep(delay_s)
-
-    raise last_exc or RuntimeError(
-        f"[{pillar_name}] NIM API exhausted {_NIM_MAX_RETRIES} retries"
-    )
-
+# ── JSON parsing helper ───────────────────────────────────────────────────────────
 
 def _parse_nim_json(raw_content: str, pillar_name: str) -> Optional[Dict[str, Any]]:
     """
-    Parse JSON from a NIM model response, stripping markdown code fences first.
-
-    Args:
-        raw_content: Raw string extracted from the model's ``message.content``.
-        pillar_name: Included in the ERROR log on parse failure.
+    Parse JSON from a model response, stripping markdown code fences first.
 
     Returns:
-        Parsed ``dict`` on success, or ``None`` on ``json.JSONDecodeError``
-        (error is logged at ERROR level with the raw content for debugging).
+        Parsed ``dict`` on success, or ``None`` on ``json.JSONDecodeError``.
     """
     fence_match = _RE_JSON_FENCE.search(raw_content)
     candidate = fence_match.group(1) if fence_match else raw_content.strip()
@@ -405,14 +187,6 @@ def _parse_nim_json(raw_content: str, pillar_name: str) -> Optional[Dict[str, An
             raw_content,
         )
         return None
-
-
-def _extract_nim_content(response_data: Dict[str, Any]) -> str:
-    """Extract the assistant message content from a NIM chat completions response."""
-    try:
-        return response_data["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, TypeError):
-        return ""
 
 
 # ── Composite trust score ─────────────────────────────────────────────────────────
@@ -515,8 +289,11 @@ class SafetyToxicityPillar(PillarEngine):
                     },
                 )
 
-            # ── NIM API call — llama-guard returns plain text: "safe" or "unsafe\nS1\nS2" ──
+            # ── Inference call — llama-guard returns plain text: "safe" or "unsafe\nS1\nS2" ──
             # No system prompt needed; llama-guard uses its own built-in safety taxonomy.
+            # On NVIDIA NIM the llama-guard model slug is forwarded via model_override.
+            # Fallback providers (Groq, Bedrock, OSS) receive this prompt and use their
+            # own model, which will also follow the safe/unsafe instruction format.
             user_message = (
                 f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"
                 f"{input_data.prompt[:500]}<|eot_id|>"
@@ -524,13 +301,14 @@ class SafetyToxicityPillar(PillarEngine):
                 f"{text}<|eot_id|>"
             )
 
-            nim_resp = await _nim_chat_complete(
-                model=_MODEL_CONTENT,
+            raw_content, _provider = await route_inference(
                 messages=[{"role": "user", "content": user_message}],
                 pillar_name="ContentRisk",
+                require_json=False,
+                model_override=_MODEL_CONTENT,
+                max_tokens=32,
             )
-
-            raw_content = _extract_nim_content(nim_resp).strip().lower()
+            raw_content = raw_content.strip().lower()
             # llama-guard output: "safe" or "unsafe\nS1" (violated category on next line)
             is_unsafe = raw_content.startswith("unsafe")
             violated_cats = [c.strip() for c in raw_content.split("\n")[1:] if c.strip()]
@@ -619,16 +397,15 @@ class HallucinationPillar(PillarEngine):
                 f"AI RESPONSE: {response_text}"
             )
 
-            nim_resp = await _nim_chat_complete(
-                model=_MODEL_HALLUCINATION,
+            raw_content, _provider = await route_inference(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="HallucinationRisk",
+                require_json=True,
+                model_override=_MODEL_HALLUCINATION,
             )
-
-            raw_content = _extract_nim_content(nim_resp)
             parsed = _parse_nim_json(raw_content, "HallucinationRisk")
             if parsed is None:
                 return _degraded(self.metadata, start, "json_parse_error", parsing_error=True)
@@ -751,16 +528,15 @@ class BiasFairnessPillar(PillarEngine):
                 f"RESPONSE: {text}"
             )
 
-            nim_resp = await _nim_chat_complete(
-                model=_MODEL_BIAS,
+            raw_content, _provider = await route_inference(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="BiasEthics",
+                require_json=True,
+                model_override=_MODEL_BIAS,
             )
-
-            raw_content = _extract_nim_content(nim_resp)
             parsed = _parse_nim_json(raw_content, "BiasEthics")
             if parsed is None:
                 return _degraded(self.metadata, start, "json_parse_error", parsing_error=True)
@@ -897,16 +673,15 @@ class PromptSecurityPillar(PillarEngine):
                 f"RESPONSE: {response_text}"
             )
 
-            nim_resp = await _nim_chat_complete(
-                model=_MODEL_POLICY,
+            raw_content, _provider = await route_inference(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="PolicyViolation",
+                require_json=True,
+                model_override=_MODEL_POLICY,
             )
-
-            raw_content = _extract_nim_content(nim_resp)
             parsed = _parse_nim_json(raw_content, "PolicyViolation")
             if parsed is None:
                 return _degraded(self.metadata, start, "json_parse_error", parsing_error=True)
@@ -1004,16 +779,15 @@ class CompliancePolicyPillar(PillarEngine):
                 f"RESPONSE: {text}"
             )
 
-            nim_resp = await _nim_chat_complete(
-                model=_MODEL_LEGAL,
+            raw_content, _provider = await route_inference(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="LegalExposure",
+                require_json=True,
+                model_override=_MODEL_LEGAL,
             )
-
-            raw_content = _extract_nim_content(nim_resp)
             parsed = _parse_nim_json(raw_content, "LegalExposure")
             if parsed is None:
                 return _degraded(self.metadata, start, "json_parse_error", parsing_error=True)

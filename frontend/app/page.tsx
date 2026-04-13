@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import "./landing.css";
+import PricingSection from "@/components/landing/PricingSection";
+import {
+  NAV_LINKS,
+  FOOTER_PLATFORM_LINKS,
+  FOOTER_COMPLIANCE_LINKS,
+  FOOTER_DEVELOPER_LINKS,
+  FOOTER_COMPANY_LINKS,
+} from "@/lib/constants/nav-links";
+import { TRUST_PILLARS, GOVERNANCE_FEATURES, SCALE_FEATURES } from "@/lib/constants/product-features";
+import { PRODUCT_STATS } from "@/lib/constants/product-stats";
 
 // ── Auth check ───────────────────────────────────────────────────────────────
 function checkAuth(): boolean {
-  return (
-    document.cookie.includes("veldrix_session") ||
-    document.cookie.includes("aegis_session")
-  );
+  return document.cookie.includes("veldrix_session");
 }
 
 // ── Canonical brand mark — navbar (full mark, unique IDs) ────────────────────
@@ -106,8 +113,62 @@ function FooterLogo() {
   );
 }
 
+// ── Pillar icon map ───────────────────────────────────────────────────────────
+function PillarIcon({ id }: { id: string }) {
+  switch (id) {
+    case "safety":
+      return (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      );
+    case "hallucination":
+      return (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+        </svg>
+      );
+    case "bias":
+      return (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      );
+    case "prompt-security":
+      return (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+          <circle cx="7" cy="6" r="1" fill="currentColor"/>
+          <circle cx="7" cy="12" r="1" fill="currentColor"/>
+          <circle cx="7" cy="18" r="1" fill="currentColor"/>
+        </svg>
+      );
+    case "compliance":
+      return (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+const PILLAR_COLOR_CLASS: Record<string, string> = {
+  safety: "lp-pillar-violet",
+  hallucination: "lp-pillar-emerald",
+  bias: "lp-pillar-violet",
+  "prompt-security": "lp-pillar-indigo",
+  compliance: "lp-pillar-rose",
+};
+
+const PILLAR_ANIM_CLASS = ["p1", "p2", "p3", "p4", "p5"];
+
 // ── Main component ───────────────────────────────────────────────────────────
 export default function LandingPage() {
+  // checkAuth is used by the get-started CTA — not rendered on server
+  void checkAuth;
+
   return (
     <>
       {/* ── Ambient background ── */}
@@ -118,8 +179,8 @@ export default function LandingPage() {
 
       {/* ══════════ NAVBAR ══════════ */}
       <header className="lp-nav">
-        <nav className="lp-nav-inner">
-          <Link href="/" className="lp-nav-brand">
+        <nav className="lp-nav-inner" aria-label="Main navigation">
+          <Link href="/" className="lp-nav-brand" aria-label="VeldrixAI home">
             <div className="lp-nav-logo-box">
               <NavLogo />
             </div>
@@ -129,10 +190,17 @@ export default function LandingPage() {
           </Link>
 
           <div className="lp-nav-links">
-            <a href="#" className="lp-nav-link-active">Products</a>
-            <a href="#">Solutions</a>
-            <a href="#">Pricing</a>
-            <a href="#">Docs</a>
+            {NAV_LINKS.map((link) => (
+              link.href.startsWith("/") ? (
+                <Link key={link.label} href={link.href} className={link.label === "Products" ? "lp-nav-link-active" : undefined}>
+                  {link.label}
+                </Link>
+              ) : (
+                <a key={link.label} href={link.href}>
+                  {link.label}
+                </a>
+              )
+            ))}
           </div>
 
           <div className="lp-nav-actions">
@@ -145,7 +213,7 @@ export default function LandingPage() {
       <main className="lp-main mesh-gradient">
 
         {/* ══════════ HERO ══════════ */}
-        <section className="lp-hero section-reveal">
+        <section className="lp-hero section-reveal" aria-label="Hero">
           <div className="lp-hero-bg" />
           <div className="lp-container">
             <div className="lp-hero-grid">
@@ -179,12 +247,12 @@ export default function LandingPage() {
                   <Link href="/signup" className="lp-btn-hero-primary">
                     Secure Your AI Now
                   </Link>
-                  <button className="lp-btn-hero-secondary">
-                    Technical Manifesto
+                  <Link href="/docs" className="lp-btn-hero-secondary">
+                    Read the Docs
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M7 17L17 7M17 7H7M17 7V17"/>
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -208,15 +276,15 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Stats grid */}
+                    {/* Stats driven from PRODUCT_STATS */}
                     <div className="lp-stats-grid">
                       <div className="lp-stat-box stat-reveal" style={{ animationDelay: '0.3s' }}>
-                        <span className="lp-stat-label">Compliance</span>
-                        <div className="lp-stat-value" style={{ color: '#10b981' }}>99.8%</div>
+                        <span className="lp-stat-label">{PRODUCT_STATS[2].label}</span>
+                        <div className="lp-stat-value" style={{ color: '#10b981' }}>{PRODUCT_STATS[2].value}</div>
                       </div>
                       <div className="lp-stat-box stat-reveal" style={{ animationDelay: '0.45s' }}>
-                        <span className="lp-stat-label">Latency</span>
-                        <div className="lp-stat-value" style={{ color: '#f0f2ff' }}>14ms</div>
+                        <span className="lp-stat-label">{PRODUCT_STATS[3].label}</span>
+                        <div className="lp-stat-value" style={{ color: '#f0f2ff' }}>{PRODUCT_STATS[3].value}</div>
                       </div>
                     </div>
 
@@ -254,7 +322,7 @@ export default function LandingPage() {
         </section>
 
         {/* ══════════ TRUST BADGES ══════════ */}
-        <section className="lp-badges section-reveal">
+        <section className="lp-badges section-reveal" aria-label="Certifications">
           <div className="lp-container">
             <div className="lp-badges-row">
               <div className="lp-badge-item">
@@ -287,7 +355,7 @@ export default function LandingPage() {
         </section>
 
         {/* ══════════ FIVE PILLARS ══════════ */}
-        <section className="lp-pillars section-reveal">
+        <section id="pillars" className="lp-pillars section-reveal" aria-label="Trust Pillars">
           <div style={{ position: 'absolute', top: 0, right: 0, width: '33%', height: '100%', filter: 'blur(120px)', borderRadius: '50%', background: 'rgba(124,58,237,0.06)', pointerEvents: 'none' }} />
           <div className="lp-container">
             <div className="lp-pillars-header">
@@ -302,78 +370,33 @@ export default function LandingPage() {
                   ensure every token of enterprise intelligence is audited before it leaves your perimeter.
                 </p>
               </div>
-              <button style={{ color: '#7c3aed', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', whiteSpace: 'nowrap', transition: 'gap 0.2s' }}>
+              <Link href="/docs/trust-overview" style={{ color: '#7c3aed', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', fontSize: '1rem', whiteSpace: 'nowrap', transition: 'gap 0.2s' }}>
                 Explore Technical Specs
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
-              </button>
+              </Link>
             </div>
 
             <div className="lp-pillars-grid">
-              {/* Pillar 1 — Integrity Shield */}
-              <div className="lp-pillar lp-pillar-violet pillar-card p1">
-                <div className="lp-pillar-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
+              {TRUST_PILLARS.map((pillar, i) => (
+                <div
+                  key={pillar.id}
+                  className={`lp-pillar ${PILLAR_COLOR_CLASS[pillar.id]} pillar-card ${PILLAR_ANIM_CLASS[i]}`}
+                >
+                  <div className="lp-pillar-icon">
+                    <PillarIcon id={pillar.id} />
+                  </div>
+                  <h3 className="lp-pillar-title">{pillar.displayName}</h3>
+                  <p className="lp-pillar-desc">{pillar.description}</p>
                 </div>
-                <h3 className="lp-pillar-title">Integrity Shield</h3>
-                <p className="lp-pillar-desc">Multi-stage PII scrubbing using zero-shot semantic detectors for absolute data privacy.</p>
-              </div>
-
-              {/* Pillar 2 — Truth Verification */}
-              <div className="lp-pillar lp-pillar-emerald pillar-card p2">
-                <div className="lp-pillar-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
-                  </svg>
-                </div>
-                <h3 className="lp-pillar-title">Truth Verification</h3>
-                <p className="lp-pillar-desc">Real-time hallucination prevention via RAG-based factual consensus protocols.</p>
-              </div>
-
-              {/* Pillar 3 — Audit Trace */}
-              <div className="lp-pillar lp-pillar-violet pillar-card p3">
-                <div className="lp-pillar-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                  </svg>
-                </div>
-                <h3 className="lp-pillar-title">Audit Trace</h3>
-                <p className="lp-pillar-desc">Immutable ledger tracking for complete regulatory transparency and incident review.</p>
-              </div>
-
-              {/* Pillar 4 — Policy Engine */}
-              <div className="lp-pillar lp-pillar-indigo pillar-card p4">
-                <div className="lp-pillar-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M3 6h18M3 12h18M3 18h18"/>
-                    <circle cx="7" cy="6" r="1" fill="currentColor"/>
-                    <circle cx="7" cy="12" r="1" fill="currentColor"/>
-                    <circle cx="7" cy="18" r="1" fill="currentColor"/>
-                  </svg>
-                </div>
-                <h3 className="lp-pillar-title">Policy Engine</h3>
-                <p className="lp-pillar-desc">Dynamic RBAC policies that inject context-aware guardrails into the LLM inference stream.</p>
-              </div>
-
-              {/* Pillar 5 — Risk Scoring */}
-              <div className="lp-pillar lp-pillar-rose pillar-card p5">
-                <div className="lp-pillar-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
-                  </svg>
-                </div>
-                <h3 className="lp-pillar-title">Risk Scoring</h3>
-                <p className="lp-pillar-desc">Predictive risk assessment of prompts using specialized Veldrix Guard models.</p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* ══════════ GOVERNANCE DASHBOARD ══════════ */}
-        <section className="lp-gov section-reveal">
+        <section id="governance" className="lp-gov section-reveal" aria-label="Governance Dashboard">
           <div className="lp-container">
             <div className="lp-gov-inner">
 
@@ -388,29 +411,25 @@ export default function LandingPage() {
                   monitor, filter, and audit every interaction between your users and your models.
                 </p>
 
-                <div className="lp-feature-item">
-                  <div className="lp-feature-icon-box" style={{ color: '#10b981' }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="8" width="3" height="10"/>
-                    </svg>
+                {GOVERNANCE_FEATURES.map((feat) => (
+                  <div key={feat.title} className="lp-feature-item">
+                    <div className="lp-feature-icon-box" style={{ color: feat.color }}>
+                      {feat.title === "High-Fidelity Log Streams" ? (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="8" width="3" height="10"/>
+                        </svg>
+                      ) : (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="lp-feature-title">{feat.title}</h4>
+                      <p className="lp-feature-desc">{feat.description}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="lp-feature-title">High-Fidelity Log Streams</h4>
-                    <p className="lp-feature-desc">Real-time status tracking for every request, with automated scoring and engine-level diagnostics.</p>
-                  </div>
-                </div>
-
-                <div className="lp-feature-item">
-                  <div className="lp-feature-icon-box" style={{ color: '#7c3aed' }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="lp-feature-title">Automated Compliance Scoring</h4>
-                    <p className="lp-feature-desc">Instant validation against SOC2, HIPAA, and custom enterprise regulatory frameworks.</p>
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Right — Live Audit Table */}
@@ -494,7 +513,7 @@ export default function LandingPage() {
                     </tbody>
                   </table>
                   <div className="lp-audit-footer">
-                    <button>View All Audit Intelligence</button>
+                    <Link href="/dashboard/audit-trails">View All Audit Intelligence</Link>
                   </div>
                 </div>
               </div>
@@ -504,7 +523,7 @@ export default function LandingPage() {
         </section>
 
         {/* ══════════ USAGE TRACKER ══════════ */}
-        <section className="lp-usage section-reveal">
+        <section className="lp-usage section-reveal" aria-label="Usage and Scale">
           <div className="lp-container">
             <div className="lp-usage-grid">
 
@@ -538,7 +557,7 @@ export default function LandingPage() {
                         <span className="lp-usage-stat-num stat-reveal" style={{ animationDelay: '0.6s' }}>342</span>
                         <span className="lp-usage-stat-denom">/500</span>
                       </div>
-                      <button className="lp-usage-btn">Increase Monthly Limit</button>
+                      <Link href="/signup" className="lp-usage-btn">Increase Monthly Limit</Link>
                     </div>
                   </div>
                 </div>
@@ -555,11 +574,7 @@ export default function LandingPage() {
                   with dashboard-ready reports designed for executive-level transparency.
                 </p>
                 <ul className="lp-checklist">
-                  {[
-                    "Dynamic Regulatory Mappings (GDPR, HIPAA, AI Act)",
-                    "Semantic Hallucination & Bias Drift Heatmaps",
-                    "Financial Guardrails for Global LLM Consumption",
-                  ].map((item) => (
+                  {SCALE_FEATURES.map((item) => (
                     <li key={item}>
                       <div className="lp-check-icon">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
@@ -576,8 +591,11 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══════════ PRICING ══════════ */}
+        <PricingSection />
+
         {/* ══════════ CTA ══════════ */}
-        <section className="lp-cta section-reveal">
+        <section className="lp-cta section-reveal" aria-label="Call to action">
           <div className="lp-cta-border">
             <div className="lp-cta-glow-tl" />
             <div className="lp-cta-inner mesh-gradient">
@@ -594,9 +612,9 @@ export default function LandingPage() {
                   <Link href="/signup" className="lp-btn-cta-primary">
                     Request Sovereign Access
                   </Link>
-                  <Link href="/contact" className="lp-btn-cta-secondary">
+                  <a href="mailto:sales@veldrixai.ca" className="lp-btn-cta-secondary">
                     Speak with Security Lead
-                  </Link>
+                  </a>
                 </div>
                 <p className="lp-cta-footnote">
                   Immediate Provisioning Available for Azure &amp; AWS Tenants
@@ -625,6 +643,11 @@ export default function LandingPage() {
               The global standard for sovereign AI governance. Built on the Veldrix
               Trust Protocol to protect enterprise intelligence in a post-generative era.
             </p>
+            <p style={{ marginTop: '1rem', fontSize: '12px', color: 'rgba(240,242,255,0.35)' }}>
+              <a href="mailto:support@veldrixai.ca" style={{ color: 'inherit', textDecoration: 'none' }}>support@veldrixai.ca</a>
+              {' · '}
+              <a href="mailto:security@veldrixai.ca" style={{ color: 'inherit', textDecoration: 'none' }}>security@veldrixai.ca</a>
+            </p>
           </div>
 
           {/* Link columns */}
@@ -632,32 +655,38 @@ export default function LandingPage() {
             <div>
               <div className="lp-footer-col-title">Platform</div>
               <ul className="lp-footer-links">
-                {["Shield Core", "Audit Intelligence", "Policy Engine", "Risk Scoring", "Guard Models"].map((l) => (
-                  <li key={l}><a href="#">{l}</a></li>
+                {FOOTER_PLATFORM_LINKS.map((l) => (
+                  <li key={l.label}><Link href={l.href}>{l.label}</Link></li>
                 ))}
               </ul>
             </div>
             <div>
               <div className="lp-footer-col-title">Compliance</div>
               <ul className="lp-footer-links">
-                {["SOC2 Type II", "ISO 27001", "GDPR", "HIPAA", "AI Act"].map((l) => (
-                  <li key={l}><a href="#">{l}</a></li>
+                {FOOTER_COMPLIANCE_LINKS.map((l) => (
+                  <li key={l.label}><Link href={l.href}>{l.label}</Link></li>
                 ))}
               </ul>
             </div>
             <div>
               <div className="lp-footer-col-title">Developers</div>
               <ul className="lp-footer-links">
-                {["API Reference", "SDK Docs", "Changelog", "Status"].map((l) => (
-                  <li key={l}><a href="#">{l}</a></li>
+                {FOOTER_DEVELOPER_LINKS.map((l) => (
+                  <li key={l.label}><Link href={l.href}>{l.label}</Link></li>
                 ))}
               </ul>
             </div>
             <div>
               <div className="lp-footer-col-title">Company</div>
               <ul className="lp-footer-links">
-                {["About", "Blog", "Careers", "Contact"].map((l) => (
-                  <li key={l}><a href="#">{l}</a></li>
+                {FOOTER_COMPANY_LINKS.map((l) => (
+                  <li key={l.label}>
+                    {l.href.startsWith("mailto:") ? (
+                      <a href={l.href}>{l.label}</a>
+                    ) : (
+                      <Link href={l.href}>{l.label}</Link>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -665,7 +694,7 @@ export default function LandingPage() {
         </div>
 
         <div className="lp-footer-bottom">
-          <span>© 2025 VeldrixAI. All rights reserved.</span>
+          <span>© 2026 VeldrixAI. All rights reserved.</span>
           <span>Built for AI teams who ship responsibly.</span>
         </div>
       </footer>

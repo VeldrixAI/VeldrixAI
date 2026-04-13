@@ -66,6 +66,11 @@ class AuditTrail(Base):
     ip_address = Column(String(45))
     user_agent = Column(Text)
     created_at = Column(TIMESTAMP, default=datetime.utcnow, index=True)
+    # Intelligence layer fields (migration 006)
+    log_type = Column(String(50), nullable=False, server_default="EVALUATION", index=True)
+    request_id = Column(String(100), index=True)
+    related_request_id = Column(String(100), index=True)
+    actor = Column(String(255))
 
 
 class DeletionLog(Base):

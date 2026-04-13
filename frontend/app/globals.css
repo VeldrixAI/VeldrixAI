@@ -1,4 +1,28 @@
+/* ── VeldrixAI Design Tokens (canonical brand system) ── */
 :root {
+  /* Core brand colors */
+  --void:    #050810;
+  --violet:  #7C3AED;
+  --indigo:  #4F46E5;
+  --azure:   #2563EB;
+  --cyan:    #06B6D4;
+  --emerald: #10B981;
+  --rose:    #F43F5E;
+  --amber:   #F59E0B;
+  --snow:    #F0F2FF;
+
+  /* Surfaces */
+  --surface:   rgba(255,255,255,0.03);
+  --surface2:  rgba(255,255,255,0.055);
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+
+  /* Text */
+  --text:   #F0F2FF;
+  --muted:  rgba(240,242,255,0.55);
+  --dim:    rgba(240,242,255,0.25);
+
+  /* Legacy aliases (dashboard compatibility) */
   --bg-primary: #0b0e14;
   --bg-secondary: #0f1219;
   --bg-tertiary: #151a24;

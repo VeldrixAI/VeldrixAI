@@ -5,8 +5,8 @@ export const sdkVersions: SDKVersion[] = [
     language: "Python",
     version: "1.4.2",
     releasedAt: "2025-01-10",
-    installCommand: "pip install aegisai",
-    packageName: "aegisai",
+    installCommand: "pip install veldrixai",
+    packageName: "veldrixai",
     changelog: [
       {
         version: "1.4.2",
@@ -22,7 +22,7 @@ export const sdkVersions: SDKVersion[] = [
         date: "2024-12-28",
         changes: [
           "Added support for custom policy document uploads",
-          "New `aegisai.analyze()` method for post-processing checks",
+          "New `veldrixai.analyze()` method for post-processing checks",
           "Performance improvements for batch embedding requests",
         ],
       },
@@ -51,15 +51,15 @@ export const sdkVersions: SDKVersion[] = [
     language: "Node",
     version: "2.1.0",
     releasedAt: "2025-01-12",
-    installCommand: "npm install @aegisai/sdk",
-    packageName: "@aegisai/sdk",
+    installCommand: "npm install @veldrixai/sdk",
+    packageName: "@veldrixai/sdk",
     changelog: [
       {
         version: "2.1.0",
         date: "2025-01-12",
         changes: [
           "Added TypeScript 5.x support with improved type inference",
-          "New `aegisai.toolCheck()` for agent tool-call validation",
+          "New `veldrixai.toolCheck()` for agent tool-call validation",
           "Added Express and Fastify middleware helpers",
         ],
       },
@@ -77,7 +77,7 @@ export const sdkVersions: SDKVersion[] = [
         date: "2024-12-18",
         changes: [
           "Major rewrite with full TypeScript support",
-          "New `AegisClient` class with builder pattern",
+          "New `VeldrixClient` class with builder pattern",
           "Added streaming analysis for real-time content moderation",
           "Breaking: Renamed `check()` to `evaluate()` for API consistency",
           "Breaking: Minimum Node.js version is now 18.x",
@@ -99,12 +99,12 @@ export const sdkVersions: SDKVersion[] = [
 export const codeExamples: CodeExample[] = [
   {
     title: "Guarded Generation",
-    description: "Wrap your LLM calls with AegisAI to automatically enforce policies before and after generation.",
-    python: `import aegisai
+    description: "Wrap your LLM calls with VeldrixAI to automatically enforce policies before and after generation.",
+    python: `import veldrixai
 from openai import OpenAI
 
 client = OpenAI()
-aegis = aegisai.Client(api_key="your-aegis-api-key")
+aegis = veldrixai.Client(api_key="your-aegis-api-key")
 
 # Pre-check the user input
 pre_check = aegis.evaluate(
@@ -135,11 +135,11 @@ else:
         print(response.choices[0].message.content)
     else:
         print(f"Output filtered: {post_check.reason}")`,
-    node: `import AegisAI from '@aegisai/sdk';
+    node: `import VeldrixAI from '@veldrixai/sdk';
 import OpenAI from 'openai';
 
 const openai = new OpenAI();
-const aegis = new AegisAI({ apiKey: 'your-aegis-api-key' });
+const aegis = new VeldrixAI({ apiKey: 'your-aegis-api-key' });
 
 // Pre-check the user input
 const preCheck = await aegis.evaluate({
@@ -176,9 +176,9 @@ if (preCheck.action === 'block') {
   {
     title: "Post-Processing Analyze",
     description: "Analyze LLM outputs after generation to detect policy violations, PII leakage, and content issues.",
-    python: `import aegisai
+    python: `import veldrixai
 
-aegis = aegisai.Client(api_key="your-aegis-api-key")
+aegis = veldrixai.Client(api_key="your-aegis-api-key")
 
 # Analyze any text for policy compliance
 result = aegis.analyze(
@@ -200,9 +200,9 @@ for violation in result.violations:
 # Optionally get a rewritten safe version
 if not result.safe and result.rewritten_text:
     print(f"Safe alternative: {result.rewritten_text}")`,
-    node: `import AegisAI from '@aegisai/sdk';
+    node: `import VeldrixAI from '@veldrixai/sdk';
 
-const aegis = new AegisAI({ apiKey: 'your-aegis-api-key' });
+const aegis = new VeldrixAI({ apiKey: 'your-aegis-api-key' });
 
 // Analyze any text for policy compliance
 const result = await aegis.analyze({
@@ -230,9 +230,9 @@ if (!result.safe && result.rewrittenText) {
   {
     title: "Agent Tool-Call Check",
     description: "Validate and guard AI agent tool calls before execution to prevent unauthorized actions.",
-    python: `import aegisai
+    python: `import veldrixai
 
-aegis = aegisai.Client(api_key="your-aegis-api-key")
+aegis = veldrixai.Client(api_key="your-aegis-api-key")
 
 # Define the tool call from your AI agent
 tool_call = {
@@ -265,9 +265,9 @@ elif check.action == "rewrite":
 else:
     print(f"Tool call blocked: {check.reason}")
     print(f"Violations: {check.violations}")`,
-    node: `import AegisAI from '@aegisai/sdk';
+    node: `import VeldrixAI from '@veldrixai/sdk';
 
-const aegis = new AegisAI({ apiKey: 'your-aegis-api-key' });
+const aegis = new VeldrixAI({ apiKey: 'your-aegis-api-key' });
 
 // Define the tool call from your AI agent
 const toolCall = {
@@ -306,16 +306,16 @@ if (check.allowed) {
 
 export const faqs: FAQ[] = [
   {
-    question: "What are the rate limits for the AegisAI API?",
+    question: "What are the rate limits for the VeldrixAI API?",
     answer: "Free tier: 100 requests/minute, 10,000 requests/day. Pro tier: 1,000 requests/minute, 100,000 requests/day. Enterprise tier: Custom limits based on your contract. Rate limit headers (X-RateLimit-Remaining, X-RateLimit-Reset) are included in every response.",
   },
   {
     question: "How should I handle retries?",
-    answer: "The SDK includes automatic retry with exponential backoff for transient errors (5xx, network timeouts). Default: 3 retries with 1s, 2s, 4s delays. Configure via `aegis.configure(max_retries=5, retry_delay=2.0)` in Python or `new AegisAI({ maxRetries: 5, retryDelay: 2000 })` in Node.",
+    answer: "The SDK includes automatic retry with exponential backoff for transient errors (5xx, network timeouts). Default: 3 retries with 1s, 2s, 4s delays. Configure via `aegis.configure(max_retries=5, retry_delay=2.0)` in Python or `new VeldrixAI({ maxRetries: 5, retryDelay: 2000 })` in Node.",
   },
   {
     question: "What timeout values should I use?",
-    answer: "Default timeout is 30 seconds. For evaluate/analyze calls, 10-15 seconds is recommended. For tool-check calls, 5-10 seconds. For batch operations, up to 60 seconds. Set via `aegis.configure(timeout=15)` in Python or `new AegisAI({ timeout: 15000 })` in Node.",
+    answer: "Default timeout is 30 seconds. For evaluate/analyze calls, 10-15 seconds is recommended. For tool-check calls, 5-10 seconds. For batch operations, up to 60 seconds. Set via `aegis.configure(timeout=15)` in Python or `new VeldrixAI({ timeout: 15000 })` in Node.",
   },
   {
     question: "What error codes does the API return?",
@@ -326,7 +326,7 @@ export const faqs: FAQ[] = [
     answer: "1. Generate a new API key in the dashboard (Settings > API Keys). 2. Update your environment variables with the new key. 3. Verify the new key works by making a test evaluate call. 4. Revoke the old key in the dashboard. Both keys are valid simultaneously during the rotation window.",
   },
   {
-    question: "Does AegisAI support streaming responses?",
+    question: "Does VeldrixAI support streaming responses?",
     answer: "Yes. Use `aegis.evaluate_stream()` in Python or `aegis.evaluateStream()` in Node to analyze streaming LLM responses in real-time. The SDK buffers chunks and runs policy checks incrementally, allowing you to stop generation early if a violation is detected.",
   },
 ];

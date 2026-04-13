@@ -6,7 +6,13 @@
     "dev": "next dev --webpack -p 5000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 5000 -H 0.0.0.0",
-    "lint": "eslint . --max-warnings=0"
+    "lint": "eslint . --max-warnings=0",
+    "test": "playwright test --config playwright.config.ts",
+    "test:critical": "playwright test --project=critical-chrome --config playwright.config.ts",
+    "test:critical:ff": "playwright test --project=critical-firefox --config playwright.config.ts",
+    "test:agent": "npx tsx scripts/run-agent-tests.ts",
+    "test:report": "playwright show-report tests/reports/html",
+    "test:ci": "playwright test --project=critical-chrome --project=critical-firefox --config playwright.config.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -20,11 +26,16 @@
     "recharts": "^3.7.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@playwright/test": "^1.59.1",
     "@types/node": "22.10.7",
     "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
+    "dotenv": "^17.4.2",
     "eslint": "9.17.0",
     "eslint-config-next": "^16.1.6",
+    "playwright": "^1.59.1",
+    "tsx": "^4.21.0",
     "typescript": "5.7.3"
   }
 }
