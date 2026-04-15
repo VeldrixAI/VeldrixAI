@@ -7,6 +7,8 @@ import httpx
 from datetime import datetime
 from fastapi import APIRouter, Depends, status
 
+from src.services.notification_dispatch import dispatch_notification
+
 from src.validators.schemas import (
     TrustEvaluationRequest,
     SuccessResponse,
@@ -28,6 +30,17 @@ _PILLAR_ID_MAP = {
     "prompt_security": "prompt_security",
     "compliance_policy": "compliance",
 }
+
+
+def _worst_pillar(pillar_results: dict) -> str:
+    """Return the pillar_id with the lowest trust score (most problematic)."""
+    worst_id = next(iter(pillar_results), "safety_toxicity")
+    worst_score = float("inf")
+    for pillar_id, result in pillar_results.items():
+        if result.score is not None and result.score.value < worst_score:
+            worst_score = result.score.value
+            worst_id = pillar_id
+    return worst_id
 
 
 def _record_latency(user_id: str, latency_ms: float, status_code: int = 200):
@@ -195,6 +208,20 @@ async def evaluate_trust(
         prompt_preview=request.prompt,
         response_preview=request.response,
     ))
+
+    # Dispatch trust-violation notification (non-blocking, fire-and-forget)
+    risk_level = report.final_score.risk_level.value if report.final_score.risk_level else "safe"
+    if risk_level in ("critical", "high_risk"):
+        _action = "blocked" if risk_level == "critical" else "flagged"
+        _pillar = _worst_pillar(report.pillar_results)
+        asyncio.create_task(dispatch_notification(
+            user_id=user_id,
+            audit_log_id=report.request_id,
+            action=_action,
+            pillar=_PILLAR_ID_MAP.get(_pillar, _pillar),
+            endpoint=request.context or "/trust/evaluate",
+            model_name=request.model,
+        ))
 
     return SuccessResponse(
         data=response_data,

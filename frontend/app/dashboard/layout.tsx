@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import "./veldrix-tokens.css";
 
 type User = {
@@ -68,12 +69,6 @@ const IcoHelp = () => (
     <circle cx="12" cy="12" r="10"/>
     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
     <line x1="12" y1="17" x2="12.01" y2="17"/>
-  </svg>
-);
-const IcoBell = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
   </svg>
 );
 const IcoDoc = () => (
@@ -400,13 +395,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Actions + user */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <TopbarIconBtn title="Notifications">
-              <div style={{ position: "relative" }}>
-                <IcoBell />
-                <span style={{ position: "absolute", top: "-4px", right: "-4px", width: "7px", height: "7px", borderRadius: "50%", background: "#f43f5e" }}/>
-              </div>
-            </TopbarIconBtn>
-            <TopbarIconBtn title="Audit history"><IcoDoc /></TopbarIconBtn>
+            <NotificationBell userId={user.id} />
+            <TopbarIconBtn title="Audit history" onClick={() => router.push("/dashboard/audit-trails")}><IcoDoc /></TopbarIconBtn>
 
             <div style={{ width: "1px", height: "28px", background: "rgba(255,255,255,0.08)" }}/>
 
@@ -455,11 +445,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 }
 
-function TopbarIconBtn({ children, title }: { children: React.ReactNode; title: string }) {
+function TopbarIconBtn({ children, title, onClick }: { children: React.ReactNode; title: string; onClick?: () => void }) {
   const [hov, setHov] = useState(false);
   return (
     <button
       title={title}
+      onClick={onClick}
       style={{
         padding: "8px", borderRadius: "50%", background: hov ? "rgba(255,255,255,0.06)" : "none",
         border: "none", cursor: "pointer", color: "rgba(240,242,255,0.6)", transition: "background 0.2s",

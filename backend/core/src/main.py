@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load .env before any module reads os.getenv — must happen before all local imports
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -145,3 +145,41 @@ app.include_router(internal_router)     # GET  /internal/latency-stats, /interna
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+# ── WebSocket: real-time notification stream ──────────────────────────────────
+
+from src.services.notification_broadcaster import broadcaster  # noqa: E402
+
+
+@app.websocket("/ws/notifications/{user_id}")
+async def notifications_ws(
+    websocket: WebSocket,
+    user_id: str,
+    token: str = "",
+):
+    """
+    Persistent WebSocket for trust-violation notifications.
+    Auth: JWT passed as ?token=<jwt> query param (httpOnly cookie unavailable over WS).
+    """
+    from src.middlewares.auth import verify_jwt_token  # local import avoids circular
+    from fastapi import HTTPException
+
+    # Validate the token before accepting the connection
+    try:
+        verified_user_id = await verify_jwt_token(authorization=f"Bearer {token}")
+        if verified_user_id != user_id:
+            await websocket.close(code=4003)
+            return
+    except HTTPException:
+        await websocket.close(code=4001)
+        return
+
+    await broadcaster.connect(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        await broadcaster.disconnect(user_id, websocket)
