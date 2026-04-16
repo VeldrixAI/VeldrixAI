@@ -1,5 +1,6 @@
 """AI Safety API controller."""
 
+import asyncio
 import logging
 import os
 import httpx
@@ -7,6 +8,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, status
 from src.sdk.telemetry import SDKTelemetry
 
+from src.services.notification_dispatch import dispatch_notification
 
 from src.validators.schemas import (
     TrustEvaluationRequest,
@@ -19,7 +21,27 @@ from src.domain.types import TrustEvaluationInput, AIOutputMetadata
 from src.utils.request import Timer, set_request_id
 from src.pillars.implementations.ai_safety_pillars import compute_composite_trust_score
 
-CONNECTORS_URL = os.getenv("CONNECTORS_URL", "http://localhost:8002")
+CONNECTORS_URL = os.getenv("VELDRIX_CONNECTORS_URL", os.getenv("CONNECTORS_URL", "http://localhost:8002"))
+
+# Map internal pillar IDs (from PillarMetadata.id) to the frontend-expected keys
+_PILLAR_ID_MAP = {
+    "safety_toxicity": "safety",
+    "hallucination": "hallucination",
+    "bias_fairness": "bias",
+    "prompt_security": "prompt_security",
+    "compliance_policy": "compliance",
+}
+
+
+def _worst_pillar(pillar_results: dict) -> str:
+    """Return the pillar_id with the lowest trust score (most problematic)."""
+    worst_id = next(iter(pillar_results), "safety_toxicity")
+    worst_score = float("inf")
+    for pillar_id, result in pillar_results.items():
+        if result.score is not None and result.score.value < worst_score:
+            worst_score = result.score.value
+            worst_id = pillar_id
+    return worst_id
 
 
 def _record_latency(user_id: str, latency_ms: float, status_code: int = 200):
@@ -140,8 +162,6 @@ async def evaluate_trust(
         report.request_id,
     )
 
-<<<<<<< Updated upstream
-=======
     # Record to audit trail via telemetry
     try:
         telemetry = SDKTelemetry()
@@ -219,7 +239,6 @@ async def evaluate_trust(
             model_name=request.model,
         ))
 
->>>>>>> Stashed changes
     return SuccessResponse(
         data=response_data,
         metadata={
