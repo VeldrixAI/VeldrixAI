@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
   const path = export_ ? "export" : "";
   const url = `${CONNECTORS_API_URL}/api/audit-trails/${path}?${params}`;
 
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` } });
+  const res = await fetch(url, { 
+    headers: { Authorization: `Bearer ${t}` },
+    cache: 'no-store',
+  });
 
   if (export_) {
     const text = await res.text();
@@ -48,6 +51,26 @@ export async function GET(request: NextRequest) {
   const payload = await res.json();
   if (!res.ok) return NextResponse.json({ error: payload.detail }, { status: res.status });
   return NextResponse.json(payload);
+}
+
+export async function DELETE(request: NextRequest) {
+  const t = await token();
+  if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const res = await fetch(`${CONNECTORS_API_URL}/api/audit-trails/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${t}` },
+  });
+
+  if (!res.ok) {
+    const payload = await res.json();
+    return NextResponse.json({ error: payload.detail }, { status: res.status });
+  }
+  return NextResponse.json({ ok: true });
 }
 
 export async function POST(request: NextRequest) {

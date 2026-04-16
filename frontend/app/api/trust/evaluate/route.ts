@@ -10,7 +10,13 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json();
+<<<<<<< Updated upstream
     const response = await fetch(`${CORE_API_URL}/api/v1/analyze`, {
+=======
+
+    // Use SDK analyze endpoint which includes telemetry
+    const response = await fetch(`${CORE_API_URL}/trust/evaluate`, {
+>>>>>>> Stashed changes
       method: "POST",
       headers: {
         "Authorization": `Bearer veldrix-internal-dev-key-2026`,
@@ -29,6 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: data.detail || "Evaluation failed" }, { status: response.status });
     }
 
+<<<<<<< Updated upstream
     // Map core response to the shape the evaluate page expects
     return NextResponse.json({
       data: {
@@ -53,6 +60,22 @@ export async function POST(request: NextRequest) {
         metadata: { request_id: data.request_id },
       }
     });
+=======
+    // Backend returns SuccessResponse: { success, data: TrustReportResponse, metadata }
+    const result = await response.json();
+
+    const transformed = {
+      data: {
+        ...result.data,
+        metadata: {
+          request_id: result.metadata?.request_id ?? result.data?.request_id,
+          cache_hit: result.metadata?.cache_hit ?? false,
+        },
+      },
+    };
+
+    return NextResponse.json(transformed);
+>>>>>>> Stashed changes
   } catch (error) {
     return NextResponse.json({ error: "Failed to evaluate trust" }, { status: 500 });
   }

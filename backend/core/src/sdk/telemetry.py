@@ -53,7 +53,15 @@ class SDKTelemetry:
         # ── SSE broadcast ─────────────────────────────────────────────────────
         try:
             from src.core.sse import broadcast_event
-            await broadcast_event("analysis_complete", result.model_dump())
+            if hasattr(result, "model_dump"):
+                payload = result.model_dump()
+            else:
+                payload = {
+                    "request_id": result.request_id,
+                    "overall": result.trust_score.overall,
+                    "verdict": result.trust_score.verdict,
+                }
+            await broadcast_event("analysis_complete", payload)
         except ImportError:
             pass
         except Exception as exc:

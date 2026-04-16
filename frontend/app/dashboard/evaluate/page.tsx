@@ -206,17 +206,6 @@ export default function EvaluatePage() {
       setSafetyIndex(mapped.aggregate_score);
       setAuditLatency(`${latencyMs}ms`);
 
-      // Log to audit trails
-      fetch("/api/audit-trails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action_type: "trust_evaluation",
-          entity_type: "evaluation",
-          metadata: { prompt: userPrompt, response: aiResponse, model, provider, result: payload.data },
-        }),
-      }).catch(() => {});
-
       await new Promise((resolve) => setTimeout(resolve, 300));
       setShowResults(true);
     } catch (err) {

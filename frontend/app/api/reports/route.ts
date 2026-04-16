@@ -15,8 +15,9 @@ export async function GET() {
   const token = await getToken();
   if (!token) return unauthorized();
 
-  const res = await fetch(`${CONNECTORS_API_URL}/api/reports/`, {
+  const res = await fetch(`${CONNECTORS_API_URL}/api/reports/?skip=0&limit=100`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
 
   const payload = await res.json();

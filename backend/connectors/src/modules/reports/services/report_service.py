@@ -32,6 +32,7 @@ class ReportService:
         request: GenerateReportRequest,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
+        actor: Optional[str] = None,
     ) -> TrustReport:
         try:
             report_type_value = request.report_type
@@ -100,7 +101,13 @@ class ReportService:
             checksum = compute_checksum(pdf_content)
 
             report.checksum_hash = checksum
-            report.status = "failed" if is_high_risk else "completed"
+            report.status = "completed"
+            # Derive overall_score from nested or flat input_payload
+            if overall_score is None:
+                flat_score = (request.input_payload or {}).get("overall_score")
+                if flat_score is not None:
+                    overall_score = round(float(flat_score) * 100, 2)
+
             report.output_full_report = {
                 "report_id":       str(report.id),
                 "report_name":     report_name,
@@ -113,20 +120,24 @@ class ReportService:
             self.db.commit()
             self.db.refresh(report)
 
+            source_request_id = (request.input_payload or {}).get("request_id")
             self.audit_service.log_action(
                 db=self.db,
                 user_id=user_id,
                 action_type="create_report",
-                entity_type="TrustReport",
+                entity_type="report",
                 entity_id=report.id,
                 metadata={
-                    "report_type":  report.report_type,
-                    "report_name":  report_name,
-                    "vx_report_id": vx_report_id,
-                    "title":        report.title,
+                    "report_type":        report.report_type,
+                    "report_name":        report_name,
+                    "vx_report_id":       vx_report_id,
+                    "title":              report.title,
+                    "source_request_id":  source_request_id,
+                    "actor":              actor,
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,
+                actor=actor,
             )
 
             return report, pdf_content
@@ -174,6 +185,7 @@ class ReportService:
         user_id: UUID,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
+        actor: Optional[str] = None,
     ) -> dict:
         try:
             report = self.db.query(TrustReport).filter(
@@ -199,9 +211,11 @@ class ReportService:
                     "report_type": report.report_type,
                     "title":       report.title,
                     "deleted_at":  report.deleted_at.isoformat(),
+                    "actor":       actor,
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,
+                actor=actor,
             )
             self.db.commit()
             return {"success": True, "message": "Report deleted", "report_id": str(report_id)}

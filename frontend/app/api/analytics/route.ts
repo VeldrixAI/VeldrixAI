@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
   const res = await fetch(`${CONNECTORS_API_URL}/api/analytics/${path}?range=${range}`, {
     headers: { Authorization: `Bearer ${t}` },
+    cache: 'no-store',
   });
   const payload = await res.json();
   if (!res.ok) return NextResponse.json({ error: payload.detail }, { status: res.status });

@@ -16,10 +16,17 @@ class AuditService:
         metadata: Optional[Dict[str, Any]] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
+<<<<<<< Updated upstream
         user_timezone: str = "UTC",
     ) -> AuditTrail:
         """
         Log an action to the audit trail.
+=======
+        actor: Optional[str] = None,
+    ) -> AuditTrail:
+        """
+        Log an action to the audit trail
+>>>>>>> Stashed changes
 
         Args:
             db: Database session
@@ -30,7 +37,11 @@ class AuditService:
             metadata: Additional metadata
             ip_address: Client IP address
             user_agent: Client user agent
+<<<<<<< Updated upstream
             user_timezone: IANA timezone string from the user's session JWT (tz claim)
+=======
+            actor: Human-readable actor identifier (email preferred)
+>>>>>>> Stashed changes
 
         Returns:
             Created AuditTrail record
@@ -44,9 +55,13 @@ class AuditService:
             action_metadata=metadata,
             ip_address=ip_address,
             user_agent=user_agent,
+<<<<<<< Updated upstream
             logged_at_utc=ts["logged_at_utc"],
             user_timezone=ts["user_timezone"],
             logged_at_local=ts["logged_at_local"],
+=======
+            actor=actor or (metadata or {}).get("actor"),
+>>>>>>> Stashed changes
         )
 
         db.add(audit_entry)

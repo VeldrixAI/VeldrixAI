@@ -11,6 +11,17 @@ from src.db.base import get_db
 from uuid import UUID
 import io
 
+def _get_user_email(db: Session, user_id) -> str:
+    try:
+        from sqlalchemy import text
+        row = db.execute(
+            text("SELECT email FROM users WHERE id = :uid"),
+            {"uid": str(user_id)}
+        ).fetchone()
+        return row[0] if row else str(user_id)
+    except Exception:
+        return str(user_id)
+
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 
@@ -18,6 +29,7 @@ class OnDemandPDFRequest(BaseModel):
     title: Optional[str] = None
     report_type: str = "trust_evaluation"
     input_payload: Optional[Dict[str, Any]] = None
+    actor: Optional[str] = None
 
 
 @router.post("/generate-pdf")
@@ -44,7 +56,13 @@ async def generate_pdf_on_demand(
         request=req,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
+        actor=_get_user_email(db, user_id),
     )
+<<<<<<< Updated upstream
+=======
+    # Audit trail written once by ReportService.generate_report() via AuditService
+
+>>>>>>> Stashed changes
     filename = f"veldrix-{report.vx_report_id or report.id}.pdf"
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
@@ -66,6 +84,7 @@ async def generate_report(
         request=request_data,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
+        actor=_get_user_email(db, user_id),
     )
     return report
 
@@ -132,9 +151,21 @@ async def delete_report(
     db: Session = Depends(get_db),
 ):
     user_id = UUID(current_user["id"])
+<<<<<<< Updated upstream
     return ReportService(db).soft_delete_report(
+=======
+
+    result = ReportService(db).soft_delete_report(
+>>>>>>> Stashed changes
         report_id=report_id,
         user_id=user_id,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
+        actor=_get_user_email(db, user_id),
     )
+<<<<<<< Updated upstream
+=======
+    # Audit trail written once by ReportService.soft_delete_report() via AuditService
+
+    return result
+>>>>>>> Stashed changes

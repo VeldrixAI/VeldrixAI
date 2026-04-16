@@ -2,15 +2,12 @@
 VeldrixAI PDF Service
 Generates branded PDF reports with NVIDIA NIM-powered narrative intelligence.
 """
-
 import os
 import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
-
 import httpx
-
 from src.modules.reports.services.pdf_generator import generate_veldrix_pdf
 
 logger = logging.getLogger(__name__)
@@ -19,13 +16,19 @@ _NIM_BASE    = os.getenv("NVIDIA_API_BASE_URL", "https://integrate.api.nvidia.co
 _NIM_KEY     = os.getenv("NVIDIA_API_KEY", "")
 _NIM_MODEL   = "meta/llama-3.1-8b-instruct"
 _NIM_TIMEOUT = int(os.getenv("VELDRIX_NIM_TIMEOUT_MS", "30000")) / 1000
-
 _PASS = 85.0
 _WARN = 70.0
 
+# Mapping from flat audit log keys to display names
+_PILLAR_NAME_MAP = {
+    "safety": "Safety",
+    "hallucination": "Hallucination & Factual Integrity",
+    "bias": "Bias & Ethics Analysis",
+    "prompt_security": "Policy Violation & Prompt Security",
+    "compliance": "Legal Exposure & Compliance",
+}
 
-# ── NIM narrative generator ───────────────────────────────────────────────────
-
+# ── NIM narrative generator ──────────────────────────────────────────────────
 def _nim_narrative(report_data: Dict[str, Any]) -> Optional[Dict]:
     """
     Call NVIDIA NIM to generate executive summary, findings descriptions,
@@ -51,7 +54,7 @@ def _nim_narrative(report_data: Dict[str, Any]) -> Optional[Dict]:
     )
     enforcement_lines = ", ".join(f"{k}: {v}" for k, v in enforcement.items())
 
-    prompt = f"""You are the VeldrixAI Governance Intelligence Engine — an expert AI safety auditor.
+    prompt = f"""You are the VeldrixAI Governance Intelligence Engine - an expert AI safety auditor.
 Generate a professional, data-driven governance report narrative based on these real evaluation results.
 
 EVALUATION DATA:
@@ -67,7 +70,7 @@ Generate a JSON object with EXACTLY these keys:
   "executive_summary": "3 concise paragraphs. Paragraph 1: overall score context and what it means for production safety. Paragraph 2: which pillars passed/failed and why it matters. Paragraph 3: immediate business impact and urgency. Be specific about the numbers. Authoritative tone like a Big Four AI audit firm.",
   "recommendations": [
     {{"title": "Short action title (max 8 words)", "body": "Specific, actionable 2-3 sentence recommendation referencing the actual score"}},
-    ... (3-5 recommendations, prioritised by severity — only for pillars that need attention)
+    ... (3-5 recommendations, prioritised by severity - only for pillars that need attention)
   ]
 }}
 
@@ -93,7 +96,6 @@ Rules:
         resp.raise_for_status()
         raw = resp.json()["choices"][0]["message"]["content"].strip()
 
-        # Strip markdown fences if model adds them anyway
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
@@ -102,13 +104,21 @@ Rules:
 
         return json.loads(raw)
     except Exception as e:
-        logger.warning("NIM narrative generation failed: %s — falling back to static", e)
+        logger.warning("NIM narrative generation failed: %s - falling back to static", e)
         return None
 
 
-# ── Static fallback findings/recs (used when NIM unavailable) ─────────────────
+# ── Static fallback findings/recs (used when NIM unavailable) ────────────────
 
 _PILLAR_META: Dict[str, Dict] = {
+    "Safety": {
+        "fail_sev": "CRITICAL", "warn_sev": "HIGH",
+        "finding_fail": "Content safety score critically low ({score:.1f}/100). Harmful or policy-violating responses detected.",
+        "finding_warn": "Content safety below target ({score:.1f}/100). Borderline harmful content present.",
+        "finding_pass": "No harmful content detected. Content safety checks passed.",
+        "rec_fail": "Enable hard-block enforcement on Content Risk pillar at threshold 0.85. Audit flagged responses immediately.",
+        "rec_warn": "Lower soft-block threshold to 0.80 and enable rewriting for borderline cases.",
+    },
     "Content Risk Analysis": {
         "fail_sev": "CRITICAL", "warn_sev": "HIGH",
         "finding_fail": "Content safety score critically low ({score:.1f}/100). Harmful or policy-violating responses detected.",
@@ -185,12 +195,12 @@ def _static_findings_and_recs(
                          "action": rec or "Continue monitoring. No immediate action required."})
         if rec:
             recommendations.append({
-                "title": f"{'[CRITICAL] ' if sev == 'CRITICAL' else ''}{name} — {sev.title()} Risk",
+                "title": f"{'[CRITICAL] ' if sev == 'CRITICAL' else ''}{name} - {sev.title()} Risk",
                 "body": rec,
             })
     if risk_level in ("HIGH_RISK", "CRITICAL"):
         recommendations.insert(0, {
-            "title": "Immediate Action Required — Trust Score Below Safe Threshold",
+            "title": "Immediate Action Required - Trust Score Below Safe Threshold",
             "body": (f"Overall trust score {overall:.1f}/100 classified as {risk_level.replace('_', ' ')}. "
                      "Do not deploy without human review. Enforce hard-block below 70 on critical pillars."),
         })
@@ -217,11 +227,11 @@ class PDFService:
         vx_report_id: str = "VX-00000000-0000",
         tenant: str = "VeldrixAI Platform",
     ) -> bytes:
-        result        = (input_payload or {}).get("result", {})
-        final_score   = result.get("final_score") or {}
+        result         = (input_payload or {}).get("result", {})
+        final_score    = result.get("final_score") or {}
         pillar_results = result.get("pillar_results") or {}
 
-        # Build pillar scores + weights from real evaluation data
+        # Build pillar scores + weights from nested evaluation data
         pillar_scores: Dict[str, float] = {}
         pillar_weights: Dict[str, float] = {}
         flags_map: Dict[str, list] = {}
@@ -234,42 +244,69 @@ class PDFService:
             pillar_weights[name] = float(w) if float(w) <= 1.0 else float(w) / 100.0
             flags_map[name]      = pdata.get("flags", [])
 
+        # ── Flat audit log metadata fallback ──────────────────────────────────
+        # When input_payload comes directly from an audit log row, the structure
+        # is flat: { verdict, overall_score, pillar_scores: {safety: 0.95, ...} }
+        # instead of nested under result.final_score / result.pillar_results.
+        if not pillar_scores:
+            flat_scores = (input_payload or {}).get("pillar_scores", {})
+            for k, v in flat_scores.items():
+                name = _PILLAR_NAME_MAP.get(str(k).lower(), str(k).replace("_", " ").title())
+                pillar_scores[name]  = round(float(v) * 100, 1)
+                pillar_weights[name] = 0.20
+
+        # Overall score: prefer nested, then flat (0-1 range → ×100), then derive
         raw_overall = final_score.get("value")
         overall = round(float(raw_overall), 1) if raw_overall is not None else None
+        if overall is None:
+            flat_overall = (input_payload or {}).get("overall_score")
+            if flat_overall is not None:
+                overall = round(float(flat_overall) * 100, 1)
         if overall is None and pillar_scores:
             overall = round(sum(pillar_scores[p] * pillar_weights.get(p, 0.2) for p in pillar_scores), 1)
         overall = overall or 0.0
 
-        risk_level        = str(final_score.get("risk_level", "")).upper()
+        # Risk level: prefer nested, then derive from flat verdict
+        risk_level = str(final_score.get("risk_level", "")).upper()
+        if not risk_level:
+            flat_verdict = str((input_payload or {}).get("verdict", "")).lower()
+            risk_level = {
+                "safe": "LOW",
+                "low": "LOW",
+                "high_risk": "HIGH_RISK",
+                "high": "HIGH_RISK",
+                "critical": "CRITICAL",
+                "review_required": "MEDIUM",
+                "warn": "HIGH_RISK",
+            }.get(flat_verdict, "UNKNOWN")
+
         enforcement_action = final_score.get("enforcement_action", "")
         if str(enforcement_action).upper() in ("BLOCK", "BLOCKED") or risk_level in ("HIGH_RISK", "HIGH", "CRITICAL"):
             enforcement = {"Allow": 0, "Block": 1, "Rewrite": 0}
         else:
             enforcement = {"Allow": 1, "Block": 0, "Rewrite": 0}
 
-        model    = (input_payload or {}).get("model", "—")
-        provider = (input_payload or {}).get("provider", "")
+        model      = (input_payload or {}).get("model", "-")
+        provider   = (input_payload or {}).get("provider", "")
         model_name = f"{model} ({provider})" if provider else model
 
         # ── Try NIM narrative first ──
         nim_result = _nim_narrative({
-            "pillar_scores":  pillar_scores,
-            "pillar_weights": pillar_weights,
-            "overall_score":  overall,
-            "risk_level":     risk_level,
-            "model_name":     model_name,
+            "pillar_scores":       pillar_scores,
+            "pillar_weights":      pillar_weights,
+            "overall_score":       overall,
+            "risk_level":          risk_level,
+            "model_name":          model_name,
             "enforcement_actions": enforcement,
-            "flags_map":      flags_map,
+            "flags_map":           flags_map,
         })
 
         if nim_result:
             executive_summary = nim_result.get("executive_summary", "")
             nim_recs = nim_result.get("recommendations", [])
-            # Still derive structured findings from scores (for the findings table)
             findings, static_recs = _static_findings_and_recs(
                 pillar_scores, pillar_weights, pillar_results, overall, risk_level
             )
-            # Use NIM recommendations if available, else static
             recommendations = nim_recs if nim_recs else static_recs
         else:
             findings, recommendations = _static_findings_and_recs(
@@ -283,27 +320,30 @@ class PDFService:
             )
 
         report_data = {
-            "report_name":    report_name,
-            "vx_report_id":   vx_report_id,
-            "title":          title or "AI Model Trust Evaluation Report",
-            "subtitle":       "Deep Research Analysis · VeldrixAI Runtime Evaluation",
-            "report_type":    report_type.replace("_", " ").title(),
-            "generated_at":   created_at.strftime("%B %d, %Y %H:%M UTC"),
-            "model_name":     model_name,
-            "eval_window":    "Single Evaluation",
-            "total_evals":    1,
-            "tenant":         tenant,
-            "pillar_version": "v2.1.0",
-            "overall_score":  overall,
-            "pillar_scores":  pillar_scores or {},
-            "pillar_weights": pillar_weights or {
-                "Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20,
-                "Prompt Security": 0.15, "Compliance": 0.15,
+            "report_name":         report_name,
+            "vx_report_id":        vx_report_id,
+            "title":               title or "AI Model Trust Evaluation Report",
+            "subtitle":            "Deep Research Analysis · VeldrixAI Runtime Evaluation",
+            "report_type":         report_type.replace("_", " ").title(),
+            "generated_at":        created_at.strftime("%B %d, %Y %H:%M UTC"),
+            "model_name":          model_name,
+            "eval_window":         "Single Evaluation",
+            "total_evals":         1,
+            "tenant":              tenant,
+            "pillar_version":      "v2.1.0",
+            "overall_score":       overall,
+            "pillar_scores":       pillar_scores or {},
+            "pillar_weights":      pillar_weights or {
+                "Safety": 0.25,
+                "Hallucination & Factual Integrity": 0.25,
+                "Bias & Ethics Analysis": 0.20,
+                "Policy Violation & Prompt Security": 0.15,
+                "Legal Exposure & Compliance": 0.15,
             },
             "enforcement_actions": enforcement,
-            "findings":           findings,
-            "recommendations":    recommendations,
-            "executive_summary":  executive_summary,
+            "findings":            findings,
+            "recommendations":     recommendations,
+            "executive_summary":   executive_summary,
         }
 
         return generate_veldrix_pdf(report_data)

@@ -110,7 +110,7 @@ class VeldrixSDK:
         await self._telemetry.record(
             result,
             prompt_preview=request.prompt[:200] if request.prompt else None,
-            response_preview=request.response[:200] if request.response else None,
+            response_preview=request.response[:2000] if request.response else None,
             user_id=user_id,
             user_timezone=request.user_timezone or user_timezone,
         )

@@ -24,19 +24,20 @@ async def get_summary(
     since = _since(range)
     uid_val = uuid.UUID(current_user["id"])
 
-    row = db.execute(text("""
+    # Count trust evaluations from audit_trails (source of truth for SDK activity)
+    eval_row = db.execute(text("""
         SELECT
             COUNT(*) AS total,
-            COUNT(*) FILTER (WHERE status = 'completed') AS completed,
-            COUNT(*) FILTER (WHERE status = 'failed') AS failed,
-            COUNT(*) FILTER (WHERE status = 'generating') AS generating
-        FROM trust_reports
-        WHERE user_id = :uid AND is_deleted = false AND created_at >= :since
+            COUNT(*) FILTER (WHERE LOWER(action_metadata->>'verdict') IN ('safe', 'low', 'allow', 'review', 'review_required', 'medium')) AS completed,
+            COUNT(*) FILTER (WHERE LOWER(action_metadata->>'verdict') IN ('critical', 'block')) AS failed,
+            COUNT(*) FILTER (WHERE LOWER(action_metadata->>'verdict') IN ('high_risk', 'high', 'warn')) AS warned
+        FROM audit_trails
+        WHERE user_id = :uid AND action_type = 'trust_evaluation' AND created_at >= :since
     """), {"uid": uid_val, "since": since}).fetchone()
-    total = row.total or 0
-    completed = row.completed or 0
-    failed = row.failed or 0
-    generating = row.generating or 0
+    total = eval_row.total or 0
+    completed = eval_row.completed or 0
+    failed = eval_row.failed or 0
+    generating = eval_row.warned or 0
 
     audit_total = db.execute(text("""
         SELECT COUNT(*) FROM audit_trails
@@ -46,8 +47,11 @@ async def get_summary(
     avg_latency = None
     try:
         avg_latency = db.execute(text("""
-            SELECT ROUND(AVG(latency_ms)::numeric, 1) FROM request_latency
-            WHERE user_id = :uid AND created_at >= :since
+            SELECT ROUND(AVG((action_metadata->>'total_latency_ms')::numeric), 1)
+            FROM audit_trails
+            WHERE user_id = :uid AND action_type = 'trust_evaluation'
+              AND action_metadata->>'total_latency_ms' IS NOT NULL
+              AND created_at >= :since
         """), {"uid": uid_val, "since": since}).scalar()
     except Exception:
         db.rollback()
@@ -59,7 +63,7 @@ async def get_summary(
         "failed": failed,
         "in_progress": generating,
         "total_audit_events": audit_total,
-        "approval_rate": round(completed / (completed + failed) * 100, 1) if (completed + failed) > 0 else 0,
+        "approval_rate": round(completed / total * 100, 1) if total > 0 else 0,
         "avg_latency_ms": float(avg_latency) if avg_latency else None,
     }
 
@@ -141,8 +145,15 @@ async def get_sdk_stats(
     for row in rows:
         meta = row[0] or {}
         v = meta.get("verdict", "")
-        if v in verdict_counts:
-            verdict_counts[v] += 1
+        verdict_map = {
+            "safe": "ALLOW", "low": "ALLOW",
+            "review_required": "REVIEW", "medium": "REVIEW",
+            "high_risk": "WARN", "high": "WARN",
+            "critical": "BLOCK",
+        }
+        normalized = verdict_map.get(v.lower(), v.upper()) if v else ""
+        if normalized in verdict_counts:
+            verdict_counts[normalized] += 1
         for pillar, score in (meta.get("pillar_scores") or {}).items():
             if pillar in pillar_totals and score is not None:
                 pillar_totals[pillar].append(score)
@@ -156,7 +167,7 @@ async def get_sdk_stats(
 
     return {
         "total_requests": total,
-        "avg_trust_score": round(score_sum / total, 4) if total else 0,
+        "avg_trust_score": round((score_sum / total) * 100, 1) if total else 0,
         "avg_latency_ms": total_latency // total if total else 0,
         "verdict_breakdown": verdict_counts,
         "pillar_averages": {

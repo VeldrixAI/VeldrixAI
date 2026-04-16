@@ -59,8 +59,7 @@ export default function ReportsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadReports();
+  const loadStats = useCallback(async () => {
     fetch("/api/analytics?path=summary&range=30d")
       .then((r) => r.json())
       .then((data) => setTotalEvaluations(data.total_evaluations ?? null))
@@ -72,6 +71,37 @@ export default function ReportsPage() {
         setAvgTrustScore(score != null ? Math.round(score) : null);
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadReports();
+    loadStats();
+  }, [loadReports, loadStats]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadReports();
+      loadStats();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [loadReports, loadStats]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadReports();
+      fetch("/api/analytics?path=summary&range=30d")
+        .then((r) => r.json())
+        .then((data) => setTotalEvaluations(data.total_evaluations ?? null))
+        .catch(() => {});
+      fetch("/api/analytics?path=sdk-stats&range=30d")
+        .then((r) => r.json())
+        .then((data) => {
+          const score = data.avg_trust_score;
+          setAvgTrustScore(score != null ? Math.round(score) : null);
+        })
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
   }, [loadReports]);
 
   // Click-outside dismisses delete confirmation

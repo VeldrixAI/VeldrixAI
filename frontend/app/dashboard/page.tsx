@@ -105,6 +105,12 @@ export default function DashboardPage() {
 
   useEffect(() => { load(range); }, [range]);
 
+  // Polling: refresh analytics every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => load(range), 30000);
+    return () => clearInterval(interval);
+  }, [range]);
+
   // SSE live updates
   useEffect(() => {
     const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "http://localhost:8001";
@@ -231,6 +237,7 @@ export default function DashboardPage() {
 
   // Trend vs prior period: compare first half vs second half of timeseries
   function calcTrend(field: "requests" | "approved" | "blocked"): string {
+    if (summary && summary.total_evaluations > 0) return "NEW ACTIVITY";
     if (timeseries.length < 2) return "NO DATA YET";
     const mid = Math.floor(timeseries.length / 2);
     const prev = timeseries.slice(0, mid).reduce((s, p) => s + p[field], 0);

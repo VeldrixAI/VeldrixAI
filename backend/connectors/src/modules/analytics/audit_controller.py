@@ -27,7 +27,29 @@ class InternalAuditRequest(BaseModel):
 @router.post("/internal/audit-trail", status_code=201, include_in_schema=False)
 def internal_log_audit(body: InternalAuditRequest, db: Session = Depends(get_db)):
     """Internal service-to-service audit logging. Called from core service."""
+<<<<<<< Updated upstream
     ts = build_audit_timestamps(body.user_timezone or "UTC")
+=======
+    meta = body.metadata or {}
+    request_id = meta.get("request_id")
+    actor = body.actor_email or body.user_id
+    logger.warning("internal_log_audit: saving request_id=%s user_id=%s actor=%s", request_id, body.user_id, actor)
+    
+    # Deduplication guard: skip if record with same request_id already exists for this user
+    if request_id and body.user_id:
+        try:
+            existing = db.query(AuditTrail).filter(
+                AuditTrail.request_id == request_id,
+                AuditTrail.user_id == UUID(body.user_id),
+                AuditTrail.action_type == body.action_type
+            ).first()
+            if existing:
+                logger.warning("internal_log_audit: SKIPPED duplicate request_id=%s db_id=%s", request_id, existing.id)
+                return {"ok": True, "id": str(existing.id), "duplicate": True}
+        except Exception as exc:
+            logger.error("internal_log_audit: deduplication check FAILED request_id=%s: %s", request_id, exc)
+    
+>>>>>>> Stashed changes
     entry = AuditTrail(
         user_id=UUID(body.user_id) if body.user_id else None,
         action_type=body.action_type,
@@ -165,6 +187,57 @@ async def delete_audit_trail(
     db.delete(record)
     db.commit()
 
+<<<<<<< Updated upstream
+=======
+    # Return cached result immediately without rate-limit check
+    if not force_refresh and request_id in _intelligence_cache:
+        cached, cached_at = _intelligence_cache[request_id]
+        if time.time() - cached_at < _CACHE_TTL:
+            return {**cached, "cached": True}
+
+    # Rate limit check (per user, keyed by user_id)
+    if not _check_rate_limit(uid):
+        if request_id in _intelligence_cache:
+            cached, _ = _intelligence_cache[request_id]
+            return {**cached, "cached": True, "rate_limited": True}
+        return {
+            "error": True,
+            "error_code": "RATE_LIMITED",
+            "message": "Intelligence rate limit reached. Please wait 60 seconds.",
+            "risk_thesis": None,
+            "recommendations": [],
+            "rate_limited": True,
+        }
+
+    result = await _get_intelligence(request_id, record, force=force_refresh)
+    return result
+
+
+# ── Delete endpoint ───────────────────────────────────────────────────────────
+
+@router.delete("/{log_id}")
+async def delete_audit_log(
+    log_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    uid = current_user["id"]
+    try:
+        record = db.query(AuditTrail).filter(
+            AuditTrail.id == log_id,
+            AuditTrail.user_id == uid,
+        ).first()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid record ID")
+    if not record:
+        raise HTTPException(status_code=404, detail="Audit record not found")
+    db.delete(record)
+    db.commit()
+    return {"ok": True}
+
+
+# ── CSV export endpoint ───────────────────────────────────────────────────────
+>>>>>>> Stashed changes
 
 @router.get("/export")
 async def export_csv(
