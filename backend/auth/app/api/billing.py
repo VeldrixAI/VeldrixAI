@@ -20,7 +20,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.vault import encrypt, decrypt
+from app.vault import encrypt, decrypt, hmac_stripe_customer_id
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +91,7 @@ def _get_or_create_customer(stripe_module, user: User, db: Session) -> str:
         metadata={"user_id": str(user.id)},
     )
     user.stripe_customer_id = encrypt(customer.id)
+    user.stripe_customer_id_lookup = hmac_stripe_customer_id(customer.id)
     db.commit()
     return customer.id
 
@@ -218,17 +219,15 @@ async def stripe_webhook(
 
 
 def _find_user_by_customer(customer_id: str, db: Session) -> User | None:
-    # AES-GCM is non-deterministic: each encryption of the same value produces a
-    # different ciphertext, so we cannot filter by encrypted column directly.
-    # Stripe webhook handlers are low-frequency, so a scan-and-decrypt is safe here.
-    users = db.query(User).filter(User.stripe_customer_id.isnot(None)).all()
-    for user in users:
-        try:
-            if decrypt(user.stripe_customer_id) == customer_id:
-                return user
-        except Exception:
-            pass
-    return None
+    # O(log n) lookup via the HMAC-SHA256 deterministic index column.
+    # The encrypted stripe_customer_id column remains the cryptographic source of truth;
+    # this column powers equality lookup only.
+    lookup_hash = hmac_stripe_customer_id(customer_id)
+    return (
+        db.query(User)
+        .filter(User.stripe_customer_id_lookup == lookup_hash)
+        .first()
+    )
 
 
 def _handle_checkout_completed(session: dict, db: Session) -> None:
@@ -249,6 +248,7 @@ def _handle_checkout_completed(session: dict, db: Session) -> None:
         return
 
     user.stripe_customer_id = encrypt(customer_id) if customer_id else None
+    user.stripe_customer_id_lookup = hmac_stripe_customer_id(customer_id) if customer_id else None
     user.subscription_id = encrypt(subscription_id) if subscription_id else None
     user.plan_tier = plan
     user.plan_status = "active"

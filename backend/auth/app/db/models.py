@@ -27,6 +27,12 @@ class User(Base):
 
     # Billing fields
     stripe_customer_id = Column(String, nullable=True, unique=True, index=True)
+    # Deterministic HMAC-SHA256 of the Stripe customer ID for O(log n) webhook lookup.
+    # Populated by the write paths in billing.py and backfilled by
+    # backend/auth/scripts/backfill_stripe_lookup_hash.py.
+    # NULL for users without a Stripe subscription — do NOT add NOT NULL constraint.
+    # Uniqueness enforced by a partial unique index (see migration).
+    stripe_customer_id_lookup = Column(String(64), nullable=True, index=True)
     subscription_id = Column(String, nullable=True, unique=True, index=True)
     plan_tier = Column(String, default="free", nullable=False)
     plan_status = Column(String, default="active", nullable=False)

@@ -7,6 +7,8 @@ Key source : VELDRIX_VAULT_KEY environment variable (base64-encoded 32 bytes)
 Encoding  : Encrypted values stored as base64(nonce + ciphertext + tag)
 """
 
+import hashlib
+import hmac as _hmac
 import os
 import base64
 import secrets
@@ -136,3 +138,75 @@ def generate_key() -> str:
         python -c "from app.vault import generate_key; print(generate_key())"
     """
     return base64.b64encode(secrets.token_bytes(32)).decode("utf-8")
+
+
+# ── HMAC-SHA256 for deterministic Stripe customer ID lookup ───────────────────
+# Purpose: enable O(log n) indexed lookup of stripe_customer_id without
+# exposing the plaintext to the index layer.
+#
+# Why HMAC over plain SHA256:
+#   Plain SHA256 is enumerable — an attacker with DB access could precompute
+#   hashes for all known Stripe customer ID formats (cus_xxxx).
+#   HMAC-SHA256 with a server-side secret prevents this offline dictionary attack.
+#
+# Key lifecycle:
+#   STRIPE_CUSTOMER_HASH_KEY is loaded here (vault module = sole secret boundary).
+#   Rotating this key requires re-running the backfill script:
+#     backend/auth/scripts/backfill_stripe_lookup_hash.py
+#   The encrypted stripe_customer_id column remains the source of truth.
+#
+# The hash is a 64-char hex string — safe for VARCHAR(64) columns.
+
+_HASH_KEY_ENV_VAR = "STRIPE_CUSTOMER_HASH_KEY"
+
+
+def _load_hash_key() -> bytes:
+    """
+    Load the 32-byte HMAC key for Stripe customer ID lookup hashing.
+    Auto-generates and warns if absent (so dev environments work without config).
+    In production, this must be explicitly set and rotated via the backfill script.
+    """
+    raw = os.environ.get(_HASH_KEY_ENV_VAR)
+    if not raw:
+        import logging
+        logging.getLogger(__name__).warning(
+            "[VeldrixAI Vault] %s is not set. "
+            "Stripe customer lookup hashing will use an ephemeral key — "
+            "set this to a stable base64-encoded 32-byte value in production. "
+            "Generate: python -c \"import secrets,base64; "
+            "print(base64.b64encode(secrets.token_bytes(32)).decode())\"",
+            _HASH_KEY_ENV_VAR,
+        )
+        return secrets.token_bytes(32)  # ephemeral fallback — safe for dev, breaks on restart
+    try:
+        key = base64.b64decode(raw)
+    except Exception:
+        raise RuntimeError(
+            f"[VeldrixAI Vault] {_HASH_KEY_ENV_VAR} is not valid base64."
+        )
+    if len(key) < 32:
+        raise RuntimeError(
+            f"[VeldrixAI Vault] {_HASH_KEY_ENV_VAR} must decode to at least 32 bytes "
+            f"(got {len(key)})."
+        )
+    return key
+
+
+_HMAC_KEY: bytes = _load_hash_key()
+
+
+def hmac_stripe_customer_id(stripe_customer_id: str) -> str:
+    """
+    Deterministic, keyed hash of a Stripe customer ID for indexed lookup.
+
+    Used ONLY for the stripe_customer_id_lookup index column.
+    The source of truth for the customer ID remains the AES-256-GCM
+    encrypted stripe_customer_id column.
+
+    Returns a 64-character lowercase hex string (safe for VARCHAR(64)).
+    """
+    return _hmac.new(
+        _HMAC_KEY,
+        stripe_customer_id.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
