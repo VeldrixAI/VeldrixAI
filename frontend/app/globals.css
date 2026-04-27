@@ -1377,6 +1377,12 @@ textarea {
   animation: incidentPulse 2s ease-in-out infinite;
 }
 
+/* Violet pulse skeleton — used while live API data loads */
+@keyframes vx-skeleton {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
 /* Dashboard app shell overrides */
 .vx-app-shell {
   display: flex;

@@ -78,9 +78,13 @@ export default function DashboardPage() {
   const [auditTotal, setAuditTotal] = useState(0);
   const [feedIdx, setFeedIdx] = useState(0);
   const [feedVisible, setFeedVisible] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const prevSummaryRef = useRef<Summary | null>(null);
 
   async function load(r: TimeRange) {
+    setLoading(true);
+    setLoadError("");
     try {
       const [s, ts, oc, sdk, auditData] = await Promise.all([
         fetch(`/api/analytics?path=summary&range=${r}`).then((x) => x.json()),
@@ -100,7 +104,11 @@ export default function DashboardPage() {
         setAuditRows(auditData.records);
         setAuditTotal(auditData.total ?? 0);
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(range); }, [range]);
@@ -285,56 +293,75 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ── Error banner ── */}
+        {loadError && (
+          <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.25)", borderRadius: "12px", color: "#f43f5e", fontFamily: "DM Sans, sans-serif", fontSize: "13px", marginBottom: "24px" }}>
+            {loadError}
+          </div>
+        )}
+
         {/* ── 4 Metric cards ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
-          {/* Card 1 */}
-          <MetricCard
-            animClass="mr-1"
-            label="Total Audited"
-            valueId="stat-total"
-            valueDefault={totalDisplay}
-            valueColor="#7c3aed"
-            trendColor="#10b981"
-            trendIcon={<TrendUp />}
-            trendText={totalTrend}
-            bgIcon={<BigBarChart />}
-          />
-          {/* Card 2 */}
-          <MetricCard
-            animClass="mr-2"
-            label="Violations"
-            valueId="stat-violations"
-            valueDefault={violationsDisplay}
-            valueColor="#f43f5e"
-            trendColor="#f43f5e"
-            trendIcon={<TrendAlert />}
-            trendText={violationsTrend}
-            bgIcon={<BigAlert />}
-          />
-          {/* Card 3 */}
-          <MetricCard
-            animClass="mr-3"
-            label="Avg Latency"
-            valueId={null}
-            valueDefault={latencyDisplay}
-            valueColor={latencyOk ? "rgba(240,242,255,0.8)" : "#f43f5e"}
-            trendColor="rgba(240,242,255,0.3)"
-            trendIcon={null}
-            trendText={latencyOk ? "OPTIMIZED PERFORMANCE" : "HIGH LATENCY DETECTED"}
-            bgIcon={<BigClock />}
-          />
-          {/* Card 4 */}
-          <MetricCard
-            animClass="mr-4"
-            label="Compliance"
-            valueId="stat-compliance"
-            valueDefault={complianceDisplay}
-            valueColor="#10b981"
-            trendColor="#10b981"
-            trendIcon={null}
-            trendText={complianceTrend}
-            bgIcon={<BigShield />}
-          />
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="glass-panel" style={{ padding: "22px", borderRadius: "20px", background: "rgba(13,15,26,0.65)" }}>
+                <div style={{ height: "10px", width: "60%", borderRadius: "6px", background: "rgba(124,58,237,0.08)", animation: "vx-skeleton 1.4s ease-in-out infinite", marginBottom: "12px" }} />
+                <div style={{ height: "28px", width: "45%", borderRadius: "6px", background: "rgba(124,58,237,0.08)", animation: "vx-skeleton 1.4s ease-in-out infinite" }} />
+                <div style={{ height: "9px", width: "75%", borderRadius: "6px", background: "rgba(124,58,237,0.08)", animation: "vx-skeleton 1.4s ease-in-out infinite", marginTop: "16px" }} />
+              </div>
+            ))
+          ) : (
+            <>
+              {/* Card 1 */}
+              <MetricCard
+                animClass="mr-1"
+                label="Total Audited"
+                valueId="stat-total"
+                valueDefault={totalDisplay}
+                valueColor="#7c3aed"
+                trendColor="#10b981"
+                trendIcon={<TrendUp />}
+                trendText={totalTrend}
+                bgIcon={<BigBarChart />}
+              />
+              {/* Card 2 */}
+              <MetricCard
+                animClass="mr-2"
+                label="Violations"
+                valueId="stat-violations"
+                valueDefault={violationsDisplay}
+                valueColor="#f43f5e"
+                trendColor="#f43f5e"
+                trendIcon={<TrendAlert />}
+                trendText={violationsTrend}
+                bgIcon={<BigAlert />}
+              />
+              {/* Card 3 */}
+              <MetricCard
+                animClass="mr-3"
+                label="Avg Latency"
+                valueId={null}
+                valueDefault={latencyDisplay}
+                valueColor={latencyOk ? "rgba(240,242,255,0.8)" : "#f43f5e"}
+                trendColor="rgba(240,242,255,0.3)"
+                trendIcon={null}
+                trendText={latencyOk ? "OPTIMIZED PERFORMANCE" : "HIGH LATENCY DETECTED"}
+                bgIcon={<BigClock />}
+              />
+              {/* Card 4 */}
+              <MetricCard
+                animClass="mr-4"
+                label="Compliance"
+                valueId="stat-compliance"
+                valueDefault={complianceDisplay}
+                valueColor="#10b981"
+                trendColor="#10b981"
+                trendIcon={null}
+                trendText={complianceTrend}
+                bgIcon={<BigShield />}
+              />
+            </>
+          )}
         </div>
 
         {/* ── Traffic Velocity Bar Chart ── */}

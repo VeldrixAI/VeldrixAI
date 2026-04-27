@@ -800,8 +800,8 @@ export default function AuditDetailPage() {
               <MetaField label="IP Address" value={detail?.ip_address || "—"} mono />
               <MetaField label="Timestamp" value={fmtTs(detail?.created_at || null)} mono />
               {detail?.total_latency_ms != null && <MetaField label="Latency" value={`${detail.total_latency_ms}ms`} mono />}
-              {(detail?.metadata as Record<string, unknown>)?.sdk_version && (
-                <MetaField label="SDK Version" value={(detail?.metadata as Record<string, unknown>)?.sdk_version as string} mono />
+              {typeof (detail?.metadata as Record<string, unknown>)?.sdk_version === "string" && (
+                <MetaField label="SDK Version" value={(detail?.metadata as Record<string, unknown>).sdk_version as string} mono />
               )}
             </div>
           )}
