@@ -21,6 +21,22 @@ class Settings:
     # Leave empty to run in dev/demo mode (no auth enforced).
     VELDRIX_INTERNAL_API_KEY: str = os.getenv("VELDRIX_INTERNAL_API_KEY", "")
 
+    # ── Circuit Breaker Backend ────────────────────────────────────────────────
+    # "redis"  — shared state across all uvicorn workers (production default)
+    # "memory" — per-worker in-process state (requires no additional infra)
+    #
+    # When backend=redis and Redis is unreachable, the service automatically
+    # degrades to in-process mode and logs a WARNING. The inference pipeline
+    # never fails due to Redis unavailability.
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CIRCUIT_BREAKER_BACKEND: str = os.getenv("CIRCUIT_BREAKER_BACKEND", "memory")
+    CIRCUIT_BREAKER_REDIS_KEY_PREFIX: str = os.getenv(
+        "CIRCUIT_BREAKER_REDIS_KEY_PREFIX", "veldrix:cb"
+    )
+    CIRCUIT_BREAKER_FALLBACK_AFTER_FAILURES: int = int(
+        os.getenv("CIRCUIT_BREAKER_FALLBACK_AFTER_FAILURES", "5")
+    )
+
 
 @lru_cache()
 def get_settings() -> Settings:

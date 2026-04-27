@@ -60,6 +60,11 @@ async def warmup() -> None:
 
     await initialize_router()
     await init_internal_pool()
+
+    # Initialise circuit breaker backend (Redis or in-process per config)
+    from src.inference.circuit_breaker import initialize_backend  # noqa: PLC0415
+    await initialize_backend()
+
     logger.info("[Startup] VeldrixAI inference router and internal HTTP pool ready.")
 
 

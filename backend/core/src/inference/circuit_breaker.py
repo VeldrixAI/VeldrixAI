@@ -5,12 +5,13 @@ Implements a three-state machine per provider:
   OPEN      — provider is failing; requests are skipped until recovery timeout
   HALF_OPEN — testing recovery; limited requests are allowed through
 
-Circuit state is stored in a module-level dict keyed by provider name.
+The active backend is selected at startup by `initialize_backend()`:
+  CIRCUIT_BREAKER_BACKEND=redis   → RedisCircuitBreaker (shared across workers)
+  CIRCUIT_BREAKER_BACKEND=memory  → in-process _ProviderCircuit dict (default)
 
-TODO: Replace the in-process state dict with a Redis-backed implementation
-for multi-worker (e.g. Gunicorn / uvicorn --workers > 1) deployments.
-Each worker currently maintains an independent circuit state, which means
-the effective failure threshold is CIRCUIT_FAILURE_THRESHOLD × num_workers.
+The in-process implementation is always kept as the documented Redis fallback.
+When Redis is unreachable, RedisCircuitBreaker transparently degrades to
+in-process mode and logs a WARNING.
 """
 
 from __future__ import annotations
@@ -133,3 +134,63 @@ def get_all_states() -> Dict[str, str]:
         provider.name: _get_circuit(provider.name).state.value
         for provider in get_active_providers()
     }
+
+
+# ── Async unified interface — used by router.py ───────────────────────────────
+# When the Redis backend is initialised, these delegate to it.
+# Otherwise they wrap the synchronous in-process implementation.
+
+from typing import Optional as _Optional, TYPE_CHECKING as _TYPE_CHECKING
+if _TYPE_CHECKING:
+    from src.inference.circuit_breaker_redis import RedisCircuitBreaker
+
+_redis_backend: "_Optional[RedisCircuitBreaker]" = None
+
+
+async def initialize_backend(settings=None) -> None:
+    """
+    Wire the active circuit breaker backend based on config.
+    Called from startup.warmup() after environment is loaded.
+    """
+    global _redis_backend
+    if settings is None:
+        from src.config import get_settings
+        settings = get_settings()
+
+    if settings.CIRCUIT_BREAKER_BACKEND == "redis":
+        from src.inference.circuit_breaker_redis import initialize as _init_redis
+        _redis_backend = await _init_redis(settings.REDIS_URL)
+        logger.info("[CircuitBreaker] Backend=redis (url=%s)", settings.REDIS_URL)
+    else:
+        _redis_backend = None
+        logger.info("[CircuitBreaker] Backend=memory (in-process)")
+
+
+async def async_is_available(provider_name: str) -> bool:
+    """Async: return True if provider circuit is CLOSED or HALF_OPEN."""
+    if _redis_backend is not None:
+        return await _redis_backend.is_available(provider_name)
+    return is_available(provider_name)
+
+
+async def async_record_success(provider_name: str) -> None:
+    """Async: record a successful inference call."""
+    if _redis_backend is not None:
+        await _redis_backend.record_success(provider_name)
+    else:
+        record_success(provider_name)
+
+
+async def async_record_failure(provider_name: str) -> None:
+    """Async: record a failed inference call."""
+    if _redis_backend is not None:
+        await _redis_backend.record_failure(provider_name)
+    else:
+        record_failure(provider_name)
+
+
+async def async_get_all_states() -> Dict[str, str]:
+    """Async: return {provider_name: state} for all active providers."""
+    if _redis_backend is not None:
+        return await _redis_backend.get_all_states()
+    return get_all_states()

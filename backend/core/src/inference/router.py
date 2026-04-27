@@ -25,6 +25,11 @@ from typing import Optional
 import httpx
 
 from src.inference import circuit_breaker
+from src.inference.circuit_breaker import (
+    async_is_available as _cb_is_available,
+    async_record_success as _cb_record_success,
+    async_record_failure as _cb_record_failure,
+)
 from src.inference.exceptions import InferenceExhaustedError
 from src.inference.providers import ProviderConfig, get_active_providers
 
@@ -241,7 +246,7 @@ async def route_inference(
     providers_attempted: list[str] = []
 
     for provider in providers:
-        if not circuit_breaker.is_available(provider.name):
+        if not await _cb_is_available(provider.name):
             logger.info(
                 "[VELDRIX ROUTER] pillar=%s provider=%s status=skipped reason=circuit_open",
                 pillar_name,
@@ -272,7 +277,7 @@ async def route_inference(
                     content = await asyncio.wait_for(_call, timeout=_PROBE_TIMEOUT_S)
                 else:
                     content = await _call
-                circuit_breaker.record_success(provider.name)
+                await _cb_record_success(provider.name)
                 return content, provider.name
 
             except asyncio.TimeoutError:
@@ -284,7 +289,7 @@ async def route_inference(
                     provider.name,
                     _PROBE_TIMEOUT_S,
                 )
-                circuit_breaker.record_failure(provider.name)
+                await _cb_record_failure(provider.name)
                 break  # move to next provider immediately
 
             except _CredentialError:
@@ -310,7 +315,7 @@ async def route_inference(
                     await asyncio.sleep(delay)
                 else:
                     # All retries for this provider exhausted — trip the breaker
-                    circuit_breaker.record_failure(provider.name)
+                    await _cb_record_failure(provider.name)
 
             except Exception as exc:
                 logger.warning(
@@ -319,7 +324,7 @@ async def route_inference(
                     provider.name,
                     type(exc).__name__,
                 )
-                circuit_breaker.record_failure(provider.name)
+                await _cb_record_failure(provider.name)
                 break  # unexpected error — skip to next provider
 
     raise InferenceExhaustedError(

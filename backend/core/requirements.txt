@@ -22,11 +22,18 @@ httpx[http2]>=0.27.0
 # DigitalOcean/Linux production: add --loop uvloop to the uvicorn command.
 uvloop>=0.21.0; sys_platform != "win32"
 
+# ── Redis (distributed circuit breaker) ──────────────────────────────────────
+# redis[hiredis] — async client via redis.asyncio; hiredis C parser for throughput.
+# NOT aioredis (deprecated since redis-py 4.x absorbed it).
+redis[hiredis]>=5.0.0
+
 # ── Testing ────────────────────────────────────────────────────────────────────
 # pytest-asyncio: async coroutine test runner
 # respx:          httpx request mock/intercept (no live NIM API calls in tests)
 # pytest-mock:    general mock/patch utilities
+# fakeredis:      in-process Redis emulation for circuit breaker tests (no Redis server needed)
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 respx>=0.21.0
 pytest-mock>=3.14.0
+fakeredis>=2.23.0

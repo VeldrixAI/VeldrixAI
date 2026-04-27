@@ -183,3 +183,56 @@ async def health_providers() -> dict:
         "evaluation_capability": evaluation_capable,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+
+@router.get(
+    "/health/circuit-breaker",
+    summary="Distributed circuit breaker state across all providers",
+    description=(
+        "Returns the live circuit breaker state for all configured inference "
+        "providers, plus the active backend (redis|memory) and whether Redis "
+        "fallback mode is currently active. "
+        "Public endpoint — no authentication required."
+    ),
+)
+async def health_circuit_breaker() -> dict:
+    """
+    GET /api/v1/health/circuit-breaker
+
+    Response shape:
+      {
+        "backend": "redis" | "memory",
+        "redis_fallback_active": false,
+        "providers": {
+          "nvidia_nim": "CLOSED",
+          "groq":       "OPEN",
+          "bedrock":    "excluded",
+          "oss_fallback": "excluded"
+        },
+        "timestamp": "2026-03-25T10:00:00Z"
+      }
+    """
+    from src.inference.providers import get_active_providers   # noqa: PLC0415
+    from src.inference import circuit_breaker as cb            # noqa: PLC0415
+    from src.config import get_settings                        # noqa: PLC0415
+
+    settings = get_settings()
+    active_names = {p.name for p in get_active_providers()}
+    _ALL = {"nvidia_nim", "groq", "bedrock", "oss_fallback"}
+
+    live_states = await cb.async_get_all_states()
+    provider_states: dict[str, str] = {}
+    for name in _ALL:
+        provider_states[name] = live_states.get(name, "CLOSED") if name in active_names else "excluded"
+
+    # Report Redis fallback status
+    redis_fallback = False
+    if cb._redis_backend is not None:
+        redis_fallback = cb._redis_backend._fallback_mode
+
+    return {
+        "backend": settings.CIRCUIT_BREAKER_BACKEND,
+        "redis_fallback_active": redis_fallback,
+        "providers": provider_states,
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
