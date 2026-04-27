@@ -15,7 +15,10 @@ from typing import Optional
 import httpx
 
 from veldrixai.models     import TrustResult, PillarScore, GuardConfig
-from veldrixai.exceptions import VeldrixAuthError, VeldrixAPIError, VeldrixTimeoutError
+from veldrixai.exceptions import (
+    VeldrixAuthError, VeldrixAPIError, VeldrixTimeoutError, VeldrixServiceUnavailableError,
+)
+from veldrixai._transport.rate_limiter import TokenBucket, BoundedDispatchQueue, ClientCircuitBreaker
 
 logger = logging.getLogger("veldrix.transport")
 
@@ -33,12 +36,42 @@ def _sdk_version() -> str:
 
 
 class Transport:
-    def __init__(self, api_key: str, base_url: str, timeout_ms: int = 10_000):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str,
+        timeout_ms: int = 10_000,
+        rate_limit_rps: float = 100.0,
+        rate_limit_burst: float = 200.0,
+        queue_max_size: int = 10_000,
+        queue_overflow_policy: str = "drop_oldest",
+        client_breaker_threshold: int = 10,
+        client_breaker_recovery_seconds: float = 30.0,
+    ):
         self._api_key  = api_key
         self._base_url = base_url.rstrip("/")
         self._timeout  = timeout_ms / 1000
         self._client: Optional[httpx.AsyncClient] = None
         self._lock = threading.Lock()
+        # Rate limiting primitives
+        self._bucket = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_rps)
+        self._queue  = BoundedDispatchQueue(max_size=queue_max_size, on_overflow=queue_overflow_policy)
+        self._breaker = ClientCircuitBreaker(
+            threshold=client_breaker_threshold,
+            recovery_seconds=client_breaker_recovery_seconds,
+        )
+
+    def stats(self) -> dict:
+        """Live counters for observability."""
+        q = self._queue.stats()
+        b = self._breaker.stats()
+        return {
+            "queue_depth":          q["depth"],
+            "queue_dropped_total":  q["dropped_total"],
+            "rate_limited_total":   self._bucket.throttle_count,
+            "breaker_state":        b["breaker_state"],
+            "breaker_trips_total":  b["breaker_trips_total"],
+        }
 
     def _get_client(self) -> httpx.AsyncClient:
         """
@@ -95,6 +128,29 @@ class Transport:
         The degraded TrustResult has verdict="UNKNOWN" and overall=0.0.
         It is always distinguishable: trust.is_degraded == True.
         """
+        # Client-side circuit breaker check
+        if self._breaker.is_open():
+            self._breaker.record_drop()
+            if not config.background:
+                raise VeldrixServiceUnavailableError(
+                    "VeldrixAI client circuit breaker is OPEN — backend is degraded. "
+                    f"Retry after {self._breaker._recovery}s or check veldrix.stats()."
+                )
+            logger.debug("veldrix breaker OPEN: dropping background evaluation")
+            return _degraded_trust_result("client_breaker_open")
+
+        # Token bucket rate limiting
+        token_timeout = self._timeout if not config.background else 5.0
+        acquired = await self._bucket.acquire(timeout=token_timeout)
+        if not acquired:
+            if not config.background:
+                from veldrixai.exceptions import VeldrixRateLimitError
+                raise VeldrixRateLimitError(
+                    f"VeldrixAI rate limit exceeded ({self._bucket._refill_rate:.0f} RPS). "
+                    "Reduce request rate or increase rate_limit_rps."
+                )
+            return _degraded_trust_result("rate_limited")
+
         return await self.evaluate_with_client(self._get_client(), prompt, response, config)
 
     async def evaluate_with_client(
@@ -146,16 +202,20 @@ class Transport:
                 resp.raise_for_status()
 
                 data = resp.json()
-                return _parse_trust_result(data, int((time.monotonic() - t0) * 1000))
+                result = _parse_trust_result(data, int((time.monotonic() - t0) * 1000))
+                self._breaker.record_success()
+                return result
 
             except VeldrixAuthError:
                 raise
             except httpx.TimeoutException as e:
                 logger.warning("VeldrixAI timeout attempt %d: %s", attempt + 1, e)
+                self._breaker.record_failure()
                 last_exc = e
                 await asyncio.sleep(BASE_BACKOFF * (2 ** attempt))
             except Exception as e:
                 logger.warning("VeldrixAI transport error attempt %d: %s", attempt + 1, e)
+                self._breaker.record_failure()
                 last_exc = e
                 await asyncio.sleep(BASE_BACKOFF * (2 ** attempt))
 

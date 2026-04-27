@@ -64,9 +64,18 @@ class Veldrix:
     def __init__(
         self,
         api_key:    str,
-        base_url:   str  = DEFAULT_BASE_URL,
-        timeout_ms: int  = 10_000,
-        background: bool = True,
+        base_url:   str   = DEFAULT_BASE_URL,
+        timeout_ms: int   = 10_000,
+        background: bool  = True,
+        # Rate limiting — defaults are high enough to be invisible for typical usage
+        rate_limit_rps:   float = 100.0,
+        rate_limit_burst: float = 200.0,
+        # Background dispatch queue
+        queue_max_size:        int = 10_000,
+        queue_overflow_policy: str = "drop_oldest",
+        # Client-side circuit breaker
+        client_breaker_threshold:        int   = 10,
+        client_breaker_recovery_seconds: float = 30.0,
         **kwargs,
     ):
         if not api_key:
@@ -88,9 +97,33 @@ class Veldrix:
                 "  VeldrixAI API keys start with 'vx-live-' or 'vx-test-'.\n"
                 "  Get your key at: https://app.veldrix.ai/settings/api-keys"
             )
-        self._transport   = Transport(api_key, base_url, timeout_ms)
+        self._transport   = Transport(
+            api_key, base_url, timeout_ms,
+            rate_limit_rps=rate_limit_rps,
+            rate_limit_burst=rate_limit_burst,
+            queue_max_size=queue_max_size,
+            queue_overflow_policy=queue_overflow_policy,
+            client_breaker_threshold=client_breaker_threshold,
+            client_breaker_recovery_seconds=client_breaker_recovery_seconds,
+        )
         self._default_cfg = GuardConfig(background=background, **kwargs)
         logger.info("VeldrixAI initialised (background=%s, base_url=%s)", background, base_url)
+
+    def stats(self) -> dict:
+        """
+        Return live SDK counters for observability.
+
+        Usage:
+            print(veldrix.stats())
+            # {
+            #   "queue_depth": 0,
+            #   "queue_dropped_total": 0,
+            #   "rate_limited_total": 0,
+            #   "breaker_state": "CLOSED",
+            #   "breaker_trips_total": 0,
+            # }
+        """
+        return self._transport.stats()
 
     @classmethod
     def from_env(
@@ -118,7 +151,20 @@ class Veldrix:
                 "  Get your key at: https://app.veldrix.ai/settings/api-keys"
             )
         base_url = os.environ.get(base_url_env, DEFAULT_BASE_URL)
-        return cls(api_key=api_key, base_url=base_url, **kwargs)
+        # Rate limit config from environment — all optional, defaults match constructor
+        rate_limit_rps = float(os.environ.get("VELDRIX_RATE_LIMIT_RPS", "100"))
+        rate_limit_burst = float(os.environ.get("VELDRIX_RATE_LIMIT_BURST", "200"))
+        queue_max_size = int(os.environ.get("VELDRIX_QUEUE_MAX_SIZE", "10000"))
+        queue_overflow_policy = os.environ.get("VELDRIX_QUEUE_OVERFLOW_POLICY", "drop_oldest")
+        return cls(
+            api_key=api_key,
+            base_url=base_url,
+            rate_limit_rps=rate_limit_rps,
+            rate_limit_burst=rate_limit_burst,
+            queue_max_size=queue_max_size,
+            queue_overflow_policy=queue_overflow_policy,
+            **kwargs,
+        )
 
     # ── @veldrix.guard and @veldrix.guard(config=...) ────────────────────────
 

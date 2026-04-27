@@ -27,3 +27,21 @@ class VeldrixBlockError(VeldrixError):
         except VeldrixBlockError as e:
             return "I can't help with that."
     """
+
+
+class VeldrixRateLimitError(VeldrixError):
+    """
+    Raised in sync mode (background=False) when the dispatch queue is full and
+    queue_overflow_policy='raise'. Background mode never raises this — it drops
+    and increments sdk.stats()['queue_dropped_total'] instead.
+    """
+
+
+class VeldrixServiceUnavailableError(VeldrixError):
+    """
+    Raised in sync mode (background=False) when the client-side circuit breaker
+    is OPEN (too many consecutive backend failures). Background mode silently
+    drops the request and increments sdk.stats()['breaker_dropped_total'].
+
+    The breaker resets after client_breaker_recovery_seconds.
+    """
