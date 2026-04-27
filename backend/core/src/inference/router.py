@@ -34,6 +34,22 @@ logger = logging.getLogger(__name__)
 _TRANSIENT_ERROR_STATUSES = frozenset({429, 500, 502, 503, 504})
 _CREDENTIAL_ERROR_STATUSES = frozenset({401, 403})
 
+# ── Connection pool configuration ────────────────────────────────────────────
+# 20 max connections per provider: supports 5 pillars × 2 concurrent requests
+# with headroom.  Keepalive at 30s keeps warm connections for back-to-back
+# evaluations without paying TCP+TLS setup cost again.
+_HTTP_LIMITS = httpx.Limits(
+    max_connections=20,
+    max_keepalive_connections=10,
+    keepalive_expiry=30.0,
+)
+
+# Fast-fail probe timeout for the PRIMARY provider (priority=1, NVIDIA NIM).
+# If a single inference call exceeds this threshold, the circuit breaker records
+# a failure and the request routes immediately to the next provider.
+# Configurable via VELDRIX_PROBE_TIMEOUT_S (default 3.0s).
+_PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "1.0"))
+
 # ── Module-level connection pool (one client per provider) ───────────────────
 _clients: dict[str, httpx.AsyncClient] = {}
 
@@ -57,6 +73,8 @@ def _get_or_create_client(provider: ProviderConfig) -> httpx.AsyncClient:
             base_url=provider.base_url,
             headers=headers,
             timeout=httpx.Timeout(provider.timeout_seconds),
+            limits=_HTTP_LIMITS,
+            http2=True,
         )
         logger.info(
             "[VELDRIX ROUTER] HTTP client initialised for provider=%s base_url=%s",
@@ -155,6 +173,26 @@ async def _call_provider(
             response=resp,
         )
 
+    # 4xx client errors that are not auth (401/403) or rate-limit (429) are
+    # non-retryable — retrying a bad request wastes time and trips the circuit
+    # breaker incorrectly.  Log the body (truncated) so the error is diagnosable,
+    # then skip to the next provider without touching the breaker.
+    if 400 <= resp.status_code < 500:
+        try:
+            error_body = resp.text[:400]
+        except Exception:
+            error_body = "<unreadable>"
+        logger.error(
+            "[VELDRIX ROUTER] pillar=%s provider=%s status=failed reason=client_error "
+            "http=%d model=%r body=%r — check provider model name / request format",
+            pillar_name,
+            provider.name,
+            resp.status_code,
+            model,
+            error_body,
+        )
+        raise _CredentialError(f"HTTP {resp.status_code} client error from {provider.name}")
+
     resp.raise_for_status()
 
     data = resp.json()
@@ -212,11 +250,12 @@ async def route_inference(
             continue
 
         providers_attempted.append(provider.name)
-        initial_delay = 0.5  # seconds; doubles per retry
+        # Reduced from 0.5 s — a 500 ms sleep before retry breaks sub-200 ms p50.
+        initial_delay = 0.1  # seconds; doubles per retry
 
         for attempt in range(1, provider.max_retries + 1):
             try:
-                content = await _call_provider(
+                _call = _call_provider(
                     provider=provider,
                     messages=messages,
                     temperature=temperature,
@@ -225,8 +264,28 @@ async def route_inference(
                     pillar_name=pillar_name,
                     attempt=attempt,
                 )
+                # Apply probe timeout to the primary provider only.
+                # If NIM is degraded and responds slowly, fail THIS request
+                # fast and route to Groq while the circuit breaker accumulates
+                # failures in the background.
+                if provider.priority == 1:
+                    content = await asyncio.wait_for(_call, timeout=_PROBE_TIMEOUT_S)
+                else:
+                    content = await _call
                 circuit_breaker.record_success(provider.name)
                 return content, provider.name
+
+            except asyncio.TimeoutError:
+                # Probe timeout exceeded on primary — trip breaker, skip retries.
+                logger.warning(
+                    "[VELDRIX ROUTER] pillar=%s provider=%s status=failed "
+                    "reason=probe_timeout_%.1fs",
+                    pillar_name,
+                    provider.name,
+                    _PROBE_TIMEOUT_S,
+                )
+                circuit_breaker.record_failure(provider.name)
+                break  # move to next provider immediately
 
             except _CredentialError:
                 # Config error — skip provider entirely, do not trip circuit breaker

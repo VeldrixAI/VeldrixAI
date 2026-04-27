@@ -271,7 +271,7 @@ export default function DashboardPage() {
                   fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", border: "none",
                   background: range === r ? "#7c3aed" : "rgba(255,255,255,0.03)",
                   color: range === r ? "white" : "rgba(240,242,255,0.4)",
-                  cursor: "pointer", transition: "all 0.15s",
+                  cursor: "pointer", transition: "color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s",
                   borderRight: r !== "30d" ? "1px solid rgba(124,58,237,0.12)" : "none",
                 }}>
                   {r}
@@ -486,7 +486,7 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ display: "flex", gap: "6px", marginTop: "16px" }}>
                       {liveFeedItems.map((_, fi) => (
-                        <div key={fi} style={{ width: fi === feedIdx % liveFeedItems.length ? "16px" : "6px", height: "6px", borderRadius: "3px", background: fi === feedIdx % liveFeedItems.length ? "#7c3aed" : "rgba(255,255,255,0.1)", transition: "all 0.3s" }}/>
+                        <div key={fi} style={{ width: fi === feedIdx % liveFeedItems.length ? "16px" : "6px", height: "6px", borderRadius: "3px", background: fi === feedIdx % liveFeedItems.length ? "#7c3aed" : "rgba(255,255,255,0.1)", transition: "width 0.3s, background-color 0.3s, opacity 0.3s" }}/>
                       ))}
                     </div>
                   </>
@@ -525,7 +525,7 @@ function MetricCard({ animClass, label, valueId, valueDefault, valueColor, trend
       onMouseLeave={() => setHov(false)}
       style={{
         padding: "22px", borderRadius: "20px", position: "relative", overflow: "hidden",
-        transition: "all 0.3s",
+        transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s",
         boxShadow: hov ? "0 8px 32px rgba(124,58,237,0.1)" : undefined,
         background: hov ? "rgba(255,255,255,0.04)" : "rgba(13,15,26,0.65)",
       }}
@@ -574,7 +574,7 @@ function GlassButton({ children }: { children: React.ReactNode }) {
         padding: "9px 16px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "7px",
         fontFamily: "DM Sans, sans-serif", fontSize: "12px", fontWeight: 600,
         color: hov ? "#f0f2ff" : "rgba(240,242,255,0.7)", cursor: "pointer",
-        border: "1px solid rgba(255,255,255,0.08)", transition: "all 0.2s", background: "none",
+        border: "1px solid rgba(255,255,255,0.08)", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s", background: "none",
       }}
     >
       {children}

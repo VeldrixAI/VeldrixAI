@@ -245,7 +245,7 @@ export default function PromptArchitectPage() {
               border: `2px dashed ${dragOver ? "rgba(124,58,237,0.5)" : pdfFile ? "rgba(6,182,212,0.4)" : "rgba(255,255,255,0.1)"}`,
               borderRadius: "14px", padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               background: dragOver ? "rgba(124,58,237,0.06)" : pdfFile ? "rgba(6,182,212,0.06)" : "rgba(255,255,255,0.02)",
-              cursor: pdfFile ? "default" : "pointer", transition: "all 0.3s",
+              cursor: pdfFile ? "default" : "pointer", transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s",
             }}
           >
             <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}/>
@@ -399,7 +399,7 @@ export default function PromptArchitectPage() {
                   background: canGenerate ? "linear-gradient(135deg, #9f67ff 0%, #7c3aed 50%, #4f46e5 100%)" : "rgba(255,255,255,0.06)",
                   color: canGenerate ? "white" : "rgba(240,242,255,0.3)",
                   border: "none", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "13px",
-                  cursor: canGenerate ? "pointer" : "not-allowed", transition: "all 0.2s",
+                  cursor: canGenerate ? "pointer" : "not-allowed", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                   boxShadow: canGenerate ? "0 4px 20px rgba(124,58,237,0.3)" : "none",
                 }}
               >
@@ -453,7 +453,7 @@ export default function PromptArchitectPage() {
                     <button key={tab} onClick={() => setActiveTab(tab)} style={{
                       flex: 1, padding: "11px 8px", border: "none", cursor: "pointer",
                       fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "10px",
-                      letterSpacing: "1.5px", textTransform: "uppercase", transition: "all 0.2s",
+                      letterSpacing: "1.5px", textTransform: "uppercase", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                       background: activeTab === tab ? meta.bg : "transparent",
                       color: activeTab === tab ? meta.color : "rgba(240,242,255,0.3)",
                       borderBottom: activeTab === tab ? `2px solid ${meta.color}` : "2px solid transparent",
@@ -591,7 +591,7 @@ function PolicBentoCard({ icon, title, children }: { icon: React.ReactNode; titl
       className="glass-panel"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      style={{ padding: "28px", borderRadius: "20px", transition: "all 0.3s", borderColor: hov ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)" }}
+      style={{ padding: "28px", borderRadius: "20px", transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s", borderColor: hov ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.06)" }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         {icon}

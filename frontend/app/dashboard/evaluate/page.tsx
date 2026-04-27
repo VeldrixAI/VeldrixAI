@@ -248,13 +248,13 @@ export default function EvaluatePage() {
 
         {/* Live stat boxes */}
         <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end" }}>
-          <div className="glass-panel stat-box-glow" style={{ padding: "20px 24px", borderRadius: "16px", minWidth: "130px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.06)", transition: "all 0.3s" }}>
+          <div className="glass-panel stat-box-glow" style={{ padding: "20px 24px", borderRadius: "16px", minWidth: "130px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.06)", transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s" }}>
             <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "28px", color: "#10b981", letterSpacing: "-1px", lineHeight: 1 }}>
               {safetyIndex !== null ? safetyIndex.toFixed(1) : "—"}
             </span>
             <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginTop: "6px" }}>Safety Index</span>
           </div>
-          <div className="glass-panel stat-box-glow" style={{ padding: "20px 24px", borderRadius: "16px", minWidth: "130px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.06)", transition: "all 0.3s" }}>
+          <div className="glass-panel stat-box-glow" style={{ padding: "20px 24px", borderRadius: "16px", minWidth: "130px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.06)", transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s" }}>
             <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "28px", color: "#7c3aed", letterSpacing: "-1px", lineHeight: 1 }}>
               {auditLatency !== null ? auditLatency : "—"}
             </span>
@@ -372,7 +372,7 @@ export default function EvaluatePage() {
               style={{
                 width: "100%", padding: "16px", borderRadius: "14px", border: "none", cursor: canSubmit && !isEvaluating ? "pointer" : "default",
                 fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "14px", letterSpacing: "3px",
-                textTransform: "uppercase", transition: "all 0.3s",
+                textTransform: "uppercase", transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s",
                 background: isEvaluating ? "rgba(124,58,237,0.3)" : "linear-gradient(135deg, #9f67ff 0%, #7c3aed 50%, #4f46e5 100%)",
                 color: isEvaluating ? "rgba(240,242,255,0.6)" : "white",
                 opacity: !canSubmit ? 0.5 : 1,
@@ -437,7 +437,7 @@ export default function EvaluatePage() {
 
             <button
               onClick={() => generatePdfReport(results, results.audit_hash)}
-              style={{ marginTop: "20px", padding: "10px 20px", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: "10px", color: "#7c3aed", fontFamily: "DM Sans, sans-serif", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s" }}
+              style={{ marginTop: "20px", padding: "10px 20px", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: "10px", color: "#7c3aed", fontFamily: "DM Sans, sans-serif", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(124,58,237,0.25)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(124,58,237,0.15)")}
             >
@@ -452,7 +452,7 @@ export default function EvaluatePage() {
               <div
                 key={pillar.name}
                 className={`pillar-card-reveal pc-${i + 1} glass-panel`}
-                style={{ padding: "24px", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.06)", cursor: "default", transition: "all 0.25s" }}
+                style={{ padding: "24px", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.06)", cursor: "default", transition: "color 0.25s, background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.25s" }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.25)")}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
               >

@@ -7,10 +7,20 @@ python-multipart>=0.0.6
 
 # ── NVIDIA NIM async HTTP client ───────────────────────────────────────────────
 # All five inference pillars call NVIDIA NIM via httpx.AsyncClient (non-blocking).
+# [http2] extra enables HTTP/2 multiplexing on inference provider connections —
+# allows all 5 parallel pillar calls to share a single TCP+TLS connection to
+# NIM/Groq, eliminating per-connection handshake cost after warm-up.
 # Local model dependencies (transformers, torch, presidio, spacy) have been
 # removed — inference is fully delegated to NVIDIA NIM hosted endpoints.
 # Configure NIM models via environment variables; see .env.example.
-httpx>=0.27.0
+httpx[http2]>=0.27.0
+
+# ── High-performance event loop (production only) ─────────────────────────────
+# uvloop replaces the default asyncio event loop with a libuv-based
+# implementation that reduces per-iteration overhead by ~2-4x.
+# NOT available on Windows — omit --loop uvloop from local dev startup.
+# DigitalOcean/Linux production: add --loop uvloop to the uvicorn command.
+uvloop>=0.21.0; sys_platform != "win32"
 
 # ── Testing ────────────────────────────────────────────────────────────────────
 # pytest-asyncio: async coroutine test runner

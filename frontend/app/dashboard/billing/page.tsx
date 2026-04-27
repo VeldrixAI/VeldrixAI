@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import dynamic from "next/dynamic";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,23 +74,23 @@ function CardBase({ children, style, className }: { children: React.ReactNode; s
   );
 }
 
-// ── Custom Recharts Tooltip ───────────────────────────────────────────────────
-
-function VxTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={{
-      background: "rgba(15,13,31,0.92)",
-      border: "1px solid rgba(124,58,237,0.30)",
-      borderRadius: "8px",
-      padding: "10px 14px",
-      backdropFilter: "blur(8px)",
-    }}>
-      <div style={{ fontFamily: "var(--vx-font-body)", fontSize: "10px", color: "rgba(240,242,255,0.55)", marginBottom: "4px" }}>{label}</div>
-      <div style={{ fontFamily: "var(--vx-font-mono)", fontSize: "11px", color: "rgba(240,242,255,0.85)" }}>{payload[0].value} requests</div>
-    </div>
-  );
-}
+const BillingVelocityChart = dynamic(
+  () => import("@/components/charts/BillingVelocityChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="chart-skeleton"
+        style={{
+          height: "220px",
+          borderRadius: "12px",
+          background: "rgba(255,255,255,0.03)",
+          animation: "pulse 1.5s ease-in-out infinite",
+        }}
+      />
+    ),
+  }
+);
 
 // ── SDK stats type (subset) ───────────────────────────────────────────────────
 
@@ -569,7 +561,7 @@ export default function BillingPage() {
                   textTransform: "uppercase",
                   border: "none",
                   cursor: "pointer",
-                  transition: "all 0.2s",
+                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                   background: period === p ? "rgba(124,58,237,0.22)" : "transparent",
                   color: period === p ? "#c4b5fd" : "rgba(240,242,255,0.40)",
                   boxShadow: period === p ? "0 1px 8px rgba(124,58,237,0.25)" : "none",
@@ -586,32 +578,7 @@ export default function BillingPage() {
               No traffic data for this period
             </p>
           ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} barCategoryGap="30%">
-              <XAxis
-                dataKey="date"
-                tick={{ fill: "#9ca3af", fontSize: 9, fontFamily: "DM Sans" }}
-                axisLine={false}
-                tickLine={false}
-                interval={Math.floor(chartData.length / 7)}
-              />
-              <YAxis
-                tick={{ fill: "#9ca3af", fontSize: 9, fontFamily: "JetBrains Mono" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
-                width={32}
-              />
-              <Tooltip content={<VxTooltip />} cursor={{ fill: "rgba(124,58,237,0.04)" }} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {chartData.map((entry, i) => {
-                  const ratio = entry.count / maxCount;
-                  const fill = ratio > 0.8 ? "#7c3aed" : ratio > 0.5 ? "rgba(124,58,237,0.55)" : "rgba(124,58,237,0.22)";
-                  return <Cell key={i} fill={fill} />;
-                })}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <BillingVelocityChart chartData={chartData} maxCount={maxCount} />
           )}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px" }}>
@@ -827,7 +794,7 @@ export default function BillingPage() {
                 letterSpacing: "1.5px",
                 textTransform: "uppercase",
                 cursor: "pointer",
-                transition: "all 0.2s",
+                transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                 background: btn.primary ? "transparent" : "rgba(255,255,255,0.06)",
                 color: btn.primary ? "var(--vx-violet)" : "rgba(240,242,255,0.60)",
                 border: btn.primary ? "1px solid rgba(124,58,237,0.30)" : "1px solid rgba(255,255,255,0.10)",

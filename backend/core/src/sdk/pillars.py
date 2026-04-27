@@ -89,6 +89,17 @@ def _error_result(sdk_id: str, exc: Exception, t0: float) -> PillarResult:
     )
 
 
+# ── Module-level pillar singletons ────────────────────────────────────────────
+# Pillar classes are stateless — all evaluation state is request-scoped.
+# Reusing a single instance per pillar avoids object creation overhead on
+# every call and removes the cost of re-running @property metadata lookups.
+_SAFETY_PILLAR          = SafetyToxicityPillar()
+_HALLUCINATION_PILLAR   = HallucinationPillar()
+_BIAS_PILLAR            = BiasFairnessPillar()
+_PROMPT_SECURITY_PILLAR = PromptSecurityPillar()
+_COMPLIANCE_PILLAR      = CompliancePolicyPillar()
+
+
 # ── Five public async functions (one per pillar) ─────────────────────────────
 # Each is async and returns a PillarResult.  The http parameter is accepted for
 # API compatibility with VeldrixSDK but is unused — existing pillar classes
@@ -97,7 +108,7 @@ def _error_result(sdk_id: str, exc: Exception, t0: float) -> PillarResult:
 async def run_safety(request: AnalysisRequest, http: Optional[httpx.AsyncClient] = None) -> PillarResult:
     t0 = time.monotonic()
     try:
-        result = await SafetyToxicityPillar().evaluate(_to_input(request), _to_context())
+        result = await _SAFETY_PILLAR.evaluate(_to_input(request), _to_context())
         return _convert(result, "safety")
     except Exception as exc:
         return _error_result("safety", exc, t0)
@@ -106,7 +117,7 @@ async def run_safety(request: AnalysisRequest, http: Optional[httpx.AsyncClient]
 async def run_hallucination(request: AnalysisRequest, http: Optional[httpx.AsyncClient] = None) -> PillarResult:
     t0 = time.monotonic()
     try:
-        result = await HallucinationPillar().evaluate(_to_input(request), _to_context())
+        result = await _HALLUCINATION_PILLAR.evaluate(_to_input(request), _to_context())
         return _convert(result, "hallucination")
     except Exception as exc:
         return _error_result("hallucination", exc, t0)
@@ -115,7 +126,7 @@ async def run_hallucination(request: AnalysisRequest, http: Optional[httpx.Async
 async def run_bias(request: AnalysisRequest, http: Optional[httpx.AsyncClient] = None) -> PillarResult:
     t0 = time.monotonic()
     try:
-        result = await BiasFairnessPillar().evaluate(_to_input(request), _to_context())
+        result = await _BIAS_PILLAR.evaluate(_to_input(request), _to_context())
         return _convert(result, "bias")
     except Exception as exc:
         return _error_result("bias", exc, t0)
@@ -124,7 +135,7 @@ async def run_bias(request: AnalysisRequest, http: Optional[httpx.AsyncClient] =
 async def run_prompt_security(request: AnalysisRequest, http: Optional[httpx.AsyncClient] = None) -> PillarResult:
     t0 = time.monotonic()
     try:
-        result = await PromptSecurityPillar().evaluate(_to_input(request), _to_context())
+        result = await _PROMPT_SECURITY_PILLAR.evaluate(_to_input(request), _to_context())
         return _convert(result, "prompt_security")
     except Exception as exc:
         return _error_result("prompt_security", exc, t0)
@@ -133,7 +144,7 @@ async def run_prompt_security(request: AnalysisRequest, http: Optional[httpx.Asy
 async def run_compliance(request: AnalysisRequest, http: Optional[httpx.AsyncClient] = None) -> PillarResult:
     t0 = time.monotonic()
     try:
-        result = await CompliancePolicyPillar().evaluate(_to_input(request), _to_context())
+        result = await _COMPLIANCE_PILLAR.evaluate(_to_input(request), _to_context())
         return _convert(result, "compliance")
     except Exception as exc:
         return _error_result("compliance", exc, t0)

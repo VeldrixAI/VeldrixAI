@@ -250,7 +250,7 @@ export default function ApiKeysPage() {
                 fontSize: "14px",
                 color: "white",
                 cursor: "pointer",
-                transition: "all 0.3s",
+                transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s",
                 boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
               }}
               onMouseEnter={(e) => {
@@ -485,7 +485,7 @@ export default function ApiKeysPage() {
                                     fontSize: "11px",
                                     fontWeight: 700,
                                     cursor: "pointer",
-                                    transition: "all 0.2s",
+                                    transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                                   }}
                                 >
                                   {revokingId === key.id ? "..." : "Confirm Revoke"}
@@ -520,7 +520,7 @@ export default function ApiKeysPage() {
                                   fontSize: "11px",
                                   fontWeight: 600,
                                   cursor: "pointer",
-                                  transition: "all 0.2s",
+                                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                                 }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.color = "#f43f5e";
@@ -801,7 +801,7 @@ export default function ApiKeysPage() {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  transition: "all 0.2s",
+                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                 }}
               >
                 {isCreating && (
@@ -834,7 +834,7 @@ export default function ApiKeysPage() {
                   fontWeight: 600,
                   fontSize: "14px",
                   cursor: "pointer",
-                  transition: "all 0.2s",
+                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                 }}
               >
                 Cancel

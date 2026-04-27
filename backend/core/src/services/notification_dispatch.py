@@ -7,8 +7,7 @@ never blocks the evaluation response path.
 import logging
 import os
 
-import httpx
-
+from src.core.http_pool import get_internal_client
 from src.services.notification_broadcaster import broadcaster
 
 logger = logging.getLogger(__name__)
@@ -166,14 +165,14 @@ async def dispatch_notification(
 
     saved = payload  # fallback if persistence fails
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            resp = await client.post(
-                f"{_AUTH_URL}/notifications/internal-create",
-                json=payload,
-                headers={"x-internal-api-key": _INTERNAL_KEY},
-            )
-            resp.raise_for_status()
-            saved = resp.json()
+        client = get_internal_client()
+        resp = await client.post(
+            f"{_AUTH_URL}/notifications/internal-create",
+            json=payload,
+            headers={"x-internal-api-key": _INTERNAL_KEY},
+        )
+        resp.raise_for_status()
+        saved = resp.json()
     except Exception as exc:
         logger.error("[Notifications] persist failed user=%s: %s", user_id, exc)
 

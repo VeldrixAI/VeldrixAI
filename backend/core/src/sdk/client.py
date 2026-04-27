@@ -250,13 +250,31 @@ class VeldrixSDK:
             per_pillar_ms=per_pillar_ms,
         )
 
-        await self._telemetry.record(
+        # Audit write is fire-and-forget — response is returned immediately.
+        # The task is scheduled in the running event loop and will complete
+        # asynchronously (same pattern as trust_controller._record_audit_trail).
+        asyncio.create_task(self._telemetry.record(
             result,
             prompt_preview=request.prompt[:200] if request.prompt else None,
             response_preview=request.response[:200] if request.response else None,
             user_id=user_id,
             actor_email=actor_email,
+        ))
+
+        # Structured latency profile — emitted at INFO for every evaluation.
+        # Downstream log aggregation (Datadog, CloudWatch) can alert on SLA breaches.
+        logger.info(
+            "LATENCY_PROFILE request_id=%s total_ms=%.1f pillars=%s",
+            request_id,
+            float(elapsed_ms),
+            {k: f"{v:.1f}" for k, v in per_pillar_ms.items()},
         )
+        for _pillar, _ms in per_pillar_ms.items():
+            if _ms > 400:
+                logger.warning(
+                    "LATENCY_SLA_BREACH pillar=%s ms=%.1f threshold=400",
+                    _pillar, float(_ms),
+                )
 
         logger.info(
             "veldrix.analyze.complete",

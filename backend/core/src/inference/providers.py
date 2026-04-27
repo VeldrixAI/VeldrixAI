@@ -62,7 +62,7 @@ def _build_registry() -> list[ProviderConfig]:
             name="groq",
             base_url="https://api.groq.com/openai/v1",
             api_key_env="GROQ_API_KEY",
-            model_id="llama-3.1-70b-versatile",
+            model_id=os.environ.get("GROQ_MODEL_ID", "llama-3.3-70b-versatile"),
             priority=2,
             timeout_seconds=6.0,
             max_retries=2,

@@ -13,6 +13,7 @@ from fastapi import Header, HTTPException
 import httpx
 
 from src.config import get_settings
+from src.core.http_pool import get_internal_client
 from src.sdk.client import VeldrixSDK
 
 logger = logging.getLogger("veldrix.api")
@@ -67,13 +68,13 @@ async def require_api_key(
     if not raw_key.startswith("vx-"):
         raise HTTPException(status_code=401, detail="Invalid API key format")
 
-    # Validate against auth service
+    # Validate against auth service using the shared pool (no per-request TCP handshake)
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(
-                f"{AUTH_SERVICE_URL}/internal/validate-api-key",
-                json={"api_key": raw_key},
-            )
+        client = get_internal_client()
+        resp = await client.post(
+            f"{AUTH_SERVICE_URL}/internal/validate-api-key",
+            json={"api_key": raw_key},
+        )
         if resp.status_code == 200:
             data = resp.json()
             return {"user_id": data.get("user_id"), "email": data.get("email")}

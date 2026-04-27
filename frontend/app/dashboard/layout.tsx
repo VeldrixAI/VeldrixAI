@@ -225,7 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     color: active ? "#f0f2ff" : "rgba(240,242,255,0.45)",
     background: active ? "rgba(124,58,237,0.12)" : "transparent",
     borderLeft: active ? "3px solid #7c3aed" : "3px solid transparent",
-    transition: "all 0.2s",
+    transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
     position: "relative",
     textDecoration: "none",
     cursor: "pointer",
@@ -423,7 +423,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="vx-app-main page-reveal">
+        <main className="vx-app-main page-transition">
           {children}
         </main>
 

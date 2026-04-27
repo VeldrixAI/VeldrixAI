@@ -308,7 +308,7 @@ async def list_audit_trails(
         q = q.filter(AuditTrail.action_type.ilike(f"%{search}%"))
 
     total = q.count()
-    records = q.order_by(AuditTrail.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    records = q.distinct().order_by(AuditTrail.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
 
     return {
         "total": total,

@@ -27,6 +27,8 @@ Usage in main.py::
 
 import logging
 
+from src.core.http_pool import init_internal_pool, close_internal_pool
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +59,8 @@ async def warmup() -> None:
         )
 
     await initialize_router()
-    logger.info("[Startup] VeldrixAI inference router ready.")
+    await init_internal_pool()
+    logger.info("[Startup] VeldrixAI inference router and internal HTTP pool ready.")
 
 
 async def shutdown() -> None:
@@ -69,4 +72,5 @@ async def shutdown() -> None:
     from src.inference.router import close_router  # noqa: PLC0415
 
     await close_router()
-    logger.info("[Shutdown] Inference router closed cleanly.")
+    await close_internal_pool()
+    logger.info("[Shutdown] Inference router and internal HTTP pool closed cleanly.")

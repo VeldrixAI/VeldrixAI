@@ -558,7 +558,7 @@ export default function ReportsPage() {
                         fontSize: "11px",
                         letterSpacing: "1px",
                         textTransform: "uppercase",
-                        transition: "all 0.2s",
+                        transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                         border: `1px solid ${canDownload ? "rgba(124,58,237,0.25)" : "rgba(255,255,255,0.04)"}`,
                       }}
                       onMouseEnter={(e) => {
@@ -597,7 +597,7 @@ export default function ReportsPage() {
                           letterSpacing: "1px",
                           textTransform: "uppercase",
                           cursor: "pointer",
-                          transition: "all 0.2s",
+                          transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                         }}
                       >
                         {deletingId === report.id ? (
@@ -640,7 +640,7 @@ export default function ReportsPage() {
                           letterSpacing: "1px",
                           textTransform: "uppercase",
                           cursor: "pointer",
-                          transition: "all 0.2s",
+                          transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.color = "#f43f5e";

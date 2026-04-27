@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type AuditRecord = {
@@ -17,6 +17,16 @@ type AuditRecord = {
 type PageData = { total: number; page: number; limit: number; records: AuditRecord[] };
 
 const ACTION_TYPES = ["create_report", "delete_report", "trust_evaluation", "create_api_key", "revoke_api_key", "login", "logout"];
+
+function deduplicateById<T extends { id: string | number }>(records: T[]): T[] {
+  const seen = new Map<string | number, T>();
+  for (const record of records) {
+    if (!seen.has(record.id)) seen.set(record.id, record);
+  }
+  return Array.from(seen.values());
+}
+
+const SYSTEM_ACTION_TYPES = new Set(["create_report", "delete_report"]);
 
 const VERDICT_STYLE: Record<string, { bg: string; border: string; color: string }> = {
   ALLOW:  { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", color: "#10b981" },
@@ -48,6 +58,7 @@ export default function AuditTrailsPage() {
   const [toasts, setToasts] = useState<{ id: number; message: string; type: string }[]>([]);
   const [systemLogs, setSystemLogs] = useState<AuditRecord[]>([]);
   const [systemLogsOpen, setSystemLogsOpen] = useState(false);
+  const fetchingRef = useRef(false);
 
   function showToast(message: string, type = "success") {
     const id = Date.now();
@@ -56,6 +67,8 @@ export default function AuditTrailsPage() {
   }
 
   const load = useCallback(async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ page: String(page), limit: "20" });
@@ -70,6 +83,7 @@ export default function AuditTrailsPage() {
       setError(e instanceof Error ? e.message : "Failed to load audit trails");
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   }, [page, actionType, search]);
 
@@ -86,7 +100,7 @@ export default function AuditTrailsPage() {
         const combined = [...(p1.records || []), ...(p2.records || [])].sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-        setSystemLogs(combined);
+        setSystemLogs(deduplicateById(combined));
       } catch { /* ignore */ }
     }
     loadSystemLogs();
@@ -120,7 +134,17 @@ export default function AuditTrailsPage() {
             created_at: new Date(result.timestamp * 1000).toISOString(),
             request_id: result.request_id,
           };
-          setData((prev) => prev ? { ...prev, total: prev.total + 1, records: [newRow, ...prev.records.slice(0, prev.limit - 1)] } : prev);
+          setData((prev) => {
+            if (!prev) return prev;
+            const merged = [newRow, ...prev.records];
+            const seen = new Map<string, AuditRecord>();
+            for (const r of merged) {
+              const key = r.request_id || r.id;
+              if (!seen.has(key)) seen.set(key, r);
+            }
+            const deduped = Array.from(seen.values()).slice(0, prev.limit);
+            return { ...prev, total: prev.total + 1, records: deduped };
+          });
         } catch { /* ignore malformed */ }
       });
     } catch { /* SSE not available */ }
@@ -292,7 +316,7 @@ export default function AuditTrailsPage() {
             <button
               onClick={exportCSV}
               className="glass-panel"
-              style={{ padding: "10px 18px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(240,242,255,0.6)", cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: "8px", background: "none", transition: "all 0.2s" }}
+              style={{ padding: "10px 18px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(240,242,255,0.6)", cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: "8px", background: "none", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export CSV
@@ -340,17 +364,19 @@ export default function AuditTrailsPage() {
                     No audit records yet. SDK analysis calls and actions will appear here automatically.
                   </td></tr>
                 ) : (
-                  // Deduplicate by request_id: SSE row (id=request_id) and DB row
-                  // (id=uuid) for the same evaluation share a request_id but differ
-                  // in `id`, causing duplicates when load() runs after SSE fires.
+                  // Filter system action types (create_report, delete_report) to their
+                  // own section, then deduplicate by request_id to collapse SSE synthetic
+                  // rows and their DB-persisted counterparts for the same evaluation.
                   (() => {
                     const seen = new Set<string>();
-                    return data.records.filter((r) => {
-                      const key = r.request_id || r.id;
-                      if (seen.has(key)) return false;
-                      seen.add(key);
-                      return true;
-                    });
+                    return data.records
+                      .filter(r => !SYSTEM_ACTION_TYPES.has(r.action_type))
+                      .filter((r) => {
+                        const key = r.request_id || r.id;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                      });
                   })().map((r, ri) => {
                     const m = getMeta(r);
                     const isSdk = r.action_type === "trust_evaluation";
@@ -433,7 +459,7 @@ export default function AuditTrailsPage() {
                                   color: done ? "#10b981" : "#a78bfa",
                                   cursor: (generatingPdf === reqId || done) ? "default" : "pointer",
                                   opacity: generatingPdf === reqId ? 0.5 : 1,
-                                  transition: "all 0.2s", whiteSpace: "nowrap",
+                                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s", whiteSpace: "nowrap",
                                 }}
                               >
                                 {generatingPdf === reqId ? "Generating…" : done ? "✓ Ready" : "PDF"}
@@ -497,7 +523,7 @@ export default function AuditTrailsPage() {
               fontSize: "12px",
               fontWeight: 600,
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
             }}
           >
             <span>
@@ -612,7 +638,7 @@ export default function AuditTrailsPage() {
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "rgba(240,242,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "rgba(240,242,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 >

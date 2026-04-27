@@ -149,7 +149,7 @@ export default function SDKPage() {
             <span style={{ flex: 1 }}>{PYTHON_INSTALL}</span>
             <button
               onClick={() => copy(PYTHON_INSTALL, "install-python")}
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", padding: "0.25rem 0.6rem", borderRadius: "5px", fontSize: "0.7rem", cursor: "pointer", transition: "all 150ms" }}
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", padding: "0.25rem 0.6rem", borderRadius: "5px", fontSize: "0.7rem", cursor: "pointer", transition: "color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms, transform 150ms, opacity 150ms" }}
             >
               {copiedId === "install-python" ? "Copied!" : "Copy"}
             </button>
@@ -180,7 +180,7 @@ export default function SDKPage() {
               <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Python</span>
               <button
                 onClick={() => copy(ex.code, `ex-${idx}`)}
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: copiedId === `ex-${idx}` ? "#10B981" : "rgba(255,255,255,0.7)", padding: "0.25rem 0.6rem", borderRadius: "5px", fontSize: "0.7rem", cursor: "pointer", transition: "all 150ms" }}
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: copiedId === `ex-${idx}` ? "#10B981" : "rgba(255,255,255,0.7)", padding: "0.25rem 0.6rem", borderRadius: "5px", fontSize: "0.7rem", cursor: "pointer", transition: "color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms, transform 150ms, opacity 150ms" }}
               >
                 {copiedId === `ex-${idx}` ? "✓ Copied!" : "Copy"}
               </button>

@@ -165,7 +165,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-collapse-btn:hover {
@@ -192,7 +192,7 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
 
@@ -289,7 +289,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   border-radius: 8px;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   width: 100%;
 }
 
@@ -411,7 +411,7 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
 
@@ -466,7 +466,7 @@
   color: var(--d-text);
   font-family: inherit;
   font-size: 0.9rem;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   margin-top: 0;
 }
 
@@ -880,6 +880,8 @@
   border-radius: var(--d-radius-lg);
   padding: 1.5rem;
   margin-bottom: 1.25rem;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .dash-chart-header {
@@ -1098,7 +1100,7 @@
   font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -1228,7 +1230,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-modal-close:hover {
@@ -1384,7 +1386,7 @@
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-pagination-btn:hover:not(:disabled) {
@@ -1470,7 +1472,7 @@
   border-radius: 8px;
   font-size: 0.85rem;
   color: var(--d-text);
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-search-input input:focus {
@@ -1570,7 +1572,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-upload-btn:hover {
@@ -1871,7 +1873,7 @@
   background: transparent;
   color: var(--d-text-muted);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
 }
 
 .dash-time-toggle button:not(:last-child) {
@@ -1942,7 +1944,7 @@
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   text-decoration: none;
   text-align: left;
   width: 100%;

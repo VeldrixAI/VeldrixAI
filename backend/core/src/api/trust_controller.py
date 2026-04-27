@@ -3,10 +3,10 @@
 import asyncio
 import logging
 import os
-import httpx
 from datetime import datetime
 from fastapi import APIRouter, Depends, status
 
+from src.core.http_pool import get_internal_client
 from src.services.notification_dispatch import dispatch_notification
 
 from src.validators.schemas import (
@@ -43,13 +43,13 @@ def _worst_pillar(pillar_results: dict) -> str:
     return worst_id
 
 
-def _record_latency(user_id: str, latency_ms: float, status_code: int = 200):
-    """Fire-and-forget latency record to connectors."""
+async def _record_latency(user_id: str, latency_ms: float, status_code: int = 200) -> None:
+    """Fire-and-forget latency record to connectors (async, non-blocking)."""
     try:
-        httpx.post(
+        client = get_internal_client()
+        await client.post(
             f"{CONNECTORS_URL}/internal/latency",
             json={"user_id": user_id, "endpoint": "/trust/evaluate", "latency_ms": latency_ms, "status_code": status_code},
-            timeout=1.0,
         )
     except Exception:
         pass  # never block the response
@@ -73,24 +73,24 @@ async def _record_audit_trail(
             key = _PILLAR_ID_MAP.get(pillar_id, pillar_id)
             pillar_scores[key] = round(result.score.value / 100.0, 4) if result.score is not None else None
         verdict = report.final_score.risk_level.value if report.final_score.risk_level else "unknown"
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(
-                target_url,
-                json={
-                    "action_type": "trust_evaluation",
-                    "entity_type": "trust_evaluate",
-                    "user_id": user_id,
-                    "metadata": {
-                        "request_id": request_id,
-                        "overall_score": composite_score,
-                        "verdict": verdict,
-                        "pillar_scores": pillar_scores,
-                        "total_latency_ms": report.execution_time_ms,
-                        "prompt_preview": prompt_preview[:300] if prompt_preview else None,
-                        "response_preview": response_preview[:300] if response_preview else None,
-                    },
+        client = get_internal_client()
+        resp = await client.post(
+            target_url,
+            json={
+                "action_type": "trust_evaluation",
+                "entity_type": "trust_evaluate",
+                "user_id": user_id,
+                "metadata": {
+                    "request_id": request_id,
+                    "overall_score": composite_score,
+                    "verdict": verdict,
+                    "pillar_scores": pillar_scores,
+                    "total_latency_ms": report.execution_time_ms,
+                    "prompt_preview": prompt_preview[:300] if prompt_preview else None,
+                    "response_preview": response_preview[:300] if response_preview else None,
                 },
-            )
+            },
+        )
         logger_at.warning("audit_trail_record: saved request_id=%s status=%s", request_id, resp.status_code)
     except Exception as exc:
         logger_at.error("audit_trail_record failed request_id=%s url=%s: %s", request_id, target_url, exc)
@@ -146,7 +146,7 @@ async def evaluate_trust(
     set_request_id(report.request_id)
     
     execution_time = timer.stop()
-    _record_latency(user_id, execution_time)
+    asyncio.create_task(_record_latency(user_id, execution_time))
 
     logger.info(f"AI safety evaluation completed", extra={
         "request_id": report.request_id,

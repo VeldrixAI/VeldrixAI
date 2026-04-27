@@ -170,7 +170,7 @@ function BillingPageInner() {
               color: "rgba(255,255,255,0.7)",
               fontSize: "14px",
               textDecoration: "none",
-              transition: "all 0.2s",
+              transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
             }}
           >
             Sign In
@@ -234,7 +234,7 @@ function BillingPageInner() {
               fontSize: "14px",
               fontWeight: 500,
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
             }}
           >
             Monthly
@@ -250,7 +250,7 @@ function BillingPageInner() {
               fontSize: "14px",
               fontWeight: 500,
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
               display: "flex",
               alignItems: "center",
               gap: "6px",

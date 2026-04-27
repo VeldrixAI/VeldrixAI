@@ -6,7 +6,20 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // Recharts RadarChart — SSR-safe via dynamic import
-const RadarChart = dynamic(() => import("./RadarChart"), { ssr: false });
+const RadarChart = dynamic(() => import("./RadarChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="chart-skeleton"
+      style={{
+        height: "300px",
+        borderRadius: "12px",
+        background: "rgba(255,255,255,0.03)",
+        animation: "pulse 1.5s ease-in-out infinite",
+      }}
+    />
+  ),
+});
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

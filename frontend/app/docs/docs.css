@@ -504,7 +504,7 @@
   color: rgba(240, 242, 255, 0.55);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.15s, transform 0.15s;
 }
 .docs-feedback-yes:hover { color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.06); }
 .docs-feedback-no:hover  { color: #f43f5e; border-color: rgba(244, 63, 94, 0.3);  background: rgba(244, 63, 94, 0.06); }

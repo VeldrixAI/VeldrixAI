@@ -4,8 +4,7 @@ from __future__ import annotations
 import logging
 import os
 
-import httpx
-
+from src.core.http_pool import get_internal_client
 from src.sdk.models import AnalysisResult
 
 logger = logging.getLogger("veldrix.telemetry")
@@ -22,33 +21,33 @@ class SDKTelemetry:
         target_url = f"{CONNECTORS_URL}/api/audit-trails/internal/audit-trail"
         logger.info("telemetry.persist: POST %s request_id=%s user_id=%s", target_url, result.request_id, user_id)
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(
-                    target_url,
-                    json={
-                        "action_type": "trust_evaluation",
-                        "entity_type": "sdk_analysis",
-                        "user_id": user_id,
-                        "actor_email": actor_email,
-                        "metadata": {
-                            "request_id": result.request_id,
-                            "overall_score": result.trust_score.overall,
-                            "verdict": result.trust_score.verdict,
-                            "pillar_scores": result.trust_score.pillar_scores,
-                            "critical_flags": result.trust_score.critical_flags,
-                            "all_flags": result.trust_score.all_flags,
-                            "total_latency_ms": result.total_latency_ms,
-                            "sdk_version": result.sdk_version,
-                            "timestamp": result.timestamp,
-                            "prompt_preview": prompt_preview,
-                            "response_preview": response_preview,
-                            "pillars": {
-                                k: {"score": v.score, "status": v.status.value, "flags": v.flags}
-                                for k, v in result.pillars.items()
-                            },
+            client = get_internal_client()
+            resp = await client.post(
+                target_url,
+                json={
+                    "action_type": "trust_evaluation",
+                    "entity_type": "sdk_analysis",
+                    "user_id": user_id,
+                    "actor_email": actor_email,
+                    "metadata": {
+                        "request_id": result.request_id,
+                        "overall_score": result.trust_score.overall,
+                        "verdict": result.trust_score.verdict,
+                        "pillar_scores": result.trust_score.pillar_scores,
+                        "critical_flags": result.trust_score.critical_flags,
+                        "all_flags": result.trust_score.all_flags,
+                        "total_latency_ms": result.total_latency_ms,
+                        "sdk_version": result.sdk_version,
+                        "timestamp": result.timestamp,
+                        "prompt_preview": prompt_preview,
+                        "response_preview": response_preview,
+                        "pillars": {
+                            k: {"score": v.score, "status": v.status.value, "flags": v.flags}
+                            for k, v in result.pillars.items()
                         },
                     },
-                )
+                },
+            )
             logger.info("telemetry.persisted request_id=%s status=%s", result.request_id, resp.status_code)
         except Exception as exc:
             # Persistence failure must NEVER crash the analyze() response

@@ -142,7 +142,7 @@ export default function PricingSection() {
                   cursor: "pointer",
                   fontSize: "13px",
                   fontWeight: 500,
-                  transition: "all 0.2s",
+                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                   background: cycle === interval ? "#7c3aed" : "transparent",
                   color: cycle === interval ? "#fff" : "rgba(240,242,255,0.55)",
                 }}

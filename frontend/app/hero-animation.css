@@ -12,6 +12,8 @@
   background: radial-gradient(circle, rgba(124, 92, 252, 0.1) 0%, transparent 60%);
   border-radius: 50%;
   animation: haGlow 6s ease-in-out infinite;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .hero-anim-glow-2 {
@@ -43,18 +45,24 @@
 .ha-orbit-ring-1 {
   animation: haRotate 30s linear infinite;
   transform-origin: 250px 250px;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .ha-orbit-ring-2 {
   animation: haRotateRev 45s linear infinite;
   transform-origin: 250px 250px;
   stroke-dasharray: 6 12;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .ha-orbit-ring-3 {
   animation: haRotate 60s linear infinite;
   transform-origin: 250px 250px;
   stroke-dasharray: 3 10;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 @keyframes haRotate {
@@ -130,7 +138,7 @@
   fill: rgba(124, 92, 252, 0.08);
   stroke: rgba(124, 92, 252, 0.25);
   stroke-width: 1;
-  transition: all 0.3s ease;
+  transition: fill 0.3s ease, stroke 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
 }
 
 .ha-node {
@@ -160,6 +168,8 @@
 
 .ha-particle {
   fill: rgba(124, 92, 252, 0.5);
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .ha-p1 { animation: haFloat1 7s ease-in-out infinite; }
@@ -196,6 +206,8 @@
 .ha-scan-line line {
   animation: haScan 3s ease-in-out infinite;
   transform-origin: 250px 250px;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 @keyframes haScan {

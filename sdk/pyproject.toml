@@ -7,18 +7,17 @@ name            = "veldrixai"
 version         = "1.0.0"
 description     = "Runtime trust infrastructure for AI applications — five-pillar evaluation via a single decorator"
 readme          = "README.md"
-license         = "MIT"
-license-files   = ["LICENSE"]
+license         = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors         = [{ name = "VeldrixAI", email = "sdk@veldrix.ai" }]
 keywords        = ["ai", "governance", "safety", "trust", "llm", "guardrails", "nvidia", "nim", "compliance"]
 classifiers     = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Security",
     "Typing :: Typed",
@@ -34,44 +33,16 @@ dev = [
     "pytest-asyncio>=0.23",
     "respx>=0.21",
 ]
-openai = ["openai>=1.0"]
-anthropic = ["anthropic>=0.30"]
-google = ["google-generativeai>=0.7"]
-aws = ["boto3>=1.34"]
-cohere = ["cohere>=5.0"]
-mistral = ["mistralai>=1.0"]
-langchain = ["langchain-core>=0.2"]
-llamaindex = ["llama-index-core>=0.10"]
-litellm = ["litellm>=1.40"]
-ollama = ["ollama>=0.2"]
-huggingface = ["huggingface-hub>=0.23"]
-all = [
-    "openai>=1.0",
-    "anthropic>=0.30",
-    "google-generativeai>=0.7",
-    "boto3>=1.34",
-    "cohere>=5.0",
-    "mistralai>=1.0",
-    "langchain-core>=0.2",
-    "llama-index-core>=0.10",
-    "litellm>=1.40",
-    "ollama>=0.2",
-    "huggingface-hub>=0.23",
-]
 
 [project.urls]
-Homepage      = "https://veldrix.ai"
-Documentation = "https://docs.veldrix.ai"
+Homepage      = "https://veldrixai.ca"
+Documentation = "https://docs.veldrixai.ca"
 Repository    = "https://github.com/veldrixai/veldrixai-python"
 "Bug Tracker" = "https://github.com/veldrixai/veldrixai-python/issues"
-Changelog     = "https://github.com/veldrixai/veldrixai-python/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where   = ["."]
 include = ["veldrixai*"]
-
-[tool.setuptools.package-data]
-veldrixai = ["py.typed"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

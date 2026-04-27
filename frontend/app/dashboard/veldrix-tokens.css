@@ -160,7 +160,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   flex-shrink: 0;
 }
 
@@ -273,7 +273,7 @@
   font-weight: 500;
   letter-spacing: 2px;
   text-transform: uppercase;
-  transition: all 0.2s;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s;
   position: relative;
 }
 
@@ -397,7 +397,7 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   border-radius: 8px;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   width: 100%;
   text-align: left;
 }
@@ -500,7 +500,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .vx-topbar-icon-btn:hover {
@@ -752,6 +752,8 @@
   margin-bottom: 24px;
   position: relative;
   overflow: hidden;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .vx-chart-container::before {
@@ -849,7 +851,7 @@
   text-transform: uppercase;
   cursor: pointer;
   border: none;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   white-space: nowrap;
   text-decoration: none;
 }
@@ -995,7 +997,7 @@
   color: var(--vx-text-primary);
   font-family: var(--vx-font-body);
   font-size: 13px;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition);
 }
 
 .vx-input:focus,
@@ -1054,7 +1056,7 @@
   font-weight: 500;
   color: var(--vx-text-secondary);
   cursor: pointer;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
 }
 
 .vx-filter-chip:hover {
@@ -1209,7 +1211,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   font-size: 13px;
 }
 
@@ -1245,7 +1247,7 @@
   color: var(--vx-text-primary);
   font-family: var(--vx-font-body);
   font-size: 13px;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition);
 }
 
 .vx-search-input input:focus {
@@ -1282,7 +1284,7 @@
   text-transform: uppercase;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   white-space: nowrap;
   margin-bottom: -1px;
 }
@@ -1310,7 +1312,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
   background: none;
   border-top: none;
   border-right: none;
@@ -1560,7 +1562,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
 }
 
 .vx-modal-close:hover {
@@ -1780,7 +1782,7 @@
   justify-content: center;
   font-size: 13px;
   font-family: var(--vx-font-body);
-  transition: all var(--vx-transition);
+  transition: color var(--vx-transition), background-color var(--vx-transition), border-color var(--vx-transition), box-shadow var(--vx-transition), opacity var(--vx-transition), transform var(--vx-transition);
 }
 
 .vx-pagination-btn:hover:not(:disabled) {
