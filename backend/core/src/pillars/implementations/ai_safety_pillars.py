@@ -30,34 +30,21 @@ from src.pillars.pillar_engine import PillarEngine
 from src.pillars.types import PillarError, PillarMetadata, PillarResult, PillarStatus
 from src.domain.types import TrustEvaluationInput, TrustEvaluationContext
 from src.types.scoring import RiskLevel, SafetyScore
+from src.config.pillar_models import PILLAR_MODELS, PillarModelConfig
 
 logger = logging.getLogger(__name__)
 
-# ── Per-pillar model assignments for NVIDIA NIM ──────────────────────────────
-# When NVIDIA NIM is the active provider, these model slugs are forwarded as
-# model_override to route_inference().  Fallback providers (Groq, Bedrock, OSS)
-# use their own configured model and ignore these overrides.
+# ── Per-pillar model config loaded from src/config/pillar_models.py ──────────
+# All models and per-pillar parameters are configurable via environment variables.
+# See backend/core/src/config/pillar_models.py for the full matrix and override syntax.
+# No hardcoded model strings in this file — every model reference goes through PILLAR_MODELS.
 
-_MODEL_CONTENT: str = os.environ.get(
-    "VELDRIX_PILLAR_CONTENT_MODEL",
-    "meta/llama-guard-4-12b",
-)
-_MODEL_HALLUCINATION: str = os.environ.get(
-    "VELDRIX_PILLAR_HALLUCINATION_MODEL",
-    "meta/llama-3.1-8b-instruct",
-)
-_MODEL_BIAS: str = os.environ.get(
-    "VELDRIX_PILLAR_BIAS_MODEL",
-    "meta/llama-3.1-8b-instruct",
-)
-_MODEL_POLICY: str = os.environ.get(
-    "VELDRIX_PILLAR_POLICY_MODEL",
-    "meta/llama-3.1-8b-instruct",
-)
-_MODEL_LEGAL: str = os.environ.get(
-    "VELDRIX_PILLAR_LEGAL_MODEL",
-    "meta/llama-3.1-8b-instruct",
-)
+# Backwards-compatibility aliases for any legacy references (will be removed in a future release)
+_MODEL_CONTENT       = PILLAR_MODELS.safety_toxicity.primary
+_MODEL_HALLUCINATION = PILLAR_MODELS.hallucination.primary
+_MODEL_BIAS          = PILLAR_MODELS.bias_fairness.primary
+_MODEL_POLICY        = PILLAR_MODELS.prompt_security.primary
+_MODEL_LEGAL         = PILLAR_MODELS.compliance_pii.primary
 
 # Input truncation: first-half + last-half strategy preserves both intro and conclusion
 VELDRIX_MAX_INPUT_CHARS: int = int(os.environ.get("VELDRIX_MAX_INPUT_CHARS", "2000"))
@@ -121,6 +108,57 @@ def _risk_from_score(score: float, confidence: float) -> RiskLevel:
     if score >= 40:
         return RiskLevel.HIGH_RISK
     return RiskLevel.CRITICAL
+
+
+async def _route_with_model_fallback(
+    cfg: PillarModelConfig,
+    messages: List[Dict],
+    pillar_name: str,
+    require_json: bool = True,
+    max_tokens: Optional[int] = None,
+) -> tuple[str, str, bool]:
+    """
+    Route inference with per-pillar primary → fallback model logic.
+
+    Tries cfg.primary first. On InferenceExhaustedError or model-not-found (404),
+    retries once with cfg.fallback and logs the substitution.
+
+    Returns:
+        (raw_content, provider_name, fallback_used)
+    """
+    from src.inference.exceptions import InferenceExhaustedError  # noqa: PLC0415
+
+    _max_tokens = max_tokens or cfg.max_tokens
+
+    try:
+        content, provider = await route_inference(
+            messages=messages,
+            pillar_name=pillar_name,
+            require_json=require_json,
+            temperature=cfg.temperature,
+            model_override=cfg.primary,
+            max_tokens=_max_tokens,
+        )
+        return content, provider, False
+    except InferenceExhaustedError:
+        logger.warning(
+            "[%s] Primary model %r exhausted all providers — retrying with fallback %r",
+            pillar_name, cfg.primary, cfg.fallback,
+        )
+
+    content, provider = await route_inference(
+        messages=messages,
+        pillar_name=f"{pillar_name}/fallback",
+        require_json=require_json,
+        temperature=cfg.temperature,
+        model_override=cfg.fallback,
+        max_tokens=_max_tokens,
+    )
+    logger.info(
+        "[%s] pillar_model_used=%r fallback_used=true provider=%s",
+        pillar_name, cfg.fallback, provider,
+    )
+    return content, provider, True
 
 
 def _degraded(

@@ -153,14 +153,22 @@ async def initialize_backend(settings=None) -> None:
     Called from startup.warmup() after environment is loaded.
     """
     global _redis_backend
-    if settings is None:
-        from src.config import get_settings
-        settings = get_settings()
 
-    if settings.CIRCUIT_BREAKER_BACKEND == "redis":
+    backend = (
+        settings.CIRCUIT_BREAKER_BACKEND
+        if settings is not None
+        else os.environ.get("CIRCUIT_BREAKER_BACKEND", "memory")
+    )
+    redis_url = (
+        settings.REDIS_URL
+        if settings is not None
+        else os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    )
+
+    if backend == "redis":
         from src.inference.circuit_breaker_redis import initialize as _init_redis
-        _redis_backend = await _init_redis(settings.REDIS_URL)
-        logger.info("[CircuitBreaker] Backend=redis (url=%s)", settings.REDIS_URL)
+        _redis_backend = await _init_redis(redis_url)
+        logger.info("[CircuitBreaker] Backend=redis (url=%s)", redis_url)
     else:
         _redis_backend = None
         logger.info("[CircuitBreaker] Backend=memory (in-process)")

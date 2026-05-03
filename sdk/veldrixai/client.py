@@ -14,7 +14,6 @@ import functools
 import inspect
 import logging
 import os
-import threading
 from typing import Any, Callable, Optional, overload
 
 from veldrixai.models      import GuardedResponse, TrustResult, GuardConfig
@@ -29,7 +28,10 @@ class Veldrix:
     """
     VeldrixAI runtime trust client.
 
-    Usage — decorator (recommended):
+    __repr__ masks the API key so it never appears in logs or tracebacks.
+
+    Usage - decorator (recommended)::
+
         veldrix = Veldrix(api_key="vx-live-...")
 
         @veldrix.guard
@@ -39,25 +41,30 @@ class Veldrix:
         response = chat(messages)
         print(response.trust.verdict)
 
-    Usage — async decorator:
+    Usage - async decorator::
+
         @veldrix.guard
         async def chat(messages):
             return await async_openai_client.chat.completions.create(...)
 
-    Usage — with config:
+    Usage - with config::
+
         @veldrix.guard(config=GuardConfig(block_on_verdict=["BLOCK"]))
         def chat(messages):
             ...
 
-    Usage — context manager (for dynamic / conditional guarding):
+    Usage - context manager (for dynamic / conditional guarding)::
+
         async with veldrix.session() as session:
             result = await session.wrap(llm_fn, messages)
 
-    Usage — manual evaluation:
+    Usage - manual evaluation::
+
         trust = await veldrix.evaluate(prompt="...", response="...")
         trust = veldrix.evaluate_sync(prompt="...", response="...")
 
-    Usage — from environment variables (12-factor apps):
+    Usage - from environment variables (12-factor apps)::
+
         veldrix = Veldrix.from_env()   # reads VELDRIX_API_KEY
     """
 
@@ -91,10 +98,12 @@ class Veldrix:
                 f"api_key must be a string, got {type(api_key).__name__}.\n"
                 "  Usage: Veldrix(api_key='vx-live-...')"
             )
-        if not api_key.startswith("vx-"):
+        if not api_key.startswith("vx-live-") and not api_key.startswith("vx-test-"):
             raise VeldrixError(
-                f"Invalid API key format: {api_key[:8]}...\n"
-                "  VeldrixAI API keys start with 'vx-live-' or 'vx-test-'.\n"
+                f"Invalid API key format: '{api_key[:12]}...'\n"
+                "  VeldrixAI API keys must start with 'vx-live-' (production) "
+                "or 'vx-test-' (testing).\n"
+                "  Common mistake: underscores instead of dashes (vx_live_ vs vx-live-).\n"
                 "  Get your key at: https://app.veldrix.ai/settings/api-keys"
             )
         self._transport   = Transport(
@@ -107,6 +116,7 @@ class Veldrix:
             client_breaker_recovery_seconds=client_breaker_recovery_seconds,
         )
         self._default_cfg = GuardConfig(background=background, **kwargs)
+        self._api_key_hint = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
         logger.info("VeldrixAI initialised (background=%s, base_url=%s)", background, base_url)
 
     def stats(self) -> dict:
@@ -124,6 +134,12 @@ class Veldrix:
             # }
         """
         return self._transport.stats()
+
+    def __repr__(self) -> str:
+        return (
+            f"Veldrix(api_key='{self._api_key_hint}', "
+            f"base_url='{self._transport.base_url}')"
+        )
 
     @classmethod
     def from_env(
@@ -171,18 +187,37 @@ class Veldrix:
     @overload
     def guard(self, fn: Callable) -> Callable: ...
     @overload
-    def guard(self, *, config: GuardConfig) -> Callable: ...
+    def guard(self, *, config: GuardConfig, on_result: Optional[Callable] = None) -> Callable: ...
 
-    def guard(self, fn: Callable = None, *, config: GuardConfig = None):
+    def guard(
+        self,
+        fn:        Callable                = None,
+        *,
+        config:    GuardConfig             = None,
+        on_result: Optional[Callable]      = None,
+    ):
         """
-        Decorator. Works with and without arguments:
+        Decorator. Works with and without arguments::
+
             @veldrix.guard
-            @veldrix.guard(config=GuardConfig(block_on_verdict=["BLOCK"]))
+            @veldrix.guard(config=GuardConfig(background=False, block_on_verdict=["BLOCK"]))
+
+        on_result callback (enterprise audit)::
+
+            @veldrix.guard(on_result=lambda p, r, t: print(t.verdict))
+            def chat(messages):
+                ...
+
+        Signature: on_result(prompt: str, response: str, trust: TrustResult)
+        Runs after every evaluation. Exceptions are caught and logged, never
+        propagated to the caller.
         """
         effective_config = config or self._default_cfg
 
         def decorator(func: Callable) -> Callable:
-            interceptor = Interceptor(func, self._transport, effective_config)
+            interceptor = Interceptor(
+                func, self._transport, effective_config, on_result=on_result
+            )
 
             if inspect.iscoroutinefunction(func):
                 @functools.wraps(func)
@@ -213,64 +248,57 @@ class Veldrix:
 
     # ── Manual evaluation — async ───────────────────────────────────────────
 
-    async def evaluate(self, prompt: str, response: str, metadata: dict = None) -> TrustResult:
+    async def evaluate(
+        self,
+        prompt:    str,
+        response:  str,
+        metadata:  dict                = None,
+        on_result: Optional[Callable]  = None,
+    ) -> TrustResult:
         """
         Manually evaluate a prompt+response pair (async).
         Use when you cannot use the decorator.
+
+        on_result: optional callback(prompt, response, trust) fired after
+        evaluation completes. Exceptions are caught and logged, never raised.
         """
-        cfg = GuardConfig(background=False, metadata=metadata or {})
-        return await self._transport.evaluate(prompt, response, cfg)
+        cfg   = GuardConfig(background=False, metadata=metadata or {})
+        trust = await self._transport.evaluate(prompt, response, cfg)
+        if on_result is not None:
+            try:
+                on_result(prompt, response, trust)
+            except Exception as exc:
+                logger.debug("evaluate on_result callback raised (non-fatal): %s", exc)
+        return trust
 
     # ── Manual evaluation — sync ────────────────────────────────────────────
 
-    def evaluate_sync(self, prompt: str, response: str, metadata: dict = None) -> TrustResult:
+    def evaluate_sync(
+        self,
+        prompt:    str,
+        response:  str,
+        metadata:  dict                = None,
+        on_result: Optional[Callable]  = None,
+    ) -> TrustResult:
         """
         Manually evaluate a prompt+response pair (sync).
         Safe to call from scripts, Jupyter notebooks, Django views, or any context
         including inside a running event loop.
 
-        Each call creates its own event loop + fresh httpx.AsyncClient in a
-        background thread — no shared state, no event loop collisions.
+        on_result: optional callback(prompt, response, trust) fired after
+        evaluation completes. Exceptions are caught and logged, never raised.
 
-            trust = veldrix.evaluate_sync(prompt="...", response="...")
-            print(trust.verdict)
+        Delegates to Transport.evaluate_sync() which owns the thread-isolation
+        contract. Single source of truth — no duplicated logic.
         """
-        cfg = GuardConfig(background=False, metadata=metadata or {})
-        # Always use a thread with a fresh client — safe from both sync and async contexts
-        result_holder: list[TrustResult] = []
-        exc_holder:    list[Exception]   = []
-
-        def _run():
-            loop   = asyncio.new_event_loop()
-            client = None
+        cfg   = GuardConfig(background=False, metadata=metadata or {})
+        trust = self._transport.evaluate_sync(prompt, response, cfg)
+        if on_result is not None:
             try:
-                client = self._transport._make_fresh_client()
-                result_holder.append(
-                    loop.run_until_complete(
-                        self._transport.evaluate_with_client(client, prompt, response, cfg)
-                    )
-                )
-            except Exception as e:
-                exc_holder.append(e)
-            finally:
-                if client is not None:
-                    try:
-                        loop.run_until_complete(client.aclose())
-                    except Exception:
-                        pass
-                try:
-                    loop.close()
-                except Exception:
-                    pass
-
-        t = threading.Thread(target=_run)
-        t.start()
-        t.join(timeout=cfg.timeout_ms / 1000)
-        if exc_holder:
-            raise exc_holder[0]
-        if result_holder:
-            return result_holder[0]
-        raise VeldrixError("evaluate_sync timed out")
+                on_result(prompt, response, trust)
+            except Exception as exc:
+                logger.debug("evaluate_sync on_result callback raised (non-fatal): %s", exc)
+        return trust
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 

@@ -22,6 +22,7 @@ def make_veldrix():
     v._transport              = MagicMock()
     v._transport.evaluate     = AsyncMock(return_value=MOCK_TRUST)
     v._transport.evaluate_with_client = AsyncMock(return_value=MOCK_TRUST)
+    v._transport.evaluate_sync        = MagicMock(return_value=MOCK_TRUST)
     v._transport._make_fresh_client   = MagicMock(return_value=mock_client)
     v._default_cfg            = GuardConfig(background=False)
     return v
@@ -94,8 +95,9 @@ def test_guard_block_raises():
         overall=0.1, verdict="BLOCK",
         pillar_scores={}, critical_flags=["violence"], request_id="r1", latency_ms=100,
     )
-    veldrix._transport.evaluate              = AsyncMock(return_value=block_trust)
-    veldrix._transport.evaluate_with_client  = AsyncMock(return_value=block_trust)
+    veldrix._transport.evaluate             = AsyncMock(return_value=block_trust)
+    veldrix._transport.evaluate_with_client = AsyncMock(return_value=block_trust)
+    veldrix._transport.evaluate_sync        = MagicMock(return_value=block_trust)
     veldrix._default_cfg = GuardConfig(background=False, block_on_verdict=["BLOCK"])
 
     @veldrix.guard
@@ -266,6 +268,67 @@ def test_guarded_response_model_dump_with_object():
     d = guarded.model_dump()
     assert "_veldrix_trust" in d
     assert d["_veldrix_trust"]["verdict"] == "ALLOW"
+
+
+# ── GuardConfig footgun — background=True + block_on_verdict raises VeldrixConfigError ──
+
+def test_guard_config_background_true_with_block_raises():
+    """
+    GuardConfig(background=True, block_on_verdict=["BLOCK"]) must raise
+    VeldrixConfigError immediately at construction time — not silently do nothing.
+    """
+    from veldrixai.exceptions import VeldrixConfigError
+    with pytest.raises(VeldrixConfigError, match="background=False"):
+        GuardConfig(background=True, block_on_verdict=["BLOCK"])
+
+
+def test_guard_config_background_false_with_block_is_valid():
+    """background=False + block_on_verdict is the correct combination — must not raise."""
+    cfg = GuardConfig(background=False, block_on_verdict=["BLOCK"])
+    assert cfg.block_on_verdict == ["BLOCK"]
+    assert cfg.background is False
+
+
+def test_guard_config_background_true_no_block_is_valid():
+    """background=True without block_on_verdict is the default — must not raise."""
+    cfg = GuardConfig(background=True)
+    assert cfg.background is True
+    assert cfg.block_on_verdict == []
+
+
+# ── Missing exception exports are importable from top-level ──────────────────
+
+def test_rate_limit_error_importable_from_top_level():
+    from veldrixai import VeldrixRateLimitError
+    assert VeldrixRateLimitError is not None
+
+
+def test_service_unavailable_error_importable_from_top_level():
+    from veldrixai import VeldrixServiceUnavailableError
+    assert VeldrixServiceUnavailableError is not None
+
+
+def test_config_error_importable_from_top_level():
+    from veldrixai import VeldrixConfigError
+    assert VeldrixConfigError is not None
+
+
+# ── GuardedResponse.__str__ never raises on broken originals ─────────────────
+
+def test_guarded_response_str_never_raises_on_broken_original():
+    """str(response) must never raise even if the original object is broken."""
+    class BrokenOriginal:
+        @property
+        def content(self):
+            raise RuntimeError("broken")
+        @property
+        def choices(self):
+            raise RuntimeError("broken")
+
+    trust   = MOCK_TRUST
+    guarded = GuardedResponse(original=BrokenOriginal(), trust=trust)
+    result  = str(guarded)   # must not raise
+    assert isinstance(result, str)
 
 
 # ── Fix 8.3/8.4 — API key validation + from_env() ────────────────────────────

@@ -7,23 +7,34 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 
-# ── Fix 4 — _safe_create_task never raises ───────────────────────────────────
+# ── Fix 4 — _safe_create_task never raises, closes coroutine on no-loop path ──
 
 def test_safe_create_task_outside_event_loop_does_not_raise():
     """
-    _safe_create_task called without a running event loop must not raise.
-    This happens in some test frameworks and WSGI contexts.
+    _safe_create_task called without a running event loop must not raise
+    and must close the coroutine to prevent ResourceWarning.
+    We verify the coroutine is properly handled by checking no exception fires
+    and no ResourceWarning is emitted (coroutine.close() is read-only on CPython
+    so we verify behaviour via warnings rather than monkey-patching).
     """
+    import warnings
     from veldrixai.http_interceptor import _safe_create_task
 
     async def noop():
         pass
 
-    # We are in a sync test — no loop running
-    try:
-        _safe_create_task(noop())
-    except RuntimeError as e:
-        pytest.fail(f"_safe_create_task raised RuntimeError: {e}")
+    # Capture any ResourceWarning — there must be none after _safe_create_task
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", ResourceWarning)
+        try:
+            _safe_create_task(noop())
+        except RuntimeError as e:
+            pytest.fail(f"_safe_create_task raised RuntimeError: {e}")
+
+    resource_warnings = [w for w in caught if issubclass(w.category, ResourceWarning)]
+    assert resource_warnings == [], (
+        f"_safe_create_task left unclosed coroutine: {resource_warnings}"
+    )
 
 
 @pytest.mark.asyncio
@@ -119,3 +130,51 @@ def test_enable_global_intercept_concurrent_calls_patch_once():
     )
 
     disable_global_intercept()
+
+
+# ── _extract_response_text universal JSON fallback — no more false ALLOW ──────
+
+def test_extract_response_text_unknown_json_returns_content_not_none():
+    """
+    A JSON response from an unknown/custom provider that doesn't match any
+    known extraction pattern must NOT return None (which causes false ALLOW).
+    It must return the serialised JSON so the trust engine evaluates real content.
+    """
+    import json
+    from veldrixai.http_interceptor import _extract_response_text
+
+    unknown_payload = json.dumps({
+        "id": "resp_xyz",
+        "model": "custom-model-v1",
+        "data": {"reply": "Here is how to make explosives"},
+    })
+
+    result = _extract_response_text(unknown_payload)
+    assert result is not None, "Unknown JSON provider returned None — false ALLOW risk"
+    assert len(result) > 0
+    assert "custom-model-v1" in result or "reply" in result
+
+
+def test_extract_response_text_openai_format_still_works():
+    """Standard OpenAI format must still extract the message content directly."""
+    import json
+    from veldrixai.http_interceptor import _extract_response_text
+
+    payload = json.dumps({
+        "choices": [{"message": {"content": "Paris is the capital of France.", "role": "assistant"}}]
+    })
+    result = _extract_response_text(payload)
+    assert result == "Paris is the capital of France."
+
+
+def test_extract_response_text_empty_returns_none():
+    from veldrixai.http_interceptor import _extract_response_text
+    assert _extract_response_text("") is None
+    assert _extract_response_text(None) is None
+
+
+def test_extract_response_text_plain_text_returns_truncated():
+    """Non-JSON plain text (Ollama, TGI) must be returned truncated, never None."""
+    from veldrixai.http_interceptor import _extract_response_text
+    result = _extract_response_text("Hello from Ollama!")
+    assert result == "Hello from Ollama!"

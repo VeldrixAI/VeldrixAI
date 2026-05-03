@@ -1,4 +1,4 @@
-"""LangChain adapter — handles invoke(), __call__(), and chain outputs."""
+"""LangChain adapter — handles invoke(), __call__(), chain outputs, and agent outputs."""
 from typing import Any, Optional
 
 
@@ -17,13 +17,32 @@ def extract_prompt(args: tuple, kwargs: dict) -> Optional[str]:
 
 
 def extract_response(result: Any) -> str:
+    # AgentFinish — final answer from a LangChain agent
+    # result.return_values is a dict, typically {"output": "..."}  
+    if type(result).__name__ == "AgentFinish":
+        rv = getattr(result, "return_values", {})
+        if isinstance(rv, dict):
+            for key in ("output", "answer", "result", "text"):
+                if key in rv:
+                    return str(rv[key])
+        return str(rv)
+
+    # AgentAction — tool invocation from a LangChain agent
+    # result.tool + result.tool_input describe what the agent is doing
+    if type(result).__name__ == "AgentAction":
+        tool       = getattr(result, "tool", "unknown")
+        tool_input = getattr(result, "tool_input", "")
+        return f"[tool_call:{tool}] {str(tool_input)[:500]}"
+
     # Chain output dict
     if isinstance(result, dict):
         for key in ("output", "answer", "result", "text", "content", "response"):
             if key in result:
                 return str(result[key])
         return str(result)
+
     # AIMessage / BaseMessage
     if hasattr(result, "content"):
         return result.content or ""
+
     return str(result)

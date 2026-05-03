@@ -26,6 +26,22 @@ services:
     networks:
       - veldrix-net
 
+  # ── Redis (circuit breaker state + backpressure) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: veldrix-redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veldrix-net
+
   # ── Auth Service (FastAPI, port 8000) ────────────────────────────────────────
   veldrix-auth:
     build:
@@ -38,6 +54,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
       VELDRIX_VAULT_KEY: ${VELDRIX_VAULT_KEY}
+      VELDRIX_CORS_ORIGINS: ${VELDRIX_CORS_ORIGINS:-https://app.veldrixai.ca}
+      APP_ENV: production
     ports:
       - "8000:8000"
     depends_on:
@@ -71,8 +89,14 @@ services:
       - VELDRIX_PILLAR_LEGAL_MODEL=${VELDRIX_PILLAR_LEGAL_MODEL:-meta/llama-3.1-8b-instruct}
       - VELDRIX_NIM_TIMEOUT_MS=${VELDRIX_NIM_TIMEOUT_MS:-8000}
       - VELDRIX_INTERNAL_API_KEY=${VELDRIX_INTERNAL_API_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - CIRCUIT_BREAKER_BACKEND=redis
+      - APP_ENV=production
     ports:
       - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
@@ -93,6 +117,8 @@ services:
       - ./backend/connectors/.env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
+      VELDRIX_CORS_ORIGINS: ${VELDRIX_CORS_ORIGINS:-https://app.veldrixai.ca}
+      APP_ENV: production
     ports:
       - "8002:8002"
     depends_on:

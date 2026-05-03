@@ -18,7 +18,18 @@ def extract_prompt(args: tuple, kwargs: dict) -> Optional[str]:
 
 
 def extract_response(result: Any) -> str:
+    # Tool call / function call response — agent mode
     try:
-        return result.choices[0].message.content or ""
+        choice = result.choices[0]
+        # finish_reason == "tool_calls" means the model called a tool, not text
+        if getattr(choice, "finish_reason", None) == "tool_calls":
+            tool_calls = getattr(choice.message, "tool_calls", None) or []
+            parts = []
+            for tc in tool_calls:
+                fn = getattr(tc, "function", None)
+                if fn:
+                    parts.append(f"[tool_call:{getattr(fn, 'name', 'unknown')}] {getattr(fn, 'arguments', '')[:500]}")
+            return " | ".join(parts) if parts else "[tool_call]"
+        return choice.message.content or ""
     except (AttributeError, IndexError):
         return str(result)

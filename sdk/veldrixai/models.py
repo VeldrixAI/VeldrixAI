@@ -5,7 +5,10 @@ These are the types developers interact with.
 
 from __future__ import annotations
 from typing import Any, Callable, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+import logging
+
+_cfg_logger = logging.getLogger("veldrix.config")
 
 
 class PillarScore(BaseModel):
@@ -103,8 +106,15 @@ class GuardedResponse:
         return f"GuardedResponse(trust={trust!r}, original_type={type(original).__name__})"
 
     def __str__(self):
-        """str(response) returns the LLM text content."""
-        return self.content
+        """str(response) returns the LLM text content. Never raises."""
+        try:
+            return self.content
+        except Exception:
+            try:
+                original = object.__getattribute__(self, "_original")
+                return repr(original)[:500]
+            except Exception:
+                return ""
 
     # ── content property — works for OpenAI, LiteLLM, str ───────────────────
     @property
@@ -207,15 +217,43 @@ class GuardConfig(BaseModel):
     """
     Optional per-guard configuration. Pass to @veldrix.guard(config=...).
     All fields have sensible defaults.
+
+    on_block is excluded from serialization (model_dump / JSON) because
+    Callable is not JSON-serializable. It is runtime-only.
     """
     block_on_verdict: list[str] = []           # e.g. ["BLOCK"] — raise on these verdicts
     timeout_ms:       int       = 10_000       # max ms to wait for trust evaluation
     background:       bool      = True         # True = evaluate async, never slows LLM
-    on_block:         Optional[Callable[..., Any]] = None  # callable(GuardedResponse) — custom block handler
+    on_block:         Optional[Callable[..., Any]] = Field(
+        default=None,
+        exclude=True,   # never serialized — Callable is not JSON-serializable
+    )
     include_prompt:   bool      = True         # whether to send the prompt to VeldrixAI
     metadata:         dict      = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}
+
+    @model_validator(mode="after")
+    def _warn_background_block_conflict(self) -> "GuardConfig":
+        """
+        block_on_verdict requires background=False to have any effect.
+        In background mode the trust result is always PENDING at the time
+        _handle_block runs, so the verdict can never match — blocks never fire.
+
+        This raises VeldrixConfigError immediately at construction time so
+        developers catch the misconfiguration during startup, not silently in
+        production. The error message tells them exactly how to fix it.
+        """
+        if self.background and self.block_on_verdict:
+            from veldrixai.exceptions import VeldrixConfigError
+            raise VeldrixConfigError(
+                f"GuardConfig: block_on_verdict={self.block_on_verdict!r} has no effect "
+                "when background=True (the default).\n"
+                "  Fix: set background=False to enable blocking behaviour:\n"
+                "  GuardConfig(background=False, block_on_verdict=['BLOCK'])\n"
+                "  Or remove block_on_verdict if you only need dashboard visibility."
+            )
+        return self
 
 
 def _extract_content(obj: Any) -> str:

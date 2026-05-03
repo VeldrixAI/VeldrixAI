@@ -48,13 +48,16 @@ from veldrixai.exceptions import (
     VeldrixTimeoutError,
     VeldrixAPIError,
     VeldrixBlockError,
+    VeldrixRateLimitError,
+    VeldrixServiceUnavailableError,
+    VeldrixConfigError,
 )
 from veldrixai.http_interceptor import (
     enable_global_intercept,
     disable_global_intercept,
 )
 from veldrixai.middleware import VeldrixMiddleware, init_flask
-from veldrixai.providers  import match_provider, is_ai_endpoint
+from veldrixai.providers  import match_provider, is_ai_endpoint, register_provider, unregister_provider
 
 try:
     from importlib.metadata import version as _pkg_version
@@ -77,6 +80,9 @@ __all__ = [
     "VeldrixTimeoutError",
     "VeldrixAPIError",
     "VeldrixBlockError",
+    "VeldrixRateLimitError",
+    "VeldrixServiceUnavailableError",
+    "VeldrixConfigError",
     # Global HTTP intercept
     "enable_global_intercept",
     "disable_global_intercept",
@@ -86,6 +92,8 @@ __all__ = [
     # Provider registry
     "match_provider",
     "is_ai_endpoint",
+    "register_provider",
+    "unregister_provider",
     # Version
     "__version__",
 ]

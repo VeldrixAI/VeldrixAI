@@ -41,12 +41,17 @@ async def test_transport_returns_trust_result():
 @pytest.mark.asyncio
 @respx.mock
 async def test_transport_degrades_on_500_when_background():
-    """A 500 with background=True must return a degraded TrustResult, never raise."""
+    """A 500 must return a degraded TrustResult, never raise.
+    Tests evaluate_with_client() directly — the queue path returns PENDING
+    immediately and the actual HTTP call happens inside the drain worker.
+    """
     respx.post(f"{BASE_URL}/api/v1/analyze").mock(return_value=httpx.Response(500))
 
-    t     = Transport(API_KEY, BASE_URL, timeout_ms=500)
-    trust = await t.evaluate("hello", "world", GuardConfig(background=True))
+    t      = Transport(API_KEY, BASE_URL, timeout_ms=500)
+    client = t._make_fresh_client()
+    trust  = await t.evaluate_with_client(client, "hello", "world", GuardConfig(background=True))
     assert trust.verdict == "UNKNOWN"
+    await client.aclose()
     await t.close()
 
 
@@ -85,16 +90,19 @@ async def test_timeout_raises_when_foreground():
 @pytest.mark.asyncio
 @respx.mock
 async def test_timeout_degrades_silently_when_background():
-    """Timeout with background=True must NEVER raise — returns degraded result."""
+    """Timeout must NEVER raise — returns degraded result.
+    Tests evaluate_with_client() directly — the queue path returns PENDING
+    immediately and the actual HTTP call happens inside the drain worker.
+    """
     respx.post(f"{BASE_URL}/api/v1/analyze").mock(
         side_effect=httpx.TimeoutException("timed out")
     )
     t      = Transport(API_KEY, BASE_URL, timeout_ms=500)
-    config = GuardConfig(background=True)
-
-    trust = await t.evaluate("prompt", "response", config)
+    client = t._make_fresh_client()
+    trust  = await t.evaluate_with_client(client, "prompt", "response", GuardConfig(background=True))
     assert trust.verdict == "UNKNOWN"
     assert trust.is_degraded is True
+    await client.aclose()
     await t.close()
 
 
@@ -137,15 +145,18 @@ async def test_503_raises_when_foreground():
 @pytest.mark.asyncio
 @respx.mock
 async def test_5xx_degrades_silently_when_background():
-    """5xx with background=True must NEVER raise."""
+    """5xx must NEVER raise — returns degraded result.
+    Tests evaluate_with_client() directly — the queue path returns PENDING
+    immediately and the actual HTTP call happens inside the drain worker.
+    """
     respx.post(f"{BASE_URL}/api/v1/analyze").mock(
         return_value=httpx.Response(500)
     )
     t      = Transport(API_KEY, BASE_URL)
-    config = GuardConfig(background=True)
-
-    trust = await t.evaluate("prompt", "response", config)
+    client = t._make_fresh_client()
+    trust  = await t.evaluate_with_client(client, "prompt", "response", GuardConfig(background=True))
     assert trust.verdict == "UNKNOWN"
+    await client.aclose()
     await t.close()
 
 

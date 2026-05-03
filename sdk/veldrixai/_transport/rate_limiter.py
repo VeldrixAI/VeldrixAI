@@ -26,7 +26,7 @@ import logging
 import threading
 import time
 from collections import deque
-from typing import Callable, Awaitable, TypeVar
+from typing import Callable, Awaitable, Optional, TypeVar
 
 logger = logging.getLogger("veldrix.transport")
 
@@ -53,7 +53,7 @@ class TokenBucket:
         self._refill_rate = float(refill_rate)
         self._tokens = float(capacity)  # start full
         self._last_refill = time.monotonic()
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None   # lazy — created inside running loop
         self._throttle_count = 0
 
     def _refill(self) -> None:
@@ -67,6 +67,8 @@ class TokenBucket:
         Acquire one token. Returns True if acquired, False if timeout elapsed.
         Suspends if no token is available (backpressure).
         """
+        if self._lock is None:
+            self._lock = asyncio.Lock()   # lazy-create inside the running event loop
         deadline = time.monotonic() + timeout
         while True:
             async with self._lock:
@@ -108,14 +110,18 @@ class BoundedDispatchQueue:
         self._on_overflow = on_overflow
         self._queue: deque[Callable[[], Awaitable[None]]] = deque()
         self._dropped = 0
-        self._lock = asyncio.Lock()
-        self._event = asyncio.Event()
+        self._lock:  Optional[asyncio.Lock]  = None   # lazy — created inside running loop
+        self._event: Optional[asyncio.Event] = None   # lazy — created inside running loop
 
     async def submit(self, coro_fn: Callable[[], Awaitable[None]]) -> bool:
         """
         Add a coroutine factory to the queue.
         Returns True if enqueued, False if dropped.
         """
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        if self._event is None:
+            self._event = asyncio.Event()
         async with self._lock:
             if len(self._queue) >= self._max_size:
                 if self._on_overflow == "drop_newest":
@@ -137,20 +143,37 @@ class BoundedDispatchQueue:
             return True
 
     async def drain_worker(self) -> None:
-        """Background task that drains the queue. Run via asyncio.create_task()."""
+        """
+        Background task that drains the queue. Run via asyncio.create_task().
+
+        Batch drain: processes up to _DRAIN_BATCH items per iteration so that
+        under burst load (10k queued items) the worker keeps pace with the
+        inbound rate instead of processing one HTTP round-trip at a time.
+        Each batch item is awaited sequentially inside the batch to preserve
+        ordering and avoid unbounded concurrency on the trust API.
+        """
+        _DRAIN_BATCH = 32
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        if self._event is None:
+            self._event = asyncio.Event()
         while True:
             await self._event.wait()
+            # Drain up to _DRAIN_BATCH items under the lock, then release
+            # before awaiting so other coroutines can submit while we run.
+            batch: list = []
             async with self._lock:
+                for _ in range(_DRAIN_BATCH):
+                    if not self._queue:
+                        break
+                    batch.append(self._queue.popleft())
                 if not self._queue:
                     self._event.clear()
-                    continue
-                fn = self._queue.popleft()
-                if not self._queue:
-                    self._event.clear()
-            try:
-                await fn()
-            except Exception as exc:
-                logger.debug("veldrix queue_worker error (non-fatal): %s", exc)
+            for fn in batch:
+                try:
+                    await fn()
+                except Exception as exc:
+                    logger.debug("veldrix queue_worker error (non-fatal): %s", exc)
 
     def stats(self) -> dict:
         return {"depth": len(self._queue), "dropped_total": self._dropped}

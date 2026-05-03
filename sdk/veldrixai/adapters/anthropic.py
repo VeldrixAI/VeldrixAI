@@ -20,8 +20,18 @@ def extract_prompt(args: tuple, kwargs: dict) -> Optional[str]:
 def extract_response(result: Any) -> str:
     try:
         for block in result.content:
-            if hasattr(block, "type") and block.type == "text":
-                return block.text
+            if hasattr(block, "type"):
+                if block.type == "text":
+                    return block.text
+                # tool_use block — Claude agent mode
+                if block.type == "tool_use":
+                    import json as _json
+                    input_str = ""
+                    try:
+                        input_str = _json.dumps(block.input)[:500]
+                    except Exception:
+                        input_str = str(getattr(block, "input", ""))[:500]
+                    return f"[tool_use:{getattr(block, 'name', 'unknown')}] {input_str}"
     except Exception:
         pass
     return str(result)

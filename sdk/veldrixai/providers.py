@@ -2,11 +2,20 @@
 VeldrixAI — Known AI Provider Endpoint Registry
 Used by the HTTP interceptor to identify AI calls regardless of which
 SDK or HTTP library the developer uses.
+
+Matching strategy
+─────────────────
+match_provider() checks url_patterns first (host match), then verifies that
+at least one request_path appears in the URL. This two-step check prevents
+broad host patterns like "localhost:8080" from matching unrelated local
+services — a vLLM server is only matched when the path is an OpenAI-compatible
+completion endpoint.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -144,7 +153,10 @@ PROVIDER_REGISTRY: list[ProviderEndpoint] = [
     ),
     ProviderEndpoint(
         name="vLLM",
-        url_patterns=["localhost:8080"],
+        # localhost:8080 is intentionally path-gated below.
+        # Without path gating, any local service on port 8080 (web servers,
+        # mock APIs, proxies) would be intercepted as an AI endpoint.
+        url_patterns=["localhost:8080", "127.0.0.1:8080"],
         request_paths=["/v1/chat/completions", "/v1/completions"],
         adapter_key="openai",
     ),
@@ -214,22 +226,107 @@ PROVIDER_REGISTRY: list[ProviderEndpoint] = [
     ProviderEndpoint(
         name="Tencent Hunyuan",
         url_patterns=["hunyuan.tencentcloudapi.com"],
-        request_paths=["/"],
+        request_paths=["/hunyuan/", "/v1/chat/completions"],
         adapter_key="generic",
         region="china",
     ),
 ]
 
 
+def _host_port(url: str) -> str:
+    """
+    Return "host" or "host:port" from a URL for exact-boundary matching.
+    Falls back to the raw lowercased URL on parse failure.
+    """
+    try:
+        parsed = urlparse(url if "://" in url else f"https://{url}")
+        host = (parsed.hostname or "").lower()
+        return f"{host}:{parsed.port}" if parsed.port else host
+    except Exception:
+        return url.lower()
+
+
 def match_provider(url: str) -> Optional[ProviderEndpoint]:
-    """Return the first matching provider for a given URL, or None."""
-    url_lower = url.lower()
+    """
+    Return the first matching provider for a given URL, or None.
+
+    Two-step match:
+      1. At least one url_pattern must appear in the parsed host[:port] string
+         (exact boundary — prevents localhost:4000 matching localhost:40001).
+      2. At least one request_path must appear in the full lowercased URL.
+
+    Both conditions must be true.
+    """
+    url_lower   = url.lower()
+    host_string = _host_port(url)
     for provider in PROVIDER_REGISTRY:
-        for pattern in provider.url_patterns:
-            if pattern in url_lower:
-                return provider
+        host_match = any(pattern in host_string for pattern in provider.url_patterns)
+        if not host_match:
+            continue
+        path_match = any(path in url_lower for path in provider.request_paths)
+        if path_match:
+            return provider
     return None
 
 
 def is_ai_endpoint(url: str) -> bool:
     return match_provider(url) is not None
+
+
+def register_provider(
+    name:          str,
+    url_patterns:  list[str],
+    request_paths: list[str],
+    adapter_key:   str = "openai",
+    region:        str = "global",
+) -> ProviderEndpoint:
+    """
+    Register a custom AI provider endpoint at runtime.
+
+    Use this for self-hosted vLLM, private NVIDIA NIM deployments, internal
+    model servers, or any provider not in the built-in registry.
+
+    The new entry is prepended so it takes priority over built-in patterns.
+    Returns the created ProviderEndpoint for inspection.
+
+    Usage::
+
+        from veldrixai.providers import register_provider
+
+        # Self-hosted vLLM on a non-standard host/port
+        register_provider(
+            name="vLLM Production",
+            url_patterns=["vllm.internal:9000"],
+            request_paths=["/v1/chat/completions"],
+            adapter_key="openai",
+        )
+
+        # Private NVIDIA NIM cluster
+        register_provider(
+            name="NIM Cluster",
+            url_patterns=["nim.corp.internal"],
+            request_paths=["/v1/chat/completions"],
+            adapter_key="openai",
+        )
+    """
+    endpoint = ProviderEndpoint(
+        name=name,
+        url_patterns=url_patterns,
+        request_paths=request_paths,
+        adapter_key=adapter_key,
+        region=region,
+    )
+    PROVIDER_REGISTRY.insert(0, endpoint)
+    return endpoint
+
+
+def unregister_provider(name: str) -> bool:
+    """
+    Remove a provider by name from the registry.
+    Returns True if found and removed, False if not found.
+    Useful in tests to clean up after register_provider().
+    """
+    global PROVIDER_REGISTRY
+    before = len(PROVIDER_REGISTRY)
+    PROVIDER_REGISTRY[:] = [p for p in PROVIDER_REGISTRY if p.name != name]
+    return len(PROVIDER_REGISTRY) < before

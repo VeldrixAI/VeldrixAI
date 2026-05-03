@@ -57,11 +57,9 @@ async def require_api_key(
 
     if not raw_key:
         settings = get_settings()
-        if not settings.VELDRIX_INTERNAL_API_KEY:
-            # Dev mode — no auth required, return anonymous
+        if not settings.VELDRIX_INTERNAL_API_KEY and settings.APP_ENV != "production":
+            # Dev/demo mode — no auth enforced when no key is configured outside production
             logger.warning("No API key provided and VELDRIX_INTERNAL_API_KEY not set; dev mode bypass")
-            return {"user_id": None, "email": None}
-        if raw_key == settings.VELDRIX_INTERNAL_API_KEY:
             return {"user_id": None, "email": None}
         raise HTTPException(status_code=401, detail="Missing API key")
 
