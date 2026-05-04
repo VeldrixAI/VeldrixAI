@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from uuid import UUID
@@ -485,14 +485,32 @@ async def get_audit_intelligence(
     return result
 
 
-# ── Immutability guard ────────────────────────────────────────────────────────
+# ── Delete endpoint ───────────────────────────────────────────────────────────
 
-@router.delete("/{log_id}")
-async def delete_audit_log(log_id: str):
-    raise HTTPException(
-        status_code=403,
-        detail="Audit log entries are immutable and cannot be deleted. This is by design.",
+@router.delete("/{log_id}", status_code=204)
+async def delete_audit_log(
+    log_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Hard-delete a single audit log entry, scoped to the calling user."""
+    uid = UUID(current_user["id"])
+    try:
+        log_uuid = UUID(log_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+
+    record = (
+        db.query(AuditTrail)
+        .filter(AuditTrail.id == log_uuid, AuditTrail.user_id == uid)
+        .first()
     )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+
+    db.delete(record)
+    db.commit()
+    return Response(status_code=204)
 
 
 # ── CSV export endpoint ───────────────────────────────────────────────────────
