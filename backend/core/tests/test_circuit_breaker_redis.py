@@ -89,7 +89,7 @@ def fake_server():
     if not HAS_FAKEREDIS:
         pytest.skip("fakeredis not installed")
     import fakeredis
-    return fakeredis.FakeServer()
+    return fakeredis.FakeServer(version=(7, 0, 0))
 
 
 # ── Test: multi-worker convergence ────────────────────────────────────────────

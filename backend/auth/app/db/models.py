@@ -85,3 +85,42 @@ class Notification(Base):
         Index("ix_notifications_user_unread",   "user_id", "is_read"),
         Index("ix_notifications_user_created",  "user_id", "created_at"),
     )
+
+
+# ── Payment OTP Vault ─────────────────────────────────────────────────────────
+
+class PaymentOTPVault(Base):
+    """AES-256-GCM encrypted OTP records for payment authorization."""
+    __tablename__ = "payment_otp_vault"
+
+    id                = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id           = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    payment_intent_id = Column(String(200), nullable=False, index=True)
+    payment_method_id = Column(String(200), nullable=False)
+    encrypted_otp     = Column(Text, nullable=False)    # AES-256-GCM via vault.encrypt()
+    attempt_count     = Column(Integer, default=0, nullable=False)
+    max_attempts      = Column(Integer, default=5, nullable=False)
+    expires_at        = Column(DateTime(timezone=True), nullable=False)
+    used_at           = Column(DateTime(timezone=True), nullable=True)
+    created_at        = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_otp_vault_user_pi", "user_id", "payment_intent_id"),
+    )
+
+
+# ── Payment History ───────────────────────────────────────────────────────────
+
+class PaymentHistory(Base):
+    """Immutable record of completed payments."""
+    __tablename__ = "payment_history"
+
+    id                       = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id                  = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    stripe_payment_intent_id = Column(String(200), nullable=False, unique=True)
+    amount                   = Column(Integer, nullable=False)     # cents
+    currency                 = Column(String(10), default="usd", nullable=False)
+    status                   = Column(String(50), nullable=False)  # succeeded | failed | refunded
+    plan_name                = Column(String(100), nullable=True)
+    receipt_email            = Column(String(255), nullable=True)
+    created_at               = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -24,6 +24,7 @@ interface UseNotificationSocketOptions {
   userId: string | null;
   token: string | null;
   onNotification: (payload: NotificationPayload) => void;
+  onTokenExpired?: () => void;
   enabled?: boolean;
 }
 
@@ -36,20 +37,21 @@ export function useNotificationSocket({
   userId,
   token,
   onNotification,
+  onTokenExpired,
   enabled = true,
 }: UseNotificationSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const pingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
-  // stable ref so reconnect closure doesn't capture a stale callback
   const onNotificationRef = useRef(onNotification);
   onNotificationRef.current = onNotification;
+  const onTokenExpiredRef = useRef(onTokenExpired);
+  onTokenExpiredRef.current = onTokenExpired;
 
   const connect = useCallback(() => {
     if (!userId || !token || !enabled || !mountedRef.current) return;
 
-    // Derive WS base from the public core URL env var, fallback to same host
     const coreUrl =
       process.env.NEXT_PUBLIC_VELDRIX_CORE_URL || "http://localhost:8001";
     const wsBase = coreUrl
@@ -77,11 +79,15 @@ export function useNotificationSocket({
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       if (pingRef.current) clearInterval(pingRef.current);
-      if (mountedRef.current) {
-        reconnectRef.current = setTimeout(connect, 3_000);
+      if (!mountedRef.current) return;
+      // 4001 = token expired/invalid — request a fresh token, don't reconnect with stale one
+      if (event.code === 4001 || event.code === 4003) {
+        onTokenExpiredRef.current?.();
+        return;
       }
+      reconnectRef.current = setTimeout(connect, 3_000);
     };
 
     ws.onerror = () => ws.close();

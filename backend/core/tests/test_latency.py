@@ -39,7 +39,6 @@ from src.pillars.implementations.ai_safety_pillars import (
     HallucinationPillar,
     PromptSecurityPillar,
     SafetyToxicityPillar,
-    _registry,
 )
 from src.pillars.types import PillarStatus
 
@@ -56,10 +55,6 @@ def _ctx() -> TrustEvaluationContext:
 
 def _input(prompt: str, response: str) -> TrustEvaluationInput:
     return TrustEvaluationInput(prompt=prompt, response=response, model="test")
-
-
-def _reset_client():
-    _registry._client = None
 
 
 def _nim_ok(content_dict: dict) -> httpx.Response:
@@ -218,8 +213,6 @@ async def test_toxic_content_detected():
 @pytest.mark.asyncio
 async def test_scores_in_valid_range():
     """All NIM-backed pillars must return scores in [0, 100] and confidence in [0, 1]."""
-    _reset_client()
-
     # Provide enough responses for all non-fast-path evaluations
     respx.post(_NIM_URL).mock(
         side_effect=[
@@ -318,7 +311,6 @@ def test_pillar_metadata_versions_contain_nim():
 @pytest.mark.asyncio
 async def test_degraded_mode_never_raises_all_pillars():
     """All pillars must return a valid PillarResult even when NIM is unreachable."""
-    _reset_client()
     respx.post(_NIM_URL).mock(side_effect=httpx.ConnectError("connection refused"))
 
     pillars = [
@@ -340,7 +332,6 @@ async def test_degraded_mode_never_raises_all_pillars():
 @respx.mock
 @pytest.mark.asyncio
 async def test_degraded_mode_never_raises_safety_toxicity():
-    _reset_client()
     respx.post(_NIM_URL).mock(side_effect=httpx.ConnectError("refused"))
     with patch("src.pillars.implementations.ai_safety_pillars.asyncio.sleep"):
         result = await SafetyToxicityPillar().evaluate(SAFE_INPUT, _ctx())
@@ -352,7 +343,6 @@ async def test_degraded_mode_never_raises_safety_toxicity():
 @respx.mock
 @pytest.mark.asyncio
 async def test_degraded_mode_never_raises_hallucination():
-    _reset_client()
     respx.post(_NIM_URL).mock(side_effect=httpx.ConnectError("refused"))
     with patch("src.pillars.implementations.ai_safety_pillars.asyncio.sleep"):
         result = await HallucinationPillar().evaluate(SAFE_INPUT, _ctx())
@@ -363,7 +353,6 @@ async def test_degraded_mode_never_raises_hallucination():
 @respx.mock
 @pytest.mark.asyncio
 async def test_degraded_mode_never_raises_prompt_security():
-    _reset_client()
     respx.post(_NIM_URL).mock(side_effect=httpx.ConnectError("refused"))
     with patch("src.pillars.implementations.ai_safety_pillars.asyncio.sleep"):
         result = await PromptSecurityPillar().evaluate(SAFE_INPUT, _ctx())
@@ -374,7 +363,6 @@ async def test_degraded_mode_never_raises_prompt_security():
 @respx.mock
 @pytest.mark.asyncio
 async def test_degraded_mode_never_raises_compliance():
-    _reset_client()
     respx.post(_NIM_URL).mock(side_effect=httpx.ConnectError("refused"))
     with patch("src.pillars.implementations.ai_safety_pillars.asyncio.sleep"):
         result = await CompliancePolicyPillar().evaluate(PII_INPUT, _ctx())

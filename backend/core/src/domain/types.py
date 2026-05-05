@@ -39,7 +39,7 @@ class TrustEvaluationInput:
     """
     prompt: str
     response: str
-    model: str
+    model: str = ""
     provider: Optional[str] = None
     context: Dict[str, Any] = field(default_factory=dict)
     metadata: Optional[AIOutputMetadata] = None

@@ -13,11 +13,17 @@ class Settings(BaseSettings):
     # Stripe billing
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
     STRIPE_PRICE_GROW_MONTHLY: str = ""
     STRIPE_PRICE_GROW_ANNUAL: str = ""
     STRIPE_PRICE_SCALE_MONTHLY: str = ""
     STRIPE_PRICE_SCALE_ANNUAL: str = ""
-    VELDRIX_UI_URL: str = "http://localhost:3000"
+    VELDRIX_UI_URL: str = "http://localhost:5000"
+
+    # Email (Resend — https://resend.com)
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "noreply@veldrixai.ca"
+    EMAIL_FROM_NAME: str = "VeldrixAI"
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_PATH), case_sensitive=True, extra="ignore"

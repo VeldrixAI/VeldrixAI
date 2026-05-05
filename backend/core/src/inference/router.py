@@ -52,8 +52,9 @@ _HTTP_LIMITS = httpx.Limits(
 # Fast-fail probe timeout for the PRIMARY provider (priority=1, NVIDIA NIM).
 # If a single inference call exceeds this threshold, the circuit breaker records
 # a failure and the request routes immediately to the next provider.
-# Configurable via VELDRIX_PROBE_TIMEOUT_S (default 3.0s).
-_PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "1.0"))
+# Default 0.3s keeps worst-case latency at ~500ms when NIM is offline.
+# Override via VELDRIX_PROBE_TIMEOUT_S if NIM connectivity is confirmed.
+_PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "0.3"))
 
 # ── Module-level connection pool (one client per provider) ───────────────────
 _clients: dict[str, httpx.AsyncClient] = {}

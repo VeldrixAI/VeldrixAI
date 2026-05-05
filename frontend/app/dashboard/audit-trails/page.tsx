@@ -59,6 +59,15 @@ export default function AuditTrailsPage() {
   const [systemLogs, setSystemLogs] = useState<AuditRecord[]>([]);
   const [systemLogsOpen, setSystemLogsOpen] = useState(false);
   const fetchingRef = useRef(false);
+  const currentUserIdRef = useRef<string | null>(null);
+
+  // Fetch authenticated user ID once on mount for SSE cross-user filtering.
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((u) => { if (u?.id) currentUserIdRef.current = String(u.id); })
+      .catch(() => {});
+  }, []);
 
   function showToast(message: string, type = "success") {
     const id = Date.now();
@@ -78,7 +87,17 @@ export default function AuditTrailsPage() {
       const res = await fetch(`/api/audit-trails?${params}`);
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || "Failed to load");
-      setData(payload);
+      // Dedup by request_id at the REST layer — guards against DB-level duplicates
+      // that share request_id but have different UUID primary keys.
+      const rawRecords: AuditRecord[] = payload.records || [];
+      const seenKeys = new Set<string>();
+      const dedupedRecords = rawRecords.filter((r: AuditRecord) => {
+        const key = r.request_id || r.id;
+        if (seenKeys.has(String(key))) return false;
+        seenKeys.add(String(key));
+        return true;
+      });
+      setData({ ...payload, records: dedupedRecords });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load audit trails");
     } finally {
@@ -115,6 +134,13 @@ export default function AuditTrailsPage() {
       es.addEventListener("analysis_complete", (e: MessageEvent) => {
         try {
           const result = JSON.parse(e.data);
+          // Drop events from other users. _user_id is null on pre-fix events — accept those
+          // for backward compatibility. Once all inflight telemetry carries _user_id, the
+          // null-accept branch can be removed.
+          const eventUserId: string | null = result._user_id ?? null;
+          if (eventUserId && currentUserIdRef.current && eventUserId !== currentUserIdRef.current) {
+            return;
+          }
           const newRow: AuditRecord = {
             id: result.request_id,
             action_type: "trust_evaluation",

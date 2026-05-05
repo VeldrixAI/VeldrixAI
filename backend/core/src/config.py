@@ -11,7 +11,7 @@ class Settings:
     """Application settings loaded from environment."""
 
     def __init__(self) -> None:
-        self.JWT_SECRET: str = os.getenv("JWT_SECRET_KEY", "your-secret-key")
+        self.JWT_SECRET: str = os.getenv("JWT_SECRET_KEY", "")
         self.JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
         self.APP_ENV: str = os.getenv("APP_ENV", "development")
         self.APP_PORT: int = int(os.getenv("APP_PORT", "8001"))

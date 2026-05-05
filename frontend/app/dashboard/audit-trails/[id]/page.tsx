@@ -440,13 +440,20 @@ export default function AuditDetailPage() {
     }
   }
 
-  // Delete Report (placeholder — navigates to reports to delete there)
   async function handleDeleteReport() {
+    if (!detail) return;
     setDeleting(true);
     try {
-      showToast("Navigate to Reports page to delete generated reports");
+      const res = await fetch(`/api/audit-trails/${detail.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Delete failed", "error");
+        return;
+      }
       setConfirmDelete(false);
-      router.push("/dashboard/reports");
+      router.push("/dashboard/audit-trails");
+    } catch {
+      showToast("Delete request failed", "error");
     } finally {
       setDeleting(false);
     }
@@ -860,11 +867,11 @@ export default function AuditDetailPage() {
           >
             <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20, color: "#f0f2ff", marginBottom: 12 }}>Delete Report?</h3>
             <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: 14, color: "rgba(240,242,255,0.5)", lineHeight: 1.6, marginBottom: 24 }}>
-              This action cannot be undone. The generated PDF report for request{" "}
+              This action cannot be undone. The audit log entry for request{" "}
               <span style={{ fontFamily: "JetBrains Mono, monospace", color: "#f0f2ff" }}>
                 {detail?.request_id?.slice(0, 12) || "—"}
               </span>{" "}
-              will be permanently deleted. The audit log entry itself is immutable and will be preserved.
+              will be permanently removed from the database.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button
