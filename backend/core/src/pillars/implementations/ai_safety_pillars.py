@@ -18,6 +18,7 @@ Architecture:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -346,9 +347,9 @@ class SafetyToxicityPillar(PillarEngine):
                 model_override=_MODEL_CONTENT,
                 max_tokens=32,
             )
-            raw_content = raw_content.strip().lower()
+            raw_content = raw_content.strip()
             # llama-guard output: "safe" or "unsafe\nS1" (violated category on next line)
-            is_unsafe = raw_content.startswith("unsafe")
+            is_unsafe = raw_content.lower().startswith("unsafe")
             violated_cats = [c.strip() for c in raw_content.split("\n")[1:] if c.strip()]
 
             risk_score = 0.90 if is_unsafe else 0.05
