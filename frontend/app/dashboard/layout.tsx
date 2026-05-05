@@ -171,10 +171,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     async function loadUser() {
       try {
         const res = await fetch("/api/auth/me");
-        if (!res.ok) throw new Error("Unauthorized");
-        setUser(await res.json());
+        if (res.status === 401) {
+          router.push("/login");
+          return;
+        }
+        if (!res.ok) {
+          // 5xx or network hiccup — retry once after 1.5s before giving up
+          await new Promise((r) => setTimeout(r, 1500));
+          const retry = await fetch("/api/auth/me");
+          if (!retry.ok) {
+            if (retry.status === 401) router.push("/login");
+            setLoading(false);
+            return;
+          }
+          setUser(await retry.json());
+        } else {
+          setUser(await res.json());
+        }
       } catch {
-        router.push("/login");
+        // pure network failure — don't kick the user out, just stop loading
       } finally {
         setLoading(false);
       }

@@ -3,13 +3,12 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PricingCard, { PLANS, type PricingPlan } from "@/components/billing/PricingCard";
-import { AUTH_API_URL, AUTH_COOKIE } from "@/lib/config";
+import { AUTH_COOKIE } from "@/lib/config";
 
 function BillingPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
-  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   // Read query params for pre-selected plan and auto-trigger
@@ -40,7 +39,7 @@ function BillingPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autostart, planParam]);
 
-  const handlePlanSelect = async (plan: PricingPlan) => {
+  const handlePlanSelect = (plan: PricingPlan) => {
     if (plan.id === "free") {
       router.push("/signup");
       return;
@@ -49,35 +48,14 @@ function BillingPageInner() {
       window.location.href = "mailto:sales@veldrixai.ca?subject=Enterprise+Inquiry";
       return;
     }
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${AUTH_API_URL}/billing/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ plan: plan.id, cycle }),
-      });
-
-      if (res.status === 401) {
-        const returnUrl = `/billing?plan=${plan.id}&cycle=${cycle}&autostart=true`;
-        router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
-        return;
-      }
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setToast((err as { detail?: string }).detail || "Failed to start checkout. Please try again.");
-        return;
-      }
-
-      const { checkout_url } = await res.json();
-      window.location.href = checkout_url;
-    } catch {
-      setToast("Network error. Please try again.");
-    } finally {
-      setLoading(false);
+    const hasCookie =
+      document.cookie.includes(AUTH_COOKIE) ||
+      document.cookie.includes("aegis_session");
+    if (!hasCookie) {
+      router.push(`/login?redirect=${encodeURIComponent(`/dashboard/billing/checkout?plan=${plan.id}&cycle=${cycle}`)}`);
+      return;
     }
+    router.push(`/dashboard/billing/checkout?plan=${plan.id}&cycle=${cycle}`);
   };
 
   const highlightedPlan = planParam || null;
@@ -297,7 +275,7 @@ function BillingPageInner() {
               plan={plan}
               cycle={cycle}
               onSelect={handlePlanSelect}
-              loading={loading}
+              loading={false}
             />
           </div>
         ))}

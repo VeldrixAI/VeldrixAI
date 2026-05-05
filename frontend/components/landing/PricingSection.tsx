@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PLANS, PLAN_FEATURES, PRICING_FAQ, ADDONS, type BillingInterval } from "@/lib/constants/pricing";
 
@@ -98,7 +98,11 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 // ── PricingSection ────────────────────────────────────────────────────────────
 export default function PricingSection() {
   const [cycle, setCycle] = useState<BillingInterval>("monthly");
-  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const activeCycle: BillingInterval = mounted ? cycle : "monthly";
 
   return (
     <section id="pricing" className="lp-pricing-section section-reveal" aria-label="Pricing">
@@ -134,7 +138,7 @@ export default function PricingSection() {
               <button
                 key={interval}
                 onClick={() => setCycle(interval)}
-                aria-pressed={cycle === interval}
+                aria-pressed={activeCycle === interval}
                 style={{
                   padding: "8px 20px",
                   borderRadius: "100px",
@@ -143,8 +147,9 @@ export default function PricingSection() {
                   fontSize: "13px",
                   fontWeight: 500,
                   transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
-                  background: cycle === interval ? "#7c3aed" : "transparent",
-                  color: cycle === interval ? "#fff" : "rgba(240,242,255,0.55)",
+                  background: activeCycle === interval ? "#7c3aed" : "transparent",
+                  color: activeCycle === interval ? "#fff" : "rgba(240,242,255,0.55)",
+
                 }}
               >
                 {interval === "monthly" ? "Monthly" : "Annual"}
@@ -173,7 +178,7 @@ export default function PricingSection() {
             aria-atomic="true"
             style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}
           >
-            {cycle === "annual" ? "Showing annual prices with 20% discount" : "Showing monthly prices"}
+            {activeCycle === "annual" ? "Showing annual prices with 20% discount" : "Showing monthly prices"}
           </div>
         </div>
 
@@ -188,14 +193,11 @@ export default function PricingSection() {
           className="lp-pricing-cards"
         >
           {PLANS.map((plan) => {
-            const price = cycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
-            const isHovered = hoveredPlan === plan.id;
+            const price = activeCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
 
             return (
               <div
                 key={plan.id}
-                onMouseEnter={() => setHoveredPlan(plan.id)}
-                onMouseLeave={() => setHoveredPlan(null)}
                 style={{
                   position: "relative",
                   background: plan.highlight
@@ -204,17 +206,12 @@ export default function PricingSection() {
                   border: plan.highlight
                     ? "1px solid rgba(124,58,237,0.5)"
                     : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: plan.highlight
-                    ? "0 0 40px rgba(124,58,237,0.15)"
-                    : isHovered
-                    ? "0 0 24px rgba(124,58,237,0.08)"
-                    : "none",
+                  boxShadow: plan.highlight ? "0 0 40px rgba(124,58,237,0.15)" : "none",
                   borderRadius: "20px",
                   padding: "32px 28px",
                   display: "flex",
                   flexDirection: "column",
                   gap: "24px",
-                  transform: isHovered ? "translateY(-4px)" : "translateY(0)",
                   transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.25s, border-color 0.25s",
                 }}
               >
@@ -295,7 +292,7 @@ export default function PricingSection() {
                         </span>
                         <span style={{ fontSize: "13px", color: "rgba(240,242,255,0.4)" }}>/mo</span>
                       </div>
-                      {cycle === "annual" && (
+                      {activeCycle === "annual" && (
                         <div style={{ fontSize: "12px", color: "#10b981", marginTop: "4px" }}>
                           Billed annually — save ~20%
                         </div>

@@ -168,7 +168,7 @@ function CheckoutInner() {
     }
 
     router.push(
-      `/dashboard/billing/verify?pi_id=${paymentIntentId}&pm_id=${encodeURIComponent(paymentMethod.id)}&email=${encodeURIComponent(data.masked_email)}`
+      `/dashboard/billing/verify?pi_id=${paymentIntentId}&pm_id=${encodeURIComponent(paymentMethod.id)}&email=${encodeURIComponent(data.masked_email)}&plan=${plan}&cycle=${cycle}`
     );
   };
 

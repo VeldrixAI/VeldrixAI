@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PricingPlan } from "./PricingCard";
-import { AUTH_API_URL } from "@/lib/config";
+import { AUTH_COOKIE } from "@/lib/config";
 
 interface CheckoutButtonProps {
   plan: PricingPlan;
@@ -18,10 +17,9 @@ export default function CheckoutButton({
   className,
   children,
 }: CheckoutButtonProps) {
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (plan.id === "free") {
       router.push("/signup");
       return;
@@ -30,42 +28,19 @@ export default function CheckoutButton({
       window.location.href = "mailto:sales@veldrixai.ca?subject=Enterprise+Inquiry";
       return;
     }
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${AUTH_API_URL}/billing/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ plan: plan.id, cycle }),
-      });
-
-      if (res.status === 401) {
-        // Not logged in — redirect to login with return params
-        router.push(
-          `/login?redirect=/dashboard/billing&plan=${plan.id}&cycle=${cycle}`
-        );
-        return;
-      }
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.detail || "Failed to start checkout. Please try again.");
-        return;
-      }
-
-      const { checkout_url } = await res.json();
-      window.location.href = checkout_url;
-    } catch {
-      alert("Network error. Please try again.");
-    } finally {
-      setLoading(false);
+    const hasCookie =
+      document.cookie.includes(AUTH_COOKIE) ||
+      document.cookie.includes("aegis_session");
+    if (!hasCookie) {
+      router.push(`/login?redirect=${encodeURIComponent(`/dashboard/billing/checkout?plan=${plan.id}&cycle=${cycle}`)}`);
+      return;
     }
+    router.push(`/dashboard/billing/checkout?plan=${plan.id}&cycle=${cycle}`);
   };
 
   return (
-    <button onClick={handleClick} disabled={loading} className={className}>
-      {loading ? "Redirecting…" : children ?? plan.cta}
+    <button onClick={handleClick} className={className}>
+      {children ?? plan.cta}
     </button>
   );
 }

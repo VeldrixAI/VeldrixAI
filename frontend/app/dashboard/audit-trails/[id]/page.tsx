@@ -403,8 +403,8 @@ export default function AuditDetailPage() {
   );
 
   useEffect(() => {
-    if (detail?.request_id) loadIntelligence();
-  }, [detail?.request_id, loadIntelligence]);
+    if (detail) loadIntelligence();
+  }, [detail?.id, loadIntelligence]);
 
   // Create Report (PDF)
   async function handleCreateReport() {

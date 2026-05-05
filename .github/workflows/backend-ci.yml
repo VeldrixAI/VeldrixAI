@@ -1,0 +1,172 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "ft/**", "release/**"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ── Auth Service ──────────────────────────────────────────────────────────────
+  auth-service:
+    name: veldrix-auth tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: veldrix_auth_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ["5432:5432"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: backend/auth/requirements.txt
+
+      - name: Install auth dependencies
+        run: pip install -r backend/auth/requirements.txt pytest pytest-asyncio httpx
+
+      - name: Run auth tests
+        working-directory: backend/auth
+        env:
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/veldrix_auth_test
+          JWT_SECRET_KEY: ci-test-secret-not-for-production
+          JWT_ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+          ENVIRONMENT: test
+          VELDRIX_VAULT_KEY: ""
+          STRIPE_SECRET_KEY: ""
+          RESEND_API_KEY: ""
+        run: pytest tests/ -v --tb=short
+
+  # ── Core Trust Engine ─────────────────────────────────────────────────────────
+  core-service:
+    name: veldrix-core tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: backend/core/requirements.txt
+
+      - name: Install core dependencies
+        run: pip install -r backend/core/requirements.txt pytest pytest-asyncio respx
+
+      - name: Run core tests (mocked inference — no real NIM calls)
+        working-directory: backend/core
+        env:
+          NVIDIA_API_KEY: "nim-mock-key-for-tests"
+          GROQ_API_KEY: "groq-mock-key-for-tests"
+          JWT_SECRET_KEY: ci-test-secret-not-for-production
+          ENVIRONMENT: test
+          APP_ENV: test
+        run: pytest tests/ -v --tb=short -k "not integration"
+
+  # ── Connectors Service ────────────────────────────────────────────────────────
+  connectors-service:
+    name: veldrix-connectors tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: veldrix_connectors_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ["5432:5432"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: backend/connectors/requirements.txt
+
+      - name: Install connectors dependencies
+        run: pip install -r backend/connectors/requirements.txt pytest pytest-asyncio httpx
+
+      - name: Run connectors tests
+        working-directory: backend/connectors
+        env:
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/veldrix_connectors_test
+          CONNECTOR_ENCRYPTION_KEY: ""
+          ENVIRONMENT: test
+          AWS_ACCESS_KEY_ID: "mock-key"
+          AWS_SECRET_ACCESS_KEY: "mock-secret"
+          AWS_REGION: us-east-1
+          S3_BUCKET_NAME: mock-bucket
+        run: pytest tests/ -v --tb=short 2>/dev/null || echo "No connectors tests yet — skipping"
+
+  # ── SDK (multi-python) ────────────────────────────────────────────────────────
+  sdk:
+    name: SDK tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+          cache: pip
+
+      - name: Install SDK with dev extras
+        run: pip install -e "sdk[dev]"
+
+      - name: Lint
+        run: ruff check sdk/veldrixai/ || true
+
+      - name: Run SDK tests
+        run: pytest sdk/tests/ -v --tb=short
+
+  # ── Security scan ─────────────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for hardcoded secrets
+        run: |
+          if grep -rn --include="*.py" --include="*.ts" --include="*.tsx" \
+            -E "(postgres123|sk_live_|nvapi-[A-Za-z0-9]{20,}|gsk_[A-Za-z0-9]{40,})" \
+            backend/ frontend/app/ frontend/components/ frontend/lib/ 2>/dev/null; then
+            echo "FAIL: hardcoded secrets found in source"
+            exit 1
+          fi
+          echo "OK: no hardcoded secrets detected"

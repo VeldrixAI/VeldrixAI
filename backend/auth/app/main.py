@@ -6,8 +6,10 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
-from app.api.auth import router as auth_router
+from app.api.auth import router as auth_router, limiter as auth_limiter
 from app.api.api_keys import router as api_keys_router
 from app.api.billing import router as billing_router
 from app.api.internal import router as internal_router
@@ -21,6 +23,8 @@ logger = logging.getLogger(__name__)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="VeldrixAI Authentication Service", version="1.0.0")
+app.state.limiter = auth_limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _raw_origins = os.getenv("VELDRIX_CORS_ORIGINS", "http://localhost:3000,http://localhost:5000")
 _cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]

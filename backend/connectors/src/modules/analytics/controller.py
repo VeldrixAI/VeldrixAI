@@ -156,8 +156,8 @@ async def get_sdk_stats(
 
     return {
         "total_requests": total,
-        "avg_trust_score": round(score_sum / total, 4) if total else 0,
-        "avg_latency_ms": total_latency // total if total else 0,
+        "avg_trust_score": round(score_sum / total, 4) if total else None,
+        "avg_latency_ms": total_latency // total if total else None,
         "verdict_breakdown": verdict_counts,
         "pillar_averages": {
             k: round(sum(v) / len(v), 4) if v else None

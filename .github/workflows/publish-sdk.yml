@@ -6,19 +6,52 @@ on:
       - "sdk-v*"
 
 jobs:
-  publish:
+  validate:
+    name: Validate SDK before publish
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
+          python-version: "${{ matrix.python-version }}"
+      - run: pip install -e "sdk[dev]"
+      - run: pytest sdk/tests/ -v --tb=short
+
+  publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: pypi
+    permissions:
+      id-token: write  # OIDC trusted publishing — no PYPI_TOKEN secret needed
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
           python-version: "3.11"
+
       - name: Install build tools
         run: pip install build twine
+
       - name: Build SDK
         run: cd sdk && python -m build
-      - name: Publish to PyPI
-        run: cd sdk && twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Validate distributions
+        run: cd sdk && twine check dist/*
+
+      - name: Install from local wheel (smoke test)
+        run: |
+          python -m venv /tmp/veldrix-install-test
+          /tmp/veldrix-install-test/bin/pip install sdk/dist/*.whl
+          /tmp/veldrix-install-test/bin/python -c "import veldrixai; print('SDK version:', veldrixai.__version__)"
+
+      - name: Publish to PyPI (OIDC)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/dist/

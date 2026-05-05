@@ -105,6 +105,9 @@ function VerifyInner() {
   const searchParams = useSearchParams();
   const piId = searchParams.get("pi_id") || "";
   const maskedEmail = searchParams.get("email") || "your email";
+  const plan = searchParams.get("plan") || "grow";
+  const cycle = searchParams.get("cycle") || "monthly";
+  const pmId = searchParams.get("pm_id") || "";
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -112,7 +115,6 @@ function VerifyInner() {
   const [secondsLeft, setSecondsLeft] = useState(600);
   const [expired, setExpired] = useState(false);
   const [resending, setResending] = useState(false);
-  const pmId = searchParams.get("pm_id") || "";
 
   // Countdown timer
   useEffect(() => {
@@ -139,7 +141,7 @@ function VerifyInner() {
     }
 
     if (res.status === 429 || res.status === 402) {
-      router.push(`/dashboard/billing/failed?reason=${encodeURIComponent(data.error || "Payment failed")}`);
+      router.push(`/dashboard/billing/failed?reason=${encodeURIComponent(data.error || "Payment failed")}&plan=${plan}&cycle=${cycle}`);
       return;
     }
 
@@ -184,7 +186,7 @@ function VerifyInner() {
       <div style={{ width: "100%", maxWidth: "480px" }}>
 
         {/* Back link */}
-        <Link href={`/dashboard/billing/checkout?plan=grow`} style={{
+        <Link href={`/dashboard/billing/checkout?plan=${plan}&cycle=${cycle}`} style={{
           display: "inline-flex",
           alignItems: "center",
           gap: "6px",

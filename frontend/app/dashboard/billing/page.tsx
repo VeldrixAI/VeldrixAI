@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -30,9 +31,10 @@ interface BillingStatus {
 }
 
 const PLAN_META: Record<string, { name: string; price: number; quota: number }> = {
-  free:  { name: "Free",  price: 0,      quota: 500 },
-  grow:  { name: "Grow",  price: 99,     quota: 10000 },
-  scale: { name: "Scale", price: 499,    quota: 100000 },
+  free:       { name: "Free",       price: 0,   quota: 1000 },
+  grow:       { name: "Grow",       price: 49,  quota: 25000 },
+  scale:      { name: "Scale",      price: 199, quota: 150000 },
+  enterprise: { name: "Enterprise", price: 0,   quota: 0 },
 };
 
 
@@ -147,7 +149,22 @@ export default function BillingPage() {
     amountDue: planMeta.price,
     status: (billingStatus?.plan_status ?? "active") as "active",
   };
+  const router = useRouter();
   const currentTier = billingStatus?.plan_tier ?? "free";
+  const nextTier = currentTier === "free" ? "grow" : "scale";
+
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.portal_url) window.location.href = data.portal_url;
+    } catch { /* silent */ } finally {
+      setPortalLoading(false);
+    }
+  };
 
   const pct = usage.quota > 0 ? (usage.used / usage.quota) * 100 : 0;
   const pctLabel = pct.toFixed(1);
@@ -265,18 +282,7 @@ export default function BillingPage() {
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.86"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
-          onClick={async () => {
-            const nextPlan = currentTier === "free" ? "grow" : "scale";
-            try {
-              const res = await fetch("/api/billing/checkout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan: nextPlan, cycle: "monthly" }),
-              });
-              const data = await res.json();
-              if (data.checkout_url) window.location.href = data.checkout_url;
-            } catch { /* silent */ }
-          }}
+          onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>upgrade</span>
             Upgrade Plan
@@ -362,7 +368,9 @@ export default function BillingPage() {
                 }}>
                   RESETS {usage.resetDate}
                 </span>
-                <button style={{
+                <button
+                  onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
+                  style={{
                   fontFamily: "var(--vx-font-body)",
                   fontWeight: 600,
                   fontSize: "10px",
@@ -414,10 +422,16 @@ export default function BillingPage() {
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: "4px", margin: "16px 0 20px" }}>
-            <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>
-              ${plan.priceMonthly.toLocaleString()}
-            </span>
-            <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "var(--vx-text-dim)" }}>/month</span>
+            {plan.priceMonthly === 0 && currentTier === "free" ? (
+              <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>Free</span>
+            ) : (
+              <>
+                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>
+                  ${plan.priceMonthly.toLocaleString()}
+                </span>
+                <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "var(--vx-text-dim)" }}>/month</span>
+              </>
+            )}
           </div>
           <div style={{
             display: "grid",
@@ -430,7 +444,7 @@ export default function BillingPage() {
           }}>
             {[
               { label: "Next Billing", value: plan.nextBillingDate },
-              { label: "Amount Due",   value: fmtCurrency(plan.amountDue) },
+              { label: "Amount Due",   value: plan.priceMonthly > 0 ? fmtCurrency(plan.amountDue) : "—" },
             ].map((item) => (
               <div key={item.label}>
                 <div style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "var(--vx-text-dim)", marginBottom: "3px" }}>{item.label}</div>
@@ -439,47 +453,49 @@ export default function BillingPage() {
             ))}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <button style={{
-              width: "100%",
-              padding: "11px 16px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-              border: "none",
-              color: "#fff",
-              fontFamily: "var(--vx-font-display)",
-              fontWeight: 700,
-              fontSize: "10px",
-              letterSpacing: "1.5px",
-              textTransform: "uppercase",
-              cursor: "pointer",
-            }}>
-              Upgrade Plan
-            </button>
-            <button
-              style={{
+            {currentTier !== "scale" && currentTier !== "enterprise" && (
+              <button
+                onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
+                style={{
                 width: "100%",
                 padding: "11px 16px",
                 borderRadius: "10px",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                color: "rgba(240,242,255,0.60)",
-                fontFamily: "var(--vx-font-body)",
-                fontWeight: 500,
+                background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                border: "none",
+                color: "#fff",
+                fontFamily: "var(--vx-font-display)",
+                fontWeight: 700,
                 fontSize: "10px",
-                letterSpacing: "1px",
+                letterSpacing: "1.5px",
                 textTransform: "uppercase",
                 cursor: "pointer",
-              }}
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/billing/portal", { method: "POST" });
-                  const data = await res.json();
-                  if (data.portal_url) window.location.href = data.portal_url;
-                } catch { /* silent */ }
-              }}
-            >
-              Manage Payment Methods
-            </button>
+              }}>
+                Upgrade to {PLAN_META[nextTier]?.name ?? "Scale"}
+              </button>
+            )}
+            {billingStatus?.stripe_customer_id && (
+              <button
+                onClick={openPortal}
+                disabled={portalLoading}
+                style={{
+                  width: "100%",
+                  padding: "11px 16px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  color: "rgba(240,242,255,0.60)",
+                  fontFamily: "var(--vx-font-body)",
+                  fontWeight: 500,
+                  fontSize: "10px",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  cursor: portalLoading ? "wait" : "pointer",
+                  opacity: portalLoading ? 0.6 : 1,
+                }}
+              >
+                {portalLoading ? "Opening…" : "Manage Payment Methods"}
+              </button>
+            )}
           </div>
         </CardBase>
 
@@ -673,14 +689,16 @@ export default function BillingPage() {
           {/* Growth — light */}
           {[
             {
-              name: "Growth",
-              price: "$699",
-              features: ["200 audit requests / month", "All 5 evaluation pillars", "Standard enforcement rules", "30-day audit log retention", "Email support"],
+              name: "Grow",
+              id: "grow",
+              price: "$49",
+              features: ["25,000 evals / month", "All 5 evaluation pillars", "Audit trail & logs", "Webhook integrations", "Email support"],
             },
             {
-              name: "Starter",
-              price: "$299",
-              features: ["50 audit requests / month", "3 evaluation pillars", "Basic enforcement rules", "7-day audit log retention", "Community support"],
+              name: "Scale",
+              id: "scale",
+              price: "$199",
+              features: ["150,000 evals / month", "Everything in Grow", "Priority support (4h SLA)", "Custom pillar weights", "SSO / SAML"],
             },
           ].map((p) => (
             <div key={p.name}
@@ -722,7 +740,9 @@ export default function BillingPage() {
                   </div>
                 ))}
               </div>
-              <button style={{
+              <button
+                onClick={() => router.push(`/dashboard/billing/checkout?plan=${p.id}&cycle=monthly`)}
+                style={{
                 width: "100%",
                 padding: "11px 16px",
                 borderRadius: "10px",
@@ -734,17 +754,18 @@ export default function BillingPage() {
                 fontSize: "10px",
                 letterSpacing: "1.5px",
                 textTransform: "uppercase",
-                cursor: "pointer",
+                cursor: currentTier === p.id ? "not-allowed" : "pointer",
                 transition: "background 0.2s, color 0.2s",
+                opacity: currentTier === p.id ? 0.4 : 1,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "var(--vx-violet-lt)";
+                if (currentTier !== p.id) (e.currentTarget as HTMLButtonElement).style.background = "var(--vx-violet-lt)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.background = "transparent";
               }}
               >
-                Downgrade
+                {currentTier === p.id ? "Current Plan" : "Switch to " + p.name}
               </button>
             </div>
           ))}
@@ -752,6 +773,7 @@ export default function BillingPage() {
       </div>
 
       {/* ── Section 5: Payment Method ─────────────────────────────────────── */}
+      {billingStatus?.stripe_customer_id && (
       <CardBase className="vx-fade-5">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
@@ -772,10 +794,10 @@ export default function BillingPage() {
               </div>
               <div>
                 <div style={{ fontFamily: "var(--vx-font-mono)", fontWeight: 500, fontSize: "13px", color: "var(--vx-text-primary)" }}>
-                  •••• •••• •••• 4242
+                  Managed via Stripe
                 </div>
                 <div style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "11px", color: "var(--vx-text-dim)", marginTop: "2px" }}>
-                  Expires 09/26
+                  Click below to update in the billing portal
                 </div>
               </div>
             </div>
@@ -785,7 +807,7 @@ export default function BillingPage() {
               { label: "Update Card", primary: true },
               { label: "Add Payment Method", primary: false },
             ].map((btn) => (
-              <button key={btn.label} style={{
+              <button key={btn.label} onClick={openPortal} style={{
                 padding: "9px 18px",
                 borderRadius: "10px",
                 fontFamily: "var(--vx-font-body)",
@@ -793,11 +815,12 @@ export default function BillingPage() {
                 fontSize: "10px",
                 letterSpacing: "1.5px",
                 textTransform: "uppercase",
-                cursor: "pointer",
+                cursor: portalLoading ? "wait" : "pointer",
                 transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                 background: btn.primary ? "transparent" : "rgba(255,255,255,0.06)",
                 color: btn.primary ? "var(--vx-violet)" : "rgba(240,242,255,0.60)",
                 border: btn.primary ? "1px solid rgba(124,58,237,0.30)" : "1px solid rgba(255,255,255,0.10)",
+                opacity: portalLoading ? 0.6 : 1,
               }}
               onMouseEnter={(e) => {
                 if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "rgba(124,58,237,0.15)";
@@ -814,6 +837,7 @@ export default function BillingPage() {
           </div>
         </div>
       </CardBase>
+      )}
 
       {/* ── Section 6: Billing History ────────────────────────────────────── */}
       <div className="vx-fade-6" style={{

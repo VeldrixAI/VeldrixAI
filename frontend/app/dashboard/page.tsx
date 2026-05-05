@@ -15,8 +15,8 @@ type Summary = {
 };
 type SdkStats = {
   total_requests: number;
-  avg_trust_score: number;
-  avg_latency_ms: number;
+  avg_trust_score: number | null;
+  avg_latency_ms: number | null;
   verdict_breakdown: Record<string, number>;
   pillar_averages: Record<string, number | null>;
   daily_volume: { date: string; count: number }[];
@@ -115,7 +115,8 @@ export default function DashboardPage() {
 
   // SSE live updates
   useEffect(() => {
-    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "http://localhost:8001";
+    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "";
+    if (!coreUrl) return;
     let es: EventSource;
     try {
       es = new EventSource(`${coreUrl}/api/v1/stream`);
@@ -208,8 +209,13 @@ export default function DashboardPage() {
     ? liveFeedItems[feedIdx % liveFeedItems.length]
     : null;
 
-  // Real latency for HUD
-  const hudLatencyMs = sdkStats?.avg_latency_ms ?? summary?.avg_latency_ms ?? null;
+  // Real latency for HUD — prefer SDK stats, fall back to analytics summary; null = no data
+  const hudLatencyMs =
+    (sdkStats?.avg_latency_ms != null && sdkStats.avg_latency_ms > 0)
+      ? sdkStats.avg_latency_ms
+      : (summary?.avg_latency_ms != null && summary.avg_latency_ms > 0)
+        ? summary.avg_latency_ms
+        : null;
   const hudLatencyLabel = hudLatencyMs != null ? `${hudLatencyMs.toFixed(1)}ms` : "—";
   const hudLatencyWidth = hudLatencyMs != null
     ? `${Math.min(Math.max((hudLatencyMs / 300) * 100, 5), 100)}%`
@@ -423,8 +429,8 @@ export default function DashboardPage() {
               <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "32px", flexWrap: "wrap" }}>
                 {[
                   { label: "SDK Requests", val: sdkStats.total_requests.toString(), color: "#7c3aed" },
-                  { label: "Avg Trust Score", val: (sdkStats.avg_trust_score * 100).toFixed(1) + "%", color: sdkStats.avg_trust_score >= 0.85 ? "#10b981" : "#f59e0b" },
-                  { label: "SDK Latency", val: sdkStats.avg_latency_ms + "ms", color: "#06b6d4" },
+                  { label: "Avg Trust Score", val: sdkStats.avg_trust_score != null ? (sdkStats.avg_trust_score * 100).toFixed(1) + "%" : "—", color: sdkStats.avg_trust_score != null && sdkStats.avg_trust_score >= 0.85 ? "#10b981" : "#f59e0b" },
+                  { label: "SDK Latency", val: sdkStats.avg_latency_ms != null ? sdkStats.avg_latency_ms + "ms" : "—", color: "#06b6d4" },
                   { label: "Blocked", val: (sdkStats.verdict_breakdown.BLOCK || 0).toString(), color: "#f43f5e" },
                 ].map(({ label, val, color }) => (
                   <div key={label}>
@@ -454,9 +460,16 @@ export default function DashboardPage() {
               {/* Column 1: Engine Status */}
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: "4px" }}>Engine Status</p>
-                <HealthBar label="Encryption Engine" value="STABLE" valueColor="#10b981" width="100%" barColor="#10b981" delay="hb-1" />
-                <HealthBar label="Tokenizer Latency" value={hudLatencyLabel} valueColor={hudLatencyColor} width={hudLatencyWidth} barColor={hudLatencyColor} delay="hb-2" />
-                <HealthBar label="Policy Engine" value={summary ? "ACTIVE" : "—"} valueColor="#06b6d4" width={summary ? "88%" : "20%"} barColor="#06b6d4" delay="hb-3" />
+                <HealthBar label="Trust Engine" value={summary ? "ACTIVE" : "—"} valueColor="#10b981" width={summary ? "100%" : "20%"} barColor="#10b981" delay="hb-1" />
+                <HealthBar label="Avg Latency" value={hudLatencyLabel} valueColor={hudLatencyColor} width={hudLatencyWidth} barColor={hudLatencyColor} delay="hb-2" />
+                <HealthBar
+                  label="Compliance Rate"
+                  value={summary ? `${summary.approval_rate.toFixed(1)}%` : "—"}
+                  valueColor={summary?.approval_rate != null && summary.approval_rate >= 90 ? "#10b981" : summary?.approval_rate != null && summary.approval_rate >= 70 ? "#f59e0b" : "#06b6d4"}
+                  width={summary?.approval_rate != null ? `${Math.round(summary.approval_rate)}%` : "20%"}
+                  barColor={summary?.approval_rate != null && summary.approval_rate >= 90 ? "#10b981" : "#06b6d4"}
+                  delay="hb-3"
+                />
                 <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", marginTop: "4px" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "flex-end" }}>
                     {[24, 32, 24, 36, 20].map((h, i) => (

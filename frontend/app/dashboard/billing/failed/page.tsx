@@ -7,6 +7,8 @@ import Link from "next/link";
 function FailedInner() {
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason") || "Your payment could not be completed.";
+  const plan = searchParams.get("plan") || "grow";
+  const cycle = searchParams.get("cycle") || "monthly";
 
   return (
     <div style={{
@@ -150,7 +152,7 @@ function FailedInner() {
 
           {/* CTA buttons */}
           <div style={{ display: "flex", gap: "10px", flexDirection: "column" }}>
-            <Link href="/dashboard/billing/checkout?plan=grow&cycle=monthly" style={{
+            <Link href={`/dashboard/billing/checkout?plan=${plan}&cycle=${cycle}`} style={{
               display: "block",
               padding: "14px 24px",
               borderRadius: "12px",

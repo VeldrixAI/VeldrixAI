@@ -127,7 +127,8 @@ export default function AuditTrailsPage() {
 
   // SSE: auto-prepend new SDK analysis rows
   useEffect(() => {
-    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "http://localhost:8001";
+    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "";
+    if (!coreUrl) return;
     let es: EventSource;
     try {
       es = new EventSource(`${coreUrl}/api/v1/stream`);
@@ -416,7 +417,7 @@ export default function AuditTrailsPage() {
                         className={`row-in ri-${Math.min(ri + 1, 8)} audit-row`}
                         onClick={() => {
                           if (isSdk && m.requestId) {
-                            router.push(`/dashboard/audit-trails/${m.requestId}`);
+                            router.push(`/dashboard/audit-trails/${r.id}?request_id=${m.requestId}`);
                           } else {
                             setSelected(r);
                           }
@@ -496,7 +497,7 @@ export default function AuditTrailsPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isSdk && m.requestId) {
-                                  router.push(`/dashboard/audit-trails/${m.requestId}`);
+                                  router.push(`/dashboard/audit-trails/${r.id}?request_id=${m.requestId}`);
                                 } else {
                                   setSelected(r);
                                 }
@@ -616,7 +617,7 @@ export default function AuditTrailsPage() {
                           <td style={{ padding: "12px 20px" }}>
                             {relatedId ? (
                               <button
-                                onClick={() => router.push(`/dashboard/audit-trails/${relatedId}`)}
+                                onClick={() => router.push(`/dashboard/audit-trails/${r.id}`)}
                                 style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", padding: 0, textDecoration: "underline", textDecorationColor: "rgba(124,58,237,0.3)" }}
                               >
                                 {relatedId.slice(0, 12)}…
