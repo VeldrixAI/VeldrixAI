@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from uuid import UUID
 import io, csv
 
@@ -219,29 +220,45 @@ class InternalAuditRequest(BaseModel):
 @router.post("/internal/audit-trail", status_code=201, include_in_schema=False)
 def internal_log_audit(body: InternalAuditRequest, db: Session = Depends(get_db)):
     """Internal service-to-service audit logging. Called from core service."""
+    import uuid as _uuid
     meta = body.metadata or {}
     request_id = meta.get("request_id")
     actor = body.actor_email or body.user_id
-    logger.warning("internal_log_audit: saving request_id=%s user_id=%s actor=%s", request_id, body.user_id, actor)
-    entry = AuditTrail(
-        user_id=UUID(body.user_id) if body.user_id else None,
-        action_type=body.action_type,
-        entity_type=body.entity_type,
-        entity_id=UUID(body.entity_id) if body.entity_id else None,
-        action_metadata=meta,
-        log_type="EVALUATION",
-        request_id=request_id,
-        actor=actor,
-    )
-    db.add(entry)
+
+    row = {
+        "id": _uuid.uuid4(),
+        "user_id": UUID(body.user_id) if body.user_id else None,
+        "action_type": body.action_type,
+        "entity_type": body.entity_type,
+        "entity_id": UUID(body.entity_id) if body.entity_id else None,
+        "action_metadata": meta,
+        "log_type": "EVALUATION",
+        "request_id": request_id,
+        "actor": actor,
+    }
+
     try:
+        stmt = pg_insert(AuditTrail).values(**row)
+        if request_id:
+            # Idempotent: if a row with this (request_id, action_type) already exists,
+            # skip the insert entirely rather than creating a duplicate.
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=["request_id", "action_type"],
+                index_where=AuditTrail.request_id.isnot(None),
+            )
+        result = db.execute(stmt)
         db.commit()
-        logger.warning("internal_log_audit: saved OK request_id=%s db_id=%s", request_id, entry.id)
+        inserted = result.rowcount > 0
+        log_id = str(row["id"]) if inserted else "duplicate-suppressed"
+        logger.info(
+            "internal_log_audit: request_id=%s inserted=%s id=%s",
+            request_id, inserted, log_id,
+        )
+        return {"ok": True, "id": log_id, "inserted": inserted}
     except Exception as exc:
         db.rollback()
         logger.error("internal_log_audit: DB commit FAILED request_id=%s: %s", request_id, exc)
         raise HTTPException(status_code=500, detail=f"Audit trail persist failed: {exc}")
-    return {"ok": True, "id": str(entry.id)}
 
 
 # ── Public write endpoint ─────────────────────────────────────────────────────
@@ -308,13 +325,25 @@ async def list_audit_trails(
         q = q.filter(AuditTrail.action_type.ilike(f"%{search}%"))
 
     total = q.count()
-    records = q.distinct().order_by(AuditTrail.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    # Fetch a larger window then dedup by request_id server-side, because
+    # q.distinct() generates SELECT DISTINCT * which never deduplicates rows
+    # that share request_id but have different UUID primary keys.
+    raw = q.order_by(AuditTrail.created_at.desc()).offset((page - 1) * limit).limit(limit * 2).all()
+    seen_request_ids: set[str] = set()
+    deduped: list[AuditTrail] = []
+    for r in raw:
+        key = r.request_id or str(r.id)
+        if key not in seen_request_ids:
+            seen_request_ids.add(key)
+            deduped.append(r)
+        if len(deduped) >= limit:
+            break
 
     return {
         "total": total,
         "page": page,
         "limit": limit,
-        "records": [_serialize(r) for r in records],
+        "records": [_serialize(r) for r in deduped],
     }
 
 

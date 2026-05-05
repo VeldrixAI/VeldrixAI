@@ -21,10 +21,15 @@ router = APIRouter(prefix="/api/v1", tags=["Stream"])
 _queue: asyncio.Queue = asyncio.Queue(maxsize=200)
 
 
-async def broadcast_event(event_type: str, data: dict) -> None:
-    """Push an event to all active SSE consumers (non-blocking)."""
+async def broadcast_event(event_type: str, data: dict, user_id: str | None = None) -> None:
+    """Push an event to all active SSE consumers (non-blocking).
+
+    user_id is embedded in the payload so browser clients can discard events
+    that belong to a different authenticated user (prevents cross-user contamination
+    in a shared single-queue architecture).
+    """
     try:
-        _queue.put_nowait({"type": event_type, "data": data})
+        _queue.put_nowait({"type": event_type, "data": {**data, "_user_id": user_id}})
     except asyncio.QueueFull:
         logger.debug("sse.broadcast dropped (no consumer or queue full)")
 

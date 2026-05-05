@@ -96,13 +96,20 @@ export function NotificationBell({ userId }: Props) {
     } catch {}
   }, [unreadCount, LS_KEY_UNREAD]);
 
-  // ── Fetch JWT for WebSocket auth ──────────────────────────────────────────
-  useEffect(() => {
+  // ── Fetch JWT for WebSocket auth (re-fetches on token expiry) ──────────────
+  const fetchWsToken = useCallback(() => {
     fetch("/api/notifications/ws-token")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.token) setWsToken(d.token); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchWsToken();
+    // Proactively refresh 2 minutes before the 60-min cookie/token expiry
+    const interval = setInterval(fetchWsToken, 58 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchWsToken]);
 
   // ── Initial hydration (server is source of truth, refreshes local cache) ──
   useEffect(() => {
@@ -162,6 +169,7 @@ export function NotificationBell({ userId }: Props) {
     userId,
     token: wsToken,
     onNotification: handleIncoming,
+    onTokenExpired: fetchWsToken,
     enabled: !!wsToken,
   });
 

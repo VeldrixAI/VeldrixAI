@@ -19,6 +19,14 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         )
     
     user = AuthService.create_user(db, user_data.email, user_data.password)
+
+    # Send welcome email (best-effort — never blocks registration response)
+    try:
+        from app.utils.email import send_welcome_email
+        send_welcome_email(to_email=user.email, to_name=user.email.split("@")[0])
+    except Exception:
+        pass
+
     return user
 
 
