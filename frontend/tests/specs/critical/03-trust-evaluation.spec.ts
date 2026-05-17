@@ -106,9 +106,9 @@ test.describe('Trust Evaluation — API', () => {
     expect([401, 403]).toContain(res.status());
   });
 
-  test('10-concurrent evaluations complete within 2× p95 latency budget', async ({ request }) => {
+  test('10-concurrent evaluations complete within 500ms p95 latency budget', async ({ request }) => {
     const CONCURRENCY = 10;
-    const P95_BUDGET_MS = 400;
+    const P95_BUDGET_MS = 500;
 
     const timings: Array<{ start: number; end: number }> = [];
 
@@ -131,8 +131,7 @@ test.describe('Trust Evaluation — API', () => {
     const p95 = latencies[Math.ceil(latencies.length * 0.95) - 1];
     console.log(`[Latency] p50=${latencies[Math.floor(latencies.length * 0.5)]}ms  p95=${p95}ms`);
 
-    // Allow 2× budget in shared CI environments
-    expect(p95).toBeLessThan(P95_BUDGET_MS * 2);
+    expect(p95).toBeLessThan(P95_BUDGET_MS);
   });
 });
 
