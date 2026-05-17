@@ -66,7 +66,7 @@ def test_concurrent_sync_calls_never_crash():
 
     veldrix = Veldrix(api_key="vx-test-concurrent", background=False)
 
-    with respx.mock(base_url="https://api.veldrix.ai") as rx:
+    with respx.mock(base_url="https://api.veldrixai.ca") as rx:
         rx.post("/api/v1/analyze").mock(
             return_value=httpx.Response(200, json=mock_resp)
         )
