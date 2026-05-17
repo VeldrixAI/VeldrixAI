@@ -1,7 +1,7 @@
 """
 Tests for the Redis-backed distributed circuit breaker.
 
-Uses fakeredis (in-process Redis emulation) — no real Redis server required.
+Uses real Redis (provided by CI service container or local Redis).
 Tests verify:
   - Multi-worker convergence: global threshold, not threshold × num_workers
   - HALF_OPEN probe slot: exactly one worker wins across concurrent instances
@@ -14,18 +14,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 
 import pytest
 import pytest_asyncio
 
-# ── fakeredis setup ───────────────────────────────────────────────────────────
-# fakeredis.aioredis provides an in-process async Redis compatible with redis.asyncio
-try:
-    import fakeredis.aioredis as fakeredis_async  # type: ignore
-    HAS_FAKEREDIS = True
-except ImportError:
-    HAS_FAKEREDIS = False
+# ── Redis connection ───────────────────────────────────────────────────────────
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
 pytestmark = pytest.mark.asyncio
 
@@ -33,52 +29,59 @@ pytestmark = pytest.mark.asyncio
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 async def _make_breaker(
-    fake_server,
     failure_threshold: int = 3,
     recovery_timeout: int = 60,
     fallback_after: int = 5,
 ) -> "RedisCircuitBreaker":  # noqa: F821
-    """Create a RedisCircuitBreaker wired to a fakeredis server."""
+    """Create a RedisCircuitBreaker connected to real Redis."""
     from src.inference.circuit_breaker_redis import RedisCircuitBreaker
-    import redis.asyncio as aioredis  # type: ignore
 
     breaker = RedisCircuitBreaker(
-        redis_url="redis://localhost",  # URL not used — client injected below
+        redis_url=REDIS_URL,
         failure_threshold=failure_threshold,
         recovery_timeout=recovery_timeout,
         fallback_after=fallback_after,
     )
-    # Inject fakeredis client directly so no real Redis is needed
-    client = fakeredis_async.FakeRedis(server=fake_server, decode_responses=True)
-    breaker._client = client
-    # fakeredis doesn't support Lua scripts — use fallback mode for testing
-    breaker._fallback_mode = True
+    # Eagerly connect to verify Redis is available
+    await breaker._get_client()
     return breaker
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 
 @pytest.fixture
-def fake_server():
-    """Shared fakeredis server — all instances in a test share the same keyspace."""
-    if not HAS_FAKEREDIS:
-        pytest.skip("fakeredis not installed")
-    import fakeredis
-    return fakeredis.FakeServer(version=(7, 0, 0))
+async def redis_client():
+    """Real Redis client for test setup/teardown."""
+    import redis.asyncio as aioredis
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
+    yield client
+    await client.aclose()
+
+
+@pytest.fixture
+async def clean_redis(redis_client):
+    """Clean all circuit breaker keys before each test."""
+    keys = await redis_client.keys("veldrix:cb:*")
+    if keys:
+        await redis_client.delete(*keys)
+    yield redis_client
+    # Cleanup after test
+    keys = await redis_client.keys("veldrix:cb:*")
+    if keys:
+        await redis_client.delete(*keys)
 
 
 # ── Test: multi-worker convergence ────────────────────────────────────────────
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
-async def test_multi_worker_trips_at_global_threshold(fake_server):
+async def test_multi_worker_trips_at_global_threshold(clean_redis):
     """
-    Four simulated workers share failure counts via fakeredis.
+    Four simulated workers share failure counts via Redis.
     The breaker should OPEN at exactly FAILURE_THRESHOLD cumulative failures,
     not at THRESHOLD × 4.
     """
     threshold = 3
     workers = [
-        await _make_breaker(fake_server, failure_threshold=threshold, recovery_timeout=60)
+        await _make_breaker(failure_threshold=threshold, recovery_timeout=60)
         for _ in range(4)
     ]
     provider = "test_provider"
@@ -104,19 +107,18 @@ async def test_multi_worker_trips_at_global_threshold(fake_server):
         assert await w.get_state(provider) == "OPEN"
 
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
-async def test_half_open_exactly_one_probe(fake_server):
+async def test_half_open_exactly_one_probe(clean_redis):
     """
     After recovery_timeout, exactly ONE worker across all four should get the
     HALF_OPEN probe slot. The others must see OPEN.
     """
+    import redis.asyncio as aioredis
+    
     threshold = 2
     recovery_timeout = 1  # short for test
 
     workers = [
-        await _make_breaker(
-            fake_server, failure_threshold=threshold, recovery_timeout=recovery_timeout
-        )
+        await _make_breaker(failure_threshold=threshold, recovery_timeout=recovery_timeout)
         for _ in range(4)
     ]
     provider = "probe_provider"
@@ -129,8 +131,7 @@ async def test_half_open_exactly_one_probe(fake_server):
         assert not await w.is_available(provider)
 
     # Simulate opened_at in the past (beyond recovery_timeout)
-    import fakeredis.aioredis as fr
-    client = fr.FakeRedis(server=fake_server, decode_responses=True)
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
     opened_at_key = f"veldrix:cb:{provider}:opened_at"
     await client.set(opened_at_key, str(time.time() - recovery_timeout - 1))
     await client.aclose()
@@ -143,14 +144,13 @@ async def test_half_open_exactly_one_probe(fake_server):
     assert half_open_winners == 1, f"Expected 1 HALF_OPEN winner, got {half_open_winners}"
 
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
-async def test_record_success_closes_half_open(fake_server):
+async def test_record_success_closes_half_open(clean_redis):
     """HALF_OPEN → success → CLOSED, and failures reset."""
+    import redis.asyncio as aioredis
+    
     threshold = 2
     recovery_timeout = 1
-    w = await _make_breaker(
-        fake_server, failure_threshold=threshold, recovery_timeout=recovery_timeout
-    )
+    w = await _make_breaker(failure_threshold=threshold, recovery_timeout=recovery_timeout)
     provider = "recovery_provider"
 
     # Trip
@@ -159,8 +159,7 @@ async def test_record_success_closes_half_open(fake_server):
     assert not await w.is_available(provider)
 
     # Simulate elapsed recovery window
-    import fakeredis.aioredis as fr
-    client = fr.FakeRedis(server=fake_server, decode_responses=True)
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
     await client.set(
         f"veldrix:cb:{provider}:opened_at", str(time.time() - recovery_timeout - 1)
     )
@@ -178,7 +177,6 @@ async def test_record_success_closes_half_open(fake_server):
 
 # ── Test: Redis fallback mode ─────────────────────────────────────────────────
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
 async def test_redis_unreachable_triggers_fallback(caplog):
     """
     When Redis is unreachable for FALLBACK_AFTER consecutive ops,
@@ -210,20 +208,17 @@ async def test_redis_unreachable_triggers_fallback(caplog):
 
 # ── Test: TTL self-healing ────────────────────────────────────────────────────
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
-async def test_keys_expire_after_ttl(fake_server):
+async def test_keys_expire_after_ttl(clean_redis):
     """
     After failure_window × 3 with no activity, Redis keys expire and
     the breaker resets to CLOSED.
     """
-    import fakeredis.aioredis as fr
+    import redis.asyncio as aioredis
 
     threshold = 2
     recovery_timeout = 1  # 1s → TTL = 3s (failure_window × 3)
 
-    w = await _make_breaker(
-        fake_server, failure_threshold=threshold, recovery_timeout=recovery_timeout
-    )
+    w = await _make_breaker(failure_threshold=threshold, recovery_timeout=recovery_timeout)
     provider = "ttl_provider"
 
     # Trip the breaker
@@ -232,7 +227,7 @@ async def test_keys_expire_after_ttl(fake_server):
     assert not await w.is_available(provider)
 
     # Manually expire all keys (simulating TTL elapsed)
-    client = fr.FakeRedis(server=fake_server, decode_responses=True)
+    client = aioredis.from_url(REDIS_URL, decode_responses=True)
     for suffix in ("state", "failures", "opened_at", "half_open_in_flight"):
         await client.delete(f"veldrix:cb:{provider}:{suffix}")
     await client.aclose()
@@ -245,11 +240,10 @@ async def test_keys_expire_after_ttl(fake_server):
 
 # ── Test: reset() admin function ─────────────────────────────────────────────
 
-@pytest.mark.skipif(not HAS_FAKEREDIS, reason="fakeredis not installed")
-async def test_reset_clears_open_state(fake_server):
+async def test_reset_clears_open_state(clean_redis):
     """reset() should force CLOSED regardless of prior failures."""
     threshold = 2
-    w = await _make_breaker(fake_server, failure_threshold=threshold)
+    w = await _make_breaker(failure_threshold=threshold)
     provider = "reset_provider"
 
     await w.record_failure(provider)
