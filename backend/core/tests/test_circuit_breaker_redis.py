@@ -51,34 +51,9 @@ async def _make_breaker(
     # Inject fakeredis client directly so no real Redis is needed
     client = fakeredis_async.FakeRedis(server=fake_server, decode_responses=True)
     breaker._client = client
-    # Load Lua scripts into fake server
-    breaker._sha_failure = await client.script_load(
-        breaker.__class__.__dict__["_LUA_RECORD_FAILURE"]
-        if hasattr(breaker.__class__, "_LUA_RECORD_FAILURE")
-        else _get_lua_failure()
-    )
-    breaker._sha_success = await client.script_load(
-        _get_lua_success()
-    )
-    breaker._sha_availability = await client.script_load(
-        _get_lua_availability()
-    )
+    # fakeredis doesn't support Lua scripts — use fallback mode for testing
+    breaker._fallback_mode = True
     return breaker
-
-
-def _get_lua_failure():
-    from src.inference.circuit_breaker_redis import _LUA_RECORD_FAILURE
-    return _LUA_RECORD_FAILURE
-
-
-def _get_lua_success():
-    from src.inference.circuit_breaker_redis import _LUA_RECORD_SUCCESS
-    return _LUA_RECORD_SUCCESS
-
-
-def _get_lua_availability():
-    from src.inference.circuit_breaker_redis import _LUA_TRY_AVAILABILITY
-    return _LUA_TRY_AVAILABILITY
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────

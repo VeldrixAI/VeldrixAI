@@ -46,7 +46,7 @@ def _make_input(prompt: str, response: str, context: Dict[str, Any] | None = Non
 
 
 def _make_ctx() -> TrustEvaluationContext:
-    return TrustEvaluationContext(request_id="test-req-001", org_id="test-org")
+    return TrustEvaluationContext(request_id="test-req-001")
 
 
 # ─── Pillar 1: Safety & Toxicity ─────────────────────────────────────────────
