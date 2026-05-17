@@ -49,7 +49,7 @@ async def _make_breaker(
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def redis_client():
     """Real Redis client for test setup/teardown."""
     import redis.asyncio as aioredis
@@ -58,7 +58,7 @@ async def redis_client():
     await client.aclose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def clean_redis(redis_client):
     """Clean all circuit breaker keys before each test."""
     keys = await redis_client.keys("veldrix:cb:*")
