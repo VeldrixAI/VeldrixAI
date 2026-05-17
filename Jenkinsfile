@@ -40,7 +40,7 @@ pipeline {
     )
     string(
       name:         'VELDRIX_BASE_URL',
-      defaultValue: 'https://staging.veldrixai.ca',
+      defaultValue: 'https://app.veldrixai.ca',
       description:  'Target URL for Playwright / E2E tests'
     )
   }
