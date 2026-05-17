@@ -141,6 +141,54 @@ services:
     networks:
       - veldrix-dev-net
 
+  # ── PostgreSQL Exporter ─────────────────────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: veldrix-dev-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_dev}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - veldrix-dev-net
+
+  # ── Prometheus ────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: veldrix-dev-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - veldrix-dev-net
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: veldrix-dev-grafana
+    restart: unless-stopped
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - veldrix-dev-net
+
   # ── Frontend — Next.js dev server ────────────────────────────────────────────
   veldrix-ui:
     build:
@@ -175,6 +223,10 @@ services:
 volumes:
   postgres_dev_data:
     name: veldrix_postgres_dev_data
+  prometheus_data:
+    name: veldrix_prometheus_data
+  grafana_data:
+    name: veldrix_grafana_data
 
 networks:
   veldrix-dev-net:

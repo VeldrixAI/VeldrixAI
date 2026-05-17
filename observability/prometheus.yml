@@ -52,4 +52,4 @@ scrape_configs:
   # PostgreSQL metrics (via postgres_exporter)
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres:5432']
+      - targets: ['postgres-exporter:9187']
