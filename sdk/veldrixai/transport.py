@@ -48,7 +48,7 @@ _UNSET = object()  # sentinel — async client not yet created
 
 logger = logging.getLogger("veldrix.transport")
 
-DEFAULT_BASE_URL = "https://api.veldrix.ai"
+DEFAULT_BASE_URL = "https://api.veldrixai.ca"
 MAX_RETRIES      = 3
 BASE_BACKOFF     = 0.4
 _MAX_PAYLOAD_CHARS = 8_000   # chars sent per field to the API

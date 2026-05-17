@@ -1,0 +1,71 @@
+{
+  "dashboard": {
+    "title": "VeldrixAI Platform Overview",
+    "tags": ["veldrix", "overview"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(traefik_service_requests_total[5m])",
+            "legendFormat": "{{service}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Latency P95",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(traefik_service_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{service}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(traefik_service_requests_total{code=~\"5..\"}[5m])",
+            "legendFormat": "{{service}} - {{code}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Active Connections",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "traefik_entrypoint_open_connections",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Service Health",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "up{job=~\"veldrix.*\"}",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s"
+  },
+  "overwrite": true
+}

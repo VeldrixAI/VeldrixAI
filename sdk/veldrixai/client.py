@@ -88,7 +88,7 @@ class Veldrix:
         if not api_key:
             raise VeldrixError(
                 "api_key is required but was empty or None.\n"
-                "  Get your API key at: https://app.veldrix.ai/settings/api-keys\n"
+                "  Get your API key at: https://app.veldrixai.ca/settings/api-keys\n"
                 "  Usage: Veldrix(api_key='vx-live-...')\n"
                 "  Tip: Set VELDRIX_API_KEY env var and use: "
                 "Veldrix(api_key=os.environ['VELDRIX_API_KEY'])"
@@ -96,7 +96,7 @@ class Veldrix:
         if not isinstance(api_key, str):
             raise VeldrixError(
                 f"api_key must be a string, got {type(api_key).__name__}.\n"
-                "  Usage: Veldrix(api_key='vx-live-...')"
+                "  Usage: Veldrix(api_key='vx-live-...')  # get yours at https://app.veldrixai.ca"
             )
         if not api_key.startswith("vx-live-") and not api_key.startswith("vx-test-"):
             raise VeldrixError(
@@ -104,7 +104,7 @@ class Veldrix:
                 "  VeldrixAI API keys must start with 'vx-live-' (production) "
                 "or 'vx-test-' (testing).\n"
                 "  Common mistake: underscores instead of dashes (vx_live_ vs vx-live-).\n"
-                "  Get your key at: https://app.veldrix.ai/settings/api-keys"
+                "  Get your key at: https://app.veldrixai.ca/settings/api-keys"
             )
         self._transport   = Transport(
             api_key, base_url, timeout_ms,
@@ -164,7 +164,7 @@ class Veldrix:
                 f"Environment variable {api_key_env!r} is not set.\n"
                 "  Set it with: export VELDRIX_API_KEY=vx-live-...\n"
                 "  Or pass it directly: Veldrix(api_key='vx-live-...')\n"
-                "  Get your key at: https://app.veldrix.ai/settings/api-keys"
+                "  Get your key at: https://app.veldrixai.ca/settings/api-keys"
             )
         base_url = os.environ.get(base_url_env, DEFAULT_BASE_URL)
         # Rate limit config from environment — all optional, defaults match constructor

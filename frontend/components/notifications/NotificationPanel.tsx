@@ -134,7 +134,9 @@ export function NotificationPanel({
   const router = useRouter();
 
   function handleNotificationClick(n: Notification) {
-    onMarkOneRead(n.id);
+    if (n.id) {
+      onMarkOneRead(n.id);
+    }
     if (n.audit_log_id) {
       router.push(`/dashboard/audit-trails/${n.audit_log_id}`);
     } else {

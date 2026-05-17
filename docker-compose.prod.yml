@@ -1,168 +1,328 @@
-version: "3.9"
-
-# VeldrixAI — Runtime Trust Infrastructure for AI Systems
-# Run all services: docker compose up -d
-# Stop all services: docker compose down
+# VeldrixAI — Production Environment
+# Google-level architecture with API Gateway, observability, and auto-scaling
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Features:
+#   - Traefik API Gateway (single entry point, path-based routing)
+#   - Prometheus metrics collection
+#   - Grafana dashboards
+#   - Redis for caching and sessions
+#   - Health checks on all services
+#   - Non-root containers
+#   - Auto-restart policies
 
 services:
-  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # API GATEWAY — Traefik (Single Entry Point)
+  # ═══════════════════════════════════════════════════════════════════════════
+  traefik:
+    image: traefik:v3.2
+    container_name: veldrix-gateway
+    restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"       # HTTP (redirects to HTTPS)
+      - "443:443"     # HTTPS
+      - "8080:8080"   # Dashboard (internal only)
+    volumes:
+      - ./gateway/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./gateway/dynamic:/etc/traefik/dynamic:ro
+      - traefik-letsencrypt:/letsencrypt
+      - traefik-logs:/var/log/traefik
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=traefik"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+    depends_on:
+      - veldrix-auth
+      - veldrix-core
+      - veldrix-connectors
+      - veldrix-ui
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CACHE & SESSION STORE — Redis
+  # ═══════════════════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: veldrix-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # METRICS — Prometheus
+  # ═══════════════════════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: veldrix-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DASHBOARDS — Grafana
+  # ═══════════════════════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: veldrix-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-veldrix2024}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://grafana.veldrixai.ca
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    networks:
+      - veldrix-network
+    depends_on:
+      - prometheus
+      - redis
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DATABASE — PostgreSQL (Production Optimized)
+  # ═══════════════════════════════════════════════════════════════════════════
   postgres:
     image: postgres:16-alpine
     container_name: veldrix-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-veldrix}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veldrix_dev_password}
-      POSTGRES_DB: ${POSTGRES_DB:-veldrix_auth}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-veldrix}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - veldrix-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veldrix}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veldrix} -d ${POSTGRES_DB:-veldrix}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - veldrix-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
-  # ── Redis (circuit breaker state + backpressure) ─────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: veldrix-redis
-    restart: unless-stopped
-    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - veldrix-net
-
-  # ── Auth Service (FastAPI, port 8000) ────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AUTH SERVICE — Authentication, API Keys, Billing
+  # ═══════════════════════════════════════════════════════════════════════════
   veldrix-auth:
     build:
       context: ./backend/auth
       dockerfile: Dockerfile
+      target: production
     container_name: veldrix-auth
     restart: unless-stopped
-    env_file:
-      - ./backend/auth/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
-      VELDRIX_VAULT_KEY: ${VELDRIX_VAULT_KEY}
-      VELDRIX_CORS_ORIGINS: ${VELDRIX_CORS_ORIGINS:-https://app.veldrixai.ca}
-      APP_ENV: production
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET required}
+      - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:?VELDRIX_VAULT_KEY required}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - REDIS_URL=redis://redis:6379/0
+      - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
+    networks:
+      - veldrix-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
-    networks:
-      - veldrix-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+      replicas: 2
 
-  # ── Core Trust Engine (FastAPI stateless, port 8001) ─────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CORE SERVICE — Trust Evaluation Engine
+  # ═══════════════════════════════════════════════════════════════════════════
   veldrix-core:
     build:
       context: ./backend/core
       dockerfile: Dockerfile
+      target: production
     container_name: veldrix-core
     restart: unless-stopped
-    env_file:
-      - ./backend/core/.env
     environment:
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
-      - NVIDIA_API_BASE_URL=${NVIDIA_API_BASE_URL:-https://integrate.api.nvidia.com/v1}
-      - VELDRIX_PILLAR_CONTENT_MODEL=${VELDRIX_PILLAR_CONTENT_MODEL:-meta/llama-guard-4-12b}
-      - VELDRIX_PILLAR_HALLUCINATION_MODEL=${VELDRIX_PILLAR_HALLUCINATION_MODEL:-meta/llama-3.1-8b-instruct}
-      - VELDRIX_PILLAR_BIAS_MODEL=${VELDRIX_PILLAR_BIAS_MODEL:-meta/llama-3.1-8b-instruct}
-      - VELDRIX_PILLAR_POLICY_MODEL=${VELDRIX_PILLAR_POLICY_MODEL:-meta/llama-3.1-8b-instruct}
-      - VELDRIX_PILLAR_LEGAL_MODEL=${VELDRIX_PILLAR_LEGAL_MODEL:-meta/llama-3.1-8b-instruct}
-      - VELDRIX_NIM_TIMEOUT_MS=${VELDRIX_NIM_TIMEOUT_MS:-8000}
-      - VELDRIX_INTERNAL_API_KEY=${VELDRIX_INTERNAL_API_KEY}
-      - REDIS_URL=redis://redis:6379/0
-      - CIRCUIT_BREAKER_BACKEND=redis
       - APP_ENV=production
-    ports:
-      - "8001:8001"
-    depends_on:
-      redis:
-        condition: service_healthy
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:?NVIDIA_API_KEY required}
+      - VELDRIX_AUTH_URL=http://veldrix-auth:8000
+      - REDIS_URL=redis://redis:6379/1
+      - CIRCUIT_BREAKER_BACKEND=redis
+      - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
+    networks:
+      - veldrix-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
-    networks:
-      - veldrix-net
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+      replicas: 2
 
-  # ── Connectors / Analytics (FastAPI + PostgreSQL, port 8002) ─────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CONNECTORS SERVICE — Analytics, Reports, Prompts
+  # ═══════════════════════════════════════════════════════════════════════════
   veldrix-connectors:
     build:
       context: ./backend/connectors
       dockerfile: Dockerfile
+      target: production
     container_name: veldrix-connectors
     restart: unless-stopped
-    env_file:
-      - ./backend/connectors/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD:-veldrix_dev_password}@postgres:5432/${POSTGRES_DB:-veldrix_auth}
-      VELDRIX_CORS_ORIGINS: ${VELDRIX_CORS_ORIGINS:-https://app.veldrixai.ca}
-      APP_ENV: production
-    ports:
-      - "8002:8002"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      veldrix-auth:
-        condition: service_healthy
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - REDIS_URL=redis://redis:6379/2
+      - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
+    networks:
+      - veldrix-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
-    networks:
-      - veldrix-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      veldrix-auth:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
 
-  # ── Frontend (Next.js, port 5000) ────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FRONTEND — Next.js Application
+  # ═══════════════════════════════════════════════════════════════════════════
   veldrix-ui:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-https://api.veldrixai.ca}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app.veldrixai.ca}
+        NEXT_PUBLIC_ENV: production
+        NEXT_PUBLIC_VELDRIX_CORE_URL: ${NEXT_PUBLIC_VELDRIX_CORE_URL:-https://api.veldrixai.ca}
     container_name: veldrix-ui
     restart: unless-stopped
-    env_file:
-      - ./frontend/.env.local
     environment:
-      VELDRIX_AUTH_API_URL: http://veldrix-auth:8000
-      VELDRIX_CORE_API_URL: http://veldrix-core:8001
-      VELDRIX_CONNECTORS_API_URL: http://veldrix-connectors:8002
-    ports:
-      - "5000:5000"
+      - NODE_ENV=production
+      - VELDRIX_AUTH_API_URL=http://veldrix-auth:8000
+      - VELDRIX_CORE_API_URL=http://veldrix-core:8001
+      - VELDRIX_CONNECTORS_API_URL=http://veldrix-connectors:8002
+      - NEXT_TELEMETRY_DISABLED=1
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
     depends_on:
       veldrix-auth:
         condition: service_healthy
       veldrix-core:
         condition: service_healthy
-    networks:
-      - veldrix-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
-volumes:
-  postgres_data:
-    name: veldrix_postgres_data
-
+# ═════════════════════════════════════════════════════════════════════════════
+# NETWORKS — Isolated bridge network for inter-service communication
+# ═════════════════════════════════════════════════════════════════════════════
 networks:
-  veldrix-net:
-    name: veldrix-network
+  veldrix-network:
     driver: bridge
+    name: veldrix-network
+
+# ═════════════════════════════════════════════════════════════════════════════
+# VOLUMES — Persistent storage
+# ═════════════════════════════════════════════════════════════════════════════
+volumes:
+  postgres-data:
+    name: veldrix-postgres-data
+  redis-data:
+    name: veldrix-redis-data
+  prometheus-data:
+    name: veldrix-prometheus-data
+  grafana-data:
+    name: veldrix-grafana-data
+  traefik-letsencrypt:
+    name: veldrix-traefik-letsencrypt
+  traefik-logs:
+    name: veldrix-traefik-logs

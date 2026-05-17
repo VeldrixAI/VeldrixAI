@@ -1,5 +1,13 @@
 """Saved prompts CRUD + AI generation controller."""
 
+from .advanced_generator import (
+    AdvancedGenerateRequest,
+    AdvancedGenerateResponse,
+    ModelProvider,
+    generate_advanced_prompt,
+    get_available_models as get_advanced_models,
+)
+
 import os
 import io
 import httpx
@@ -297,3 +305,42 @@ async def delete_prompt(
     p.is_deleted = True
     db.commit()
     return {"success": True}
+
+
+# ── Advanced Generation Routes ──────────────────────────────────────────────────
+
+@router.get("/models")
+async def list_generation_models(
+    current_user: dict = Depends(get_current_user),
+):
+    """List all available models for prompt generation (Groq + NVIDIA NIM)."""
+    return get_advanced_models()
+
+
+@router.post("/generate-advanced", response_model=AdvancedGenerateResponse)
+async def generate_prompts_advanced(
+    body: AdvancedGenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Advanced prompt generation using Groq (Llama 3.3 70B, Mixtral) or NVIDIA NIM.
+    
+    Features:
+    - Multi-model support (Groq ultra-fast, NVIDIA NIM standard)
+    - Industry-specific templates (FinTech, Healthcare, Legal, etc.)
+    - Regional compliance embedding (GDPR, CCPA, HIPAA)
+    - Three enforcement variants: Strict, Balanced, Adaptive
+    - PDF policy extraction and embedding
+    - Customizable creativity and output format
+    """
+    if not (body.keywords and body.keywords.strip()) and not (body.policy_text and body.policy_text.strip()):
+        raise HTTPException(status_code=400, detail="Provide keywords or upload a policy PDF")
+    
+    try:
+        return await generate_advanced_prompt(body)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"Model API error: {e.response.status_code}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")

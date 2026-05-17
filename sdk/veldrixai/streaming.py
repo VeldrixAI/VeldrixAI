@@ -343,9 +343,14 @@ class GuardedStream:
             if self._config.background:
                 # Hold strong Task reference so GC cannot drop the evaluation.
                 from veldrixai.interceptor import _BACKGROUND_TASKS
-                task = asyncio.create_task(
-                    self._transport.evaluate(self._prompt, response_text, self._config)
-                )
+
+                async def _eval_bg_and_store() -> None:
+                    trust = await self._transport.evaluate(
+                        self._prompt, response_text, self._config
+                    )
+                    self._trust = trust
+
+                task = asyncio.create_task(_eval_bg_and_store())
                 _BACKGROUND_TASKS.add(task)
                 task.add_done_callback(_BACKGROUND_TASKS.discard)
             else:

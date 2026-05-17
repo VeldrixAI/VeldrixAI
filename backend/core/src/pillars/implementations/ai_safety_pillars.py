@@ -197,11 +197,11 @@ def _degraded(
 
 
 def _log_latency(pillar_name: str, elapsed_ms: float) -> None:
-    """Log per-pillar timing at the appropriate level."""
-    if elapsed_ms > 3000:
-        logger.error("[%s] Latency BREACHED budget: %.1f ms", pillar_name, elapsed_ms)
-    elif elapsed_ms > 2000:
-        logger.warning("[%s] Latency approaching budget: %.1f ms", pillar_name, elapsed_ms)
+    """Log per-pillar timing at the appropriate level for sub-500ms SLA."""
+    if elapsed_ms > 500:
+        logger.error("[%s] Latency BREACHED 500ms SLA: %.1f ms", pillar_name, elapsed_ms)
+    elif elapsed_ms > 300:
+        logger.warning("[%s] Latency approaching SLA: %.1f ms", pillar_name, elapsed_ms)
     else:
         logger.debug("[%s] Evaluation completed in %.1f ms", pillar_name, elapsed_ms)
 

@@ -16,6 +16,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 from urllib.parse import urlparse
+import threading
+
+_REGISTRY_LOCK = threading.Lock()
 
 
 @dataclass
@@ -255,11 +258,14 @@ def match_provider(url: str) -> Optional[ProviderEndpoint]:
          (exact boundary — prevents localhost:4000 matching localhost:40001).
       2. At least one request_path must appear in the full lowercased URL.
 
-    Both conditions must be true.
+    Both conditions must be true. Thread-safe: takes a snapshot of the registry
+    under lock so concurrent register_provider() calls cannot cause a race.
     """
     url_lower   = url.lower()
     host_string = _host_port(url)
-    for provider in PROVIDER_REGISTRY:
+    with _REGISTRY_LOCK:
+        snapshot = list(PROVIDER_REGISTRY)
+    for provider in snapshot:
         host_match = any(pattern in host_string for pattern in provider.url_patterns)
         if not host_match:
             continue
@@ -316,7 +322,8 @@ def register_provider(
         adapter_key=adapter_key,
         region=region,
     )
-    PROVIDER_REGISTRY.insert(0, endpoint)
+    with _REGISTRY_LOCK:
+        PROVIDER_REGISTRY.insert(0, endpoint)
     return endpoint
 
 
@@ -328,5 +335,6 @@ def unregister_provider(name: str) -> bool:
     """
     global PROVIDER_REGISTRY
     before = len(PROVIDER_REGISTRY)
-    PROVIDER_REGISTRY[:] = [p for p in PROVIDER_REGISTRY if p.name != name]
+    with _REGISTRY_LOCK:
+        PROVIDER_REGISTRY[:] = [p for p in PROVIDER_REGISTRY if p.name != name]
     return len(PROVIDER_REGISTRY) < before

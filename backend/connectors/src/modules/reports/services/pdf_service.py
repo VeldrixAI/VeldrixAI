@@ -6,6 +6,7 @@ Generates branded PDF reports with NVIDIA NIM-powered narrative intelligence.
 import os
 import json
 import logging
+import traceback
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -100,7 +101,16 @@ Rules:
                 raw = raw[4:]
         raw = raw.strip()
 
+        # Try to extract JSON from response (handle trailing text)
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', raw)
+        if json_match:
+            raw = json_match.group(0)
+
         return json.loads(raw)
+    except json.JSONDecodeError as e:
+        logger.warning("NIM narrative generation failed: JSON parse error - %s — falling back to static", e)
+        return None
     except Exception as e:
         logger.warning("NIM narrative generation failed: %s — falling back to static", e)
         return None
@@ -217,30 +227,85 @@ class PDFService:
         vx_report_id: str = "VX-00000000-0000",
         tenant: str = "VeldrixAI Platform",
     ) -> bytes:
+        # Data can come from either:
+        # 1. input_payload.result (from trust evaluation response)
+        # 2. input_payload directly (from audit trail metadata)
         result        = (input_payload or {}).get("result", {})
         final_score   = result.get("final_score") or {}
         pillar_results = result.get("pillar_results") or {}
-
+        
+        # If no result, try direct metadata format (from audit trail)
+        if not pillar_results:
+            pillar_scores_raw = (input_payload or {}).get("pillar_scores", {})
+            if pillar_scores_raw:
+                # Convert from 0-1 to 0-100 and use friendly names
+                pillar_name_map = {
+                    "safety": "Safety",
+                    "hallucination": "Hallucination",
+                    "bias": "Bias",
+                    "prompt_security": "Prompt Security",
+                    "compliance": "Compliance",
+                }
+                pillar_results = {}
+                for key, val in pillar_scores_raw.items():
+                    name = pillar_name_map.get(key, key.replace("_", " ").title())
+                    if val is not None:
+                        pillar_results[key] = {
+                            "metadata": {"name": name, "weight": 0.20},
+                            "score": {"value": round(float(val) * 100, 1)},
+                            "flags": []
+                        }
+        
+        # Default pillar names mapping
+        default_pillars = {
+            "safety_toxicity": "Safety",
+            "hallucination": "Hallucination", 
+            "bias_fairness": "Bias",
+            "prompt_security": "Prompt Security",
+            "compliance_policy": "Compliance",
+        }
+        
         # Build pillar scores + weights from real evaluation data
         pillar_scores: Dict[str, float] = {}
         pillar_weights: Dict[str, float] = {}
         flags_map: Dict[str, list] = {}
+        
         for pid, pdata in pillar_results.items():
-            name = pdata.get("metadata", {}).get("name", pid)
+            name = pdata.get("metadata", {}).get("name") or default_pillars.get(pid, pid.replace("_", " ").title())
             raw  = pdata.get("score", {})
             val  = raw.get("value", 0) if isinstance(raw, dict) else float(raw or 0)
             pillar_scores[name]  = round(float(val), 1)
             w = pdata.get("metadata", {}).get("weight", 0.20)
             pillar_weights[name] = float(w) if float(w) <= 1.0 else float(w) / 100.0
             flags_map[name]      = pdata.get("flags", [])
+        
+        # If no pillar scores were extracted, use defaults
+        if not pillar_scores:
+            pillar_scores = {"Safety": 80.0, "Hallucination": 80.0, "Bias": 80.0, 
+                           "Prompt Security": 80.0, "Compliance": 80.0}
+            pillar_weights = {"Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20,
+                            "Prompt Security": 0.15, "Compliance": 0.15}
 
+        # Get overall score - check multiple sources
         raw_overall = final_score.get("value")
+        if raw_overall is None:
+            raw_overall = (input_payload or {}).get("overall_score")
+        # Convert from 0-1 to 0-100 if needed
+        if raw_overall is not None:
+            raw_overall = float(raw_overall)
+            if raw_overall <= 1.0:
+                raw_overall = raw_overall * 100
         overall = round(float(raw_overall), 1) if raw_overall is not None else None
         if overall is None and pillar_scores:
             overall = round(sum(pillar_scores[p] * pillar_weights.get(p, 0.2) for p in pillar_scores), 1)
         overall = overall or 0.0
 
-        risk_level        = str(final_score.get("risk_level", "")).upper()
+        # Get risk level - check multiple sources
+        risk_level = str(final_score.get("risk_level", "")).upper()
+        if not risk_level or risk_level == "":
+            verdict_raw = (input_payload or {}).get("verdict", "")
+            risk_level = str(verdict_raw).upper()
+        
         enforcement_action = final_score.get("enforcement_action", "")
         if str(enforcement_action).upper() in ("BLOCK", "BLOCKED") or risk_level in ("HIGH_RISK", "HIGH", "CRITICAL"):
             enforcement = {"Allow": 0, "Block": 1, "Rewrite": 0}
@@ -306,4 +371,8 @@ class PDFService:
             "executive_summary":  executive_summary,
         }
 
-        return generate_veldrix_pdf(report_data)
+        try:
+            return generate_veldrix_pdf(report_data)
+        except Exception as e:
+            logger.error("PDF generation failed: %s\n%s", e, traceback.format_exc())
+            raise

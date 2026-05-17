@@ -14,7 +14,7 @@ const codeExamples = [
 
 client = VeldrixClient(
     api_key="your-api-key",
-    base_url="https://api.veldrix.ai",
+    base_url="https://api.veldrixai.ca",
 )
 
 result = client.analyze(

@@ -9,12 +9,16 @@ from __future__ import annotations
 
 import httpx
 
+# Aggressive pooling for sub-500ms SLA:
+#   100 max connections with 50 keepalive for sustained throughput
+#   Tight timeouts: 200ms connect, 1s read (was 5s), 500ms write, 200ms pool
+#   Keepalive 60s keeps connections warm across requests
 _LIMITS = httpx.Limits(
-    max_connections=50,
-    max_keepalive_connections=10,
-    keepalive_expiry=30.0,
+    max_connections=100,
+    max_keepalive_connections=50,
+    keepalive_expiry=60.0,
 )
-_TIMEOUT = httpx.Timeout(connect=1.0, read=5.0, write=2.0, pool=0.5)
+_TIMEOUT = httpx.Timeout(connect=0.2, read=1.0, write=0.5, pool=0.2)
 
 _client: httpx.AsyncClient | None = None
 

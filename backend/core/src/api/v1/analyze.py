@@ -40,6 +40,7 @@ logger = logging.getLogger("veldrix.api")
 async def analyze(
     payload: AnalysisRequest,
     http_request: Request,
+    debug:   bool       = False,
     sdk:     VeldrixSDK = Depends(get_sdk),
     caller:  dict       = Depends(require_api_key),
 ):
@@ -81,6 +82,7 @@ async def analyze(
             budget=budget,
             collector=collector,
             request_id=getattr(http_request.state, "request_id", None),
+            emit_diagnostics=debug,
         )
     except Exception as exc:
         logger.error("analyze endpoint unhandled error: %s", exc, exc_info=True)
@@ -95,9 +97,9 @@ async def list_pillars() -> dict:
     return {
         "pillars": [
             {"id": "safety",          "name": "Safety & Toxicity",    "weight": 0.25},
-            {"id": "hallucination",   "name": "Hallucination",         "weight": 0.20},
-            {"id": "bias",            "name": "Bias & Fairness",       "weight": 0.15},
-            {"id": "prompt_security", "name": "Prompt Security",       "weight": 0.25},
+            {"id": "hallucination",   "name": "Hallucination",         "weight": 0.25},
+            {"id": "bias",            "name": "Bias & Fairness",       "weight": 0.20},
+            {"id": "prompt_security", "name": "Prompt Security",       "weight": 0.15},
             {"id": "compliance",      "name": "Compliance & PII",      "weight": 0.15},
         ]
     }

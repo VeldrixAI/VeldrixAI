@@ -51,7 +51,11 @@ export default function ReportsPage() {
       const res = await fetch("/api/reports");
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || "Failed to load reports");
-      setReports(Array.isArray(payload) ? payload : []);
+      // Filter out failed reports - only show completed and processing
+      const validReports = (Array.isArray(payload) ? payload : []).filter(
+        (r: Report) => r.status !== "failed"
+      );
+      setReports(validReports);
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Failed to load reports", "error");
     } finally {

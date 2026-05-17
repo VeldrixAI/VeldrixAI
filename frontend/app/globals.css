@@ -94,8 +94,11 @@ img {
 }
 
 .shell {
-  width: min(1200px, 92vw);
+  width: min(1440px, 92vw);
   margin: 0 auto;
+}
+@media (min-width: 1600px) {
+  .shell { width: min(1600px, 94vw); }
 }
 
 /* ==============================
@@ -1388,6 +1391,8 @@ textarea {
   display: flex;
   min-height: 100vh;
   background: #050810;
+  width: 100%;
+  overflow-x: hidden;
 }
 .vx-app-sidebar {
   width: 280px;
@@ -1413,10 +1418,16 @@ textarea {
   min-height: 100vh;
   background: #0d0f1a;
   overflow-x: hidden;
+  min-width: 0;
+  width: 100%;
 }
 .vx-app-main {
   flex: 1;
   padding: 40px;
+  max-width: 100%;
+}
+@media (min-width: 1600px) {
+  .vx-app-main { padding: 48px 64px; }
 }
 .vx-app-topbar {
   height: 64px;

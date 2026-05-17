@@ -14,6 +14,10 @@ export async function PATCH(
   if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  if (!id || id === "undefined") {
+    return NextResponse.json({ error: "Invalid notification ID" }, { status: 400 });
+  }
+
   const res = await fetch(`${AUTH_API_URL}/notifications/${id}/read`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${t}` },

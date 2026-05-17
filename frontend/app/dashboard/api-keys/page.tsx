@@ -44,11 +44,15 @@ export default function ApiKeysPage() {
   async function loadKeys() {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/api-keys");
-      if (res.ok) setApiKeys(await res.json());
-      else setError("Failed to load API keys");
-    } catch {
-      setError("Failed to load API keys");
+      const res = await fetch("/api/api-keys", { cache: "no-store" });
+      if (res.ok) {
+        setApiKeys(await res.json());
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || body.detail || `Failed to load API keys (${res.status})`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error — could not reach API service");
     } finally {
       setIsLoading(false);
     }

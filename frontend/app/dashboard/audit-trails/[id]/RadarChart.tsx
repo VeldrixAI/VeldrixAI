@@ -30,6 +30,30 @@ export default function RadarChart({ pillarScores }: Props) {
     { subject: "PII / Comp.", score: pillarScores.compliance != null ? Math.round((1 - pillarScores.compliance) * 100) : 0 },
   ];
 
+  const hasData = Object.values(pillarScores).some((v) => v != null);
+  if (!hasData) {
+    return (
+      <div style={{
+        height: 300,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        color: "rgba(240,242,255,0.2)",
+      }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <polygon points="12 2 22 20 2 20" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, letterSpacing: "1px", textTransform: "uppercase" }}>
+          No pillar score data
+        </span>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <RechartsRadarChart cx="50%" cy="50%" outerRadius="68%" data={data}>

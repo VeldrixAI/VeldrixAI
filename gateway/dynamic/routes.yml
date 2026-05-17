@@ -1,0 +1,131 @@
+# Dynamic Routes for VeldrixAI
+# Path-based routing to microservices (Google/OpenAI style)
+
+http:
+  routers:
+    # ── Auth Service Routes ───────────────────────────────────────────────────
+    auth-router:
+      rule: "PathPrefix(`/auth`) || PathPrefix(`/api-keys`) || PathPrefix(`/billing`) || PathPrefix(`/notifications`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - rate-limit
+      service: auth-service
+      tls:
+        certResolver: letsencrypt
+
+    # ── Core Trust Engine Routes ──────────────────────────────────────────────
+    core-router:
+      rule: "PathPrefix(`/api/v1/evaluate`) || PathPrefix(`/api/v1/trust`) || PathPrefix(`/api/v1/analyze`) || PathPrefix(`/api/v1/stream`) || PathPrefix(`/api/v1/pillars`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - rate-limit
+      service: core-service
+      tls:
+        certResolver: letsencrypt
+
+    # ── Connectors Routes (Analytics, Reports, Prompts) ───────────────────────
+    connectors-router:
+      rule: "PathPrefix(`/api/analytics`) || PathPrefix(`/api/reports`) || PathPrefix(`/api/prompts`) || PathPrefix(`/api/audit`) || PathPrefix(`/api/latency`) || PathPrefix(`/api/models`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - rate-limit
+      service: connectors-service
+      tls:
+        certResolver: letsencrypt
+
+    # ── Frontend Catch-All ────────────────────────────────────────────────────
+    frontend-router:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - cors
+      service: frontend-service
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+
+  services:
+    # Auth Service (port 8000)
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-auth:8000"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+        sticky:
+          cookie:
+            name: veldrix_auth_sticky
+            secure: true
+            httpOnly: true
+
+    # Core Trust Engine (port 8001)
+    core-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-core:8001"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+
+    # Connectors Service (port 8002)
+    connectors-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-connectors:8002"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+
+    # Frontend (port 5000)
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-ui:5000"
+        healthCheck:
+          path: /
+          interval: 60s
+          timeout: 10s
+
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowOriginList:
+          - "https://veldrixai.ca"
+          - "https://app.veldrixai.ca"
+          - "http://localhost:5000"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400

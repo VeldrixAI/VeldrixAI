@@ -20,14 +20,16 @@ class ExecutionManager:
     
     Ensures resilient execution where individual pillar failures do not crash
     the entire evaluation process.
+    
+    LATENCY TARGET: 400ms wall-clock for all 5 pillars in parallel.
     """
     
-    def __init__(self, timeout_seconds: float = 5.0):
+    def __init__(self, timeout_seconds: float = 0.4):  # 400ms budget (was 5s)
         """
         Initialize execution manager.
         
         Args:
-            timeout_seconds: Maximum execution time per pillar
+            timeout_seconds: Maximum execution time per pillar (default 400ms for sub-500ms SLA)
         """
         self.timeout_seconds = timeout_seconds
     

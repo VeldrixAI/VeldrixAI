@@ -44,9 +44,9 @@ function AnimatedItem({
 }
 
 const STATS = [
-  { icon: '⚡', label: '<200ms latency' },
-  { icon: '🛡️', label: '99.9% uptime' },
-  { icon: '🔒', label: 'SOC 2 Ready' },
+  { label: 'Sub-500ms evaluation' },
+  { label: 'Append-only audit log' },
+  { label: 'SOC 2 architecture' },
 ];
 
 export default function AuthLeftDefault() {
@@ -119,10 +119,10 @@ export default function AuthLeftDefault() {
               alignItems: 'center',
               gap: 6,
               fontSize: 12,
-              color: 'rgba(240,242,255,0.55)',
+              color: 'rgba(240,242,255,0.45)',
               fontFamily: 'var(--font-body)',
             }}>
-              <span>{stat.icon}</span>
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(124,58,237,0.6)', flexShrink: 0 }} />
               <span>{stat.label}</span>
             </div>
           ))}

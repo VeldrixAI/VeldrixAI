@@ -5,7 +5,7 @@ from veldrixai.transport import Transport, _degraded_trust_result
 from veldrixai.models    import GuardConfig
 
 API_KEY  = "vx-test-key-123"
-BASE_URL = "https://api.veldrix.ai"
+BASE_URL = "https://api.veldrixai.ca"
 
 MOCK_RESPONSE = {
     "request_id":  "req_abc123",

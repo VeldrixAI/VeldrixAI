@@ -15,7 +15,7 @@
 
 If you discover a security vulnerability in VeldrixAI, please report it by emailing:
 
-**security@veldrix.ai**
+**security@veldrixai.ca**
 
 Include the following information in your report:
 

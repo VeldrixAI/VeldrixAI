@@ -207,9 +207,12 @@ class ClientCircuitBreaker:
 
     def is_open(self) -> bool:
         with self._lock:
-            return self._effective_state() == _OPEN
+            return self._check_and_transition() == _OPEN
 
-    def _effective_state(self) -> str:
+    def _check_and_transition(self) -> str:
+        """Evaluate current state, applying OPEN→HALF_OPEN transition if recovery window elapsed.
+        MUST be called with self._lock held.
+        """
         if self._state == _OPEN:
             if time.monotonic() - self._opened_at >= self._recovery:
                 self._state = _HALF_OPEN
@@ -249,7 +252,7 @@ class ClientCircuitBreaker:
     def stats(self) -> dict:
         with self._lock:
             return {
-                "breaker_state": self._effective_state(),
+                "breaker_state": self._check_and_transition(),
                 "breaker_trips_total": self._trips,
                 "breaker_dropped_total": self._dropped,
             }

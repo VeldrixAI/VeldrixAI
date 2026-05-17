@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 
 /* ─── Types ─── */
+type PromptModel = { id: string; name: string; provider: string; speed: string; available: boolean };
+type Variants = { Strict: string | null; Balanced: string | null; Adaptive: string | null };
+
 type SavedPrompt = {
   id: string;
   name: string;
@@ -15,9 +18,8 @@ type SavedPrompt = {
   keywords: string | null;
   created_at: string;
 };
-type Variants = { Strict: string | null; Balanced: string | null; Adaptive: string | null };
 
-const INDUSTRIES = ["SaaS Support", "Marketplace", "FinTech", "Healthcare-lite", "Education"];
+const INDUSTRIES = ["SaaS Support", "Marketplace", "FinTech", "Healthcare-lite", "Education", "Legal", "E-commerce"];
 const REGIONS = ["US", "EU", "CA", "Global"];
 
 const MODERNITY_LABELS: Record<number, string> = {
@@ -40,8 +42,9 @@ export default function PromptArchitectPage() {
   const [addDisclaimers, setAddDisclaimers] = useState(false);
   const [allowRewrite, setAllowRewrite] = useState(true);
   const [escalateToHuman, setEscalateToHuman] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("");
-  const [nvModels, setNvModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState("groq-llama-70b");
+  const [promptModels, setPromptModels] = useState<PromptModel[]>([]);
+  const modelOptions: PromptModel[] = Array.isArray(promptModels) ? promptModels : [];
 
   /* ── PDF ── */
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -82,13 +85,12 @@ export default function PromptArchitectPage() {
 
   useEffect(() => { loadPrompts(); }, []);
 
-  // Load NVIDIA models from nv_models.json via API
+  // Load available prompt generation models (Groq + NVIDIA NIM)
   useEffect(() => {
-    fetch("/api/nv-models")
+    fetch("/api/prompt-models")
       .then((r) => r.json())
-      .then((list: string[]) => {
-        setNvModels(list);
-        if (list.length > 0) setSelectedModel(list[0]);
+      .then((data) => {
+        if (Array.isArray(data)) setPromptModels(data);
       })
       .catch(() => {});
   }, []);
@@ -138,7 +140,7 @@ export default function PromptArchitectPage() {
     setGenerating(true);
     try {
       const combinedKeywords = [baseInstruction.trim(), keywords.trim()].filter(Boolean).join("\n\n") || null;
-      const res = await fetch("/api/prompts/generate", {
+      const res = await fetch("/api/prompts/generate-advanced", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,13 +152,22 @@ export default function PromptArchitectPage() {
           add_disclaimers: addDisclaimers,
           allow_rewrite: allowRewrite,
           escalate_to_human: escalateToHuman,
+          model: selectedModel,
+          creativity: 0.3,
+          max_tokens: 2048,
+          output_format: "detailed",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      setVariants(data.variants);
+      const simpleVariants = {
+        Strict: data.variants?.Strict?.prompt || null,
+        Balanced: data.variants?.Balanced?.prompt || null,
+        Adaptive: data.variants?.Adaptive?.prompt || null,
+      };
+      setVariants(simpleVariants);
       setActiveTab("Strict");
-      showToast(`Generated via ${data.model}`);
+      showToast(`Generated via ${data.model_used} (${data.provider})`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Generation failed", "error");
     } finally {
@@ -218,7 +229,7 @@ export default function PromptArchitectPage() {
   const activeText = variants?.[activeTab] ?? null;
 
   return (
-    <div className="page-reveal">
+    <div className="page-reveal" key="prompt-architect-v2">
       {/* ── Page heading ── */}
       <section className="section-reveal" style={{ maxWidth: "680px", marginBottom: "44px" }}>
         <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "44px", letterSpacing: "-2px", color: "#f0f2ff", lineHeight: 1.05, marginBottom: "16px" }}>
@@ -335,10 +346,10 @@ export default function PromptArchitectPage() {
             Model Selection
           </label>
           <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 12px", color: "#f0f2ff", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", cursor: "pointer", width: "100%" }}>
-            {nvModels.length === 0 ? (
+            {modelOptions.length === 0 ? (
               <option value="">Loading models…</option>
-            ) : nvModels.map((id) => (
-              <option key={id} value={id}>{id}</option>
+            ) : modelOptions.map((m) => (
+              <option key={m.id} value={m.id}>{m.name} ({m.speed})</option>
             ))}
           </select>
         </div>
@@ -403,7 +414,7 @@ export default function PromptArchitectPage() {
                   boxShadow: canGenerate ? "0 4px 20px rgba(124,58,237,0.3)" : "none",
                 }}
               >
-                {generating ? "Generating via NIM…" : "Generate Prompts →"}
+                {generating ? "Generating via Groq/NIM…" : "Generate Prompts →"}
               </button>
             </div>
           </div>
@@ -422,7 +433,8 @@ export default function PromptArchitectPage() {
               {generating ? (
                 <>
                   <div style={{ width: "36px", height: "36px", borderRadius: "50%", border: "2px solid rgba(124,58,237,0.2)", borderTopColor: "#7c3aed", animation: "spin 0.9s linear infinite", marginBottom: "16px" }}/>
-                  <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.4)" }}>Calling NVIDIA NIM…</p>
+                  <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.4)", marginBottom: "6px" }}>Generating with {modelOptions.find(m => m.id === selectedModel)?.name || selectedModel}…</p>
+                  <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", color: "rgba(240,242,255,0.25)" }}>Usually takes 2-5 seconds</p>
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </>
               ) : (

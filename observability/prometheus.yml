@@ -1,0 +1,55 @@
+# Prometheus Configuration for VeldrixAI
+# Scrapes metrics from all services
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'veldrix-monitor'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Traefik API Gateway metrics
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']
+    metrics_path: /metrics
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Auth Service metrics
+  - job_name: 'veldrix-auth'
+    static_configs:
+      - targets: ['veldrix-auth:8000']
+    metrics_path: /metrics
+
+  # Core Trust Engine metrics
+  - job_name: 'veldrix-core'
+    static_configs:
+      - targets: ['veldrix-core:8001']
+    metrics_path: /metrics
+
+  # Connectors Service metrics
+  - job_name: 'veldrix-connectors'
+    static_configs:
+      - targets: ['veldrix-connectors:8002']
+    metrics_path: /metrics
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # PostgreSQL metrics (via postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']

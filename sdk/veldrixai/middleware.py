@@ -51,7 +51,7 @@ from veldrixai.client import Veldrix
 
 logger = logging.getLogger("veldrix.middleware")
 
-DEFAULT_BASE_URL = "https://api.veldrix.ai"
+from veldrixai.transport import DEFAULT_BASE_URL
 
 # Strong-reference set for fire-and-forget middleware eval tasks.
 # asyncio.create_task() without storing the reference allows GC to collect the

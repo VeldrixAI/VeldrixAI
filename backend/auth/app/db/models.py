@@ -42,11 +42,14 @@ class ApiKey(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     key_hash = Column(String, nullable=False, unique=True, index=True)
+    # First 16 chars of the raw key stored in plaintext for O(1) pre-filter.
+    # Reduces bcrypt candidates from all active keys to ~1 before the expensive verify.
+    key_prefix = Column(String(16), nullable=False, index=True, server_default="")
     name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_used_at = Column(DateTime, nullable=True)
-    
+
     user = relationship("User", back_populates="api_keys")
 
 

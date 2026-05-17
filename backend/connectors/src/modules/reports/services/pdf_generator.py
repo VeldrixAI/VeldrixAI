@@ -114,9 +114,22 @@ def _png(fig: plt.Figure) -> bytes:
 
 
 def chart_pillar_radar(scores: dict, title: str = "Trust Pillar Radar") -> bytes:
+    # NO DEFAULTS - use actual data or show empty chart
+    if not scores:
+        # Show empty radar with zeroed values
+        scores = {
+            "Safety": 0, "Hallucination": 0, "Bias": 0,
+            "Prompt Security": 0, "Compliance": 0,
+        }
+    
     labels = list(scores.keys())
     values = list(scores.values())
     N = len(labels)
+    if N == 0:
+        N = 5
+        labels = ["Safety", "Hallucination", "Bias", "Prompt Security", "Compliance"]
+        values = [0, 0, 0, 0, 0]
+    
     angles = [n / float(N) * 2 * math.pi for n in range(N)]
     angles += angles[:1]
     vals = values + values[:1]
@@ -138,9 +151,19 @@ def chart_pillar_radar(scores: dict, title: str = "Trust Pillar Radar") -> bytes
 
 
 def chart_pillar_bars(scores: dict, title: str = "Trust Pillar Scores") -> bytes:
+    # NO DEFAULTS - use actual data or show empty bars
+    if not scores:
+        scores = {
+            "Safety": 0, "Hallucination": 0, "Bias": 0,
+            "Prompt Security": 0, "Compliance": 0,
+        }
+    
     fig, ax = plt.subplots(figsize=(5.5, 3.2))
     labels = list(scores.keys())
     values = list(scores.values())
+    if not labels:
+        labels = ["Safety", "Hallucination", "Bias", "Prompt Security", "Compliance"]
+        values = [0, 0, 0, 0, 0]
     bar_colors = [VX.PILLAR_COLORS.get(l, VX.VIOLET_HEX) for l in labels]
     y_pos = range(len(labels))
 
@@ -167,6 +190,18 @@ def chart_pillar_bars(scores: dict, title: str = "Trust Pillar Scores") -> bytes
 
 def chart_enforcement_donut(actions: dict, title: str = "Enforcement Actions") -> bytes:
     fig, ax = plt.subplots(figsize=(4.2, 3.8))
+    
+    # Handle empty actions
+    if not actions:
+        ax.text(0.5, 0.5, "No enforcement data", 
+                ha="center", va="center", transform=ax.transAxes,
+                fontsize=9, color="#64748b")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        return _png(fig)
+    
     labels = list(actions.keys())
     values = list(actions.values())
     color_map = {
@@ -206,6 +241,19 @@ def chart_enforcement_donut(actions: dict, title: str = "Enforcement Actions") -
 
 def chart_trend_line(trend_data: list[dict], title: str = "Trust Score Trend") -> bytes:
     fig, ax = plt.subplots(figsize=(6.5, 3.2))
+    
+    # Handle empty or missing trend data
+    if not trend_data:
+        # Show placeholder with no data
+        ax.text(0.5, 0.5, "No trend data available for this evaluation", 
+                ha="center", va="center", transform=ax.transAxes,
+                fontsize=9, color="#64748b")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        return _png(fig)
+    
     dates = [d["date"] for d in trend_data]
     x = range(len(dates))
 
@@ -216,9 +264,12 @@ def chart_trend_line(trend_data: list[dict], title: str = "Trust Score Trend") -
         "Compliance":    (VX.EMERALD_HEX, 1.5, ":"),
     }
     for key, (color, lw, ls) in series.items():
-        vals = [d.get(key.lower(), d.get("overall", 80)) for d in trend_data]
-        ax.plot(x, vals, color=color, linewidth=lw, linestyle=ls,
-                label=key, marker="o", markersize=3, markerfacecolor=color)
+        vals = [d.get(key.lower(), d.get("overall", None)) for d in trend_data]
+        # Filter out None values for plotting
+        valid_vals = [v for v in vals if v is not None]
+        if valid_vals:  # Only plot if we have data
+            ax.plot(x, vals, color=color, linewidth=lw, linestyle=ls,
+                    label=key, marker="o", markersize=3, markerfacecolor=color)
 
     ax.axhspan(70, 90, alpha=0.06, color=VX.AMBER_HEX, label="Caution zone")
     ax.axhline(y=90, color=VX.EMERALD_HEX, linewidth=0.8, linestyle=":", alpha=0.5)
@@ -237,6 +288,18 @@ def chart_trend_line(trend_data: list[dict], title: str = "Trust Score Trend") -
 
 def chart_risk_distribution(buckets: dict, title: str = "Response Risk Distribution") -> bytes:
     fig, ax = plt.subplots(figsize=(4.5, 3.0))
+    
+    # Handle empty buckets
+    if not buckets:
+        ax.text(0.5, 0.5, "No risk distribution data", 
+                ha="center", va="center", transform=ax.transAxes,
+                fontsize=9, color="#64748b")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        return _png(fig)
+    
     labels = list(buckets.keys())
     values = list(buckets.values())
     risk_colors = {
@@ -535,8 +598,17 @@ def _cover(data: dict, s: dict) -> list:
     story.append(mt)
     story.append(Spacer(1, 8 * mm))
 
-    # Score hero
-    overall = data.get("overall_score", 82.4)
+    # Score hero - NO DEFAULTS, use actual evaluation data
+    overall = data.get("overall_score")
+    if overall is None:
+        # Calculate from pillar scores if not provided
+        pillar_scores = data.get("pillar_scores", {})
+        pw = data.get("pillar_weights", {})
+        if pillar_scores and pw:
+            overall = sum(pillar_scores.get(p, 0) * pw.get(p, 0.2) for p in pillar_scores)
+        else:
+            overall = 0.0
+    
     score_color = VX.EMERALD_HEX if overall >= 85 else VX.AMBER_HEX if overall >= 70 else VX.ROSE_HEX
     score_label = "TRUSTED" if overall >= 85 else "CAUTION" if overall >= 70 else "AT RISK"
     pw = data.get("pillar_weights", {
@@ -648,20 +720,28 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
         s["body"]))
     story.append(Spacer(1, 4 * mm))
 
-    # Metric cards
-    pillar_scores = report_data.get("pillar_scores", {
-        "Safety": 91.2, "Hallucination": 84.7, "Bias": 88.3,
-        "Prompt Security": 95.1, "Compliance": 79.4,
-    })
-    enforcement = report_data.get("enforcement_actions", {
-        "Allow": 8420, "Block": 312, "Rewrite": 184, "Mask": 67, "Escalate": 17,
-    })
-    total = report_data.get("total_evals", sum(enforcement.values()))
+    # Metric cards - use actual data from report_data
+    pillar_scores = report_data.get("pillar_scores") or {}
+    enforcement = report_data.get("enforcement_actions") or {}
+    total = report_data.get("total_evals", sum(enforcement.values()) if enforcement else 1)
     interventions = enforcement.get("Block", 0) + enforcement.get("Rewrite", 0)
-    pass_rate = enforcement.get("Allow", 0) / max(total, 1) * 100
+    pass_rate = (enforcement.get("Allow", 0) / max(total, 1) * 100) if enforcement else 0
+
+    # Calculate overall score if not provided
+    overall = report_data.get("overall_score")
+    if overall is None:
+        # Calculate from pillar scores if not provided
+        pw = report_data.get("pillar_weights", {
+            "Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20,
+            "Prompt Security": 0.15, "Compliance": 0.15,
+        })
+        if pillar_scores:
+            overall = sum(pillar_scores.get(p, 0) * pw.get(p, 0.2) for p in pillar_scores)
+        else:
+            overall = 0.0
 
     story.append(_metric_cards([
-        {"value": f"{report_data.get('overall_score', 82.4):.1f}",
+        {"value": f"{overall:.1f}",
          "label": "Overall Trust Score", "color": VX.VIOLET_HEX},
         {"value": f"{total:,}", "label": "Total Evaluations", "color": VX.INDIGO_HEX},
         {"value": str(interventions), "label": "Interventions Made", "color": VX.ROSE_HEX},

@@ -100,7 +100,10 @@ export default function PricingSection() {
   const [cycle, setCycle] = useState<BillingInterval>("monthly");
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const activeCycle: BillingInterval = mounted ? cycle : "monthly";
 
@@ -113,9 +116,8 @@ export default function PricingSection() {
       <div className="lp-container">
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <div className="lp-eyebrow">Pricing</div>
           <h2 className="lp-h2">
-            Simple, Transparent <span className="shimmer-text">Pricing</span>
+            Simple, honest pricing.
           </h2>
           <p className="lp-p" style={{ maxWidth: "520px", margin: "0 auto 32px" }}>
             Start with a 14-day free trial. No credit card required. Upgrade or cancel anytime.
@@ -215,29 +217,6 @@ export default function PricingSection() {
                   transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.25s, border-color 0.25s",
                 }}
               >
-                {/* Most Popular badge */}
-                {plan.highlight && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-14px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      background: "linear-gradient(90deg, #7c3aed, #06b6d4)",
-                      borderRadius: "100px",
-                      padding: "4px 16px",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      color: "#fff",
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      whiteSpace: "nowrap",
-                    }}
-                    aria-label="Most popular plan"
-                  >
-                    Most Popular
-                  </div>
-                )}
 
                 {/* Plan name + tagline */}
                 <div>
@@ -265,9 +244,7 @@ export default function PricingSection() {
                         fontFamily: "var(--font-display)",
                         fontWeight: 800,
                         fontSize: "42px",
-                        background: "linear-gradient(135deg, #fff, #a78bfa)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
+                        color: "#f0f2ff",
                         lineHeight: 1,
                       }}
                     >
@@ -283,9 +260,7 @@ export default function PricingSection() {
                             fontWeight: 800,
                             fontSize: "48px",
                             lineHeight: 1,
-                            background: "linear-gradient(135deg, #fff, #a78bfa)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
+                            color: "#f0f2ff",
                           }}
                         >
                           {price}
@@ -417,8 +392,7 @@ export default function PricingSection() {
         {/* Add-ons */}
         <div style={{ marginTop: "64px", marginBottom: "64px" }}>
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <div className="lp-eyebrow">Add-ons &amp; Enterprise</div>
-            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "8px 0 0" }}>
+            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "0" }}>
               Extend Your Plan
             </h3>
           </div>
@@ -467,8 +441,7 @@ export default function PricingSection() {
         {/* FAQ */}
         <div style={{ maxWidth: "680px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <div className="lp-eyebrow">FAQ</div>
-            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "8px 0 0" }}>
+            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "0" }}>
               Frequently Asked Questions
             </h3>
           </div>

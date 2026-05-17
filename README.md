@@ -351,5 +351,5 @@ MIT — see [LICENSE](aegisai-sdk/LICENSE)
 
 <div align="center">
   <p>Built with NVIDIA NIM · FastAPI · Next.js · PostgreSQL</p>
-  <p><a href="https://veldrix.ai">veldrix.ai</a> · <a href="mailto:hello@veldrix.ai">hello@veldrix.ai</a></p>
+  <p><a href="https://veldrixai.ca">veldrixai.ca</a> · <a href="mailto:hello@veldrixai.ca">hello@veldrixai.ca</a></p>
 </div>

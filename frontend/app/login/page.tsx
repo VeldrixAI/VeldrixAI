@@ -341,18 +341,6 @@ function LoginForm() {
                   </div>
                 </div>
 
-                {/* Remember session */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="checkbox"
-                    id="remember-session"
-                    style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer', flexShrink: 0 }}
-                  />
-                  <label htmlFor="remember-session" style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'rgba(240,242,255,0.5)', cursor: 'pointer' }}>
-                    Secure Session Persistence
-                  </label>
-                </div>
-
                 {/* Error */}
                 {error && (
                   <div style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#f87171', fontFamily: 'var(--font-body)' }}>

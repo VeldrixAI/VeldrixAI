@@ -129,6 +129,7 @@ class VeldrixSDK:
         budget: Optional["LatencyBudget"] = None,
         collector: Optional["LatencyCollector"] = None,
         request_id: Optional[str] = None,
+        emit_diagnostics: bool = False,
     ) -> AnalysisResult:
         """
         Run all five trust pillars in parallel and return a unified AnalysisResult.
@@ -155,6 +156,9 @@ class VeldrixSDK:
         )
 
         slots = budget.pillar_slots if budget else None
+
+        # ── Stage timings ──────────────────────────────────────────────────────
+        _t = {"start": time.monotonic()}
 
         # ── Build per-pillar coroutines ────────────────────────────────────────
         # If a budget is supplied, wrap each coroutine in _run_pillar_with_slot
@@ -194,9 +198,12 @@ class VeldrixSDK:
                 ),
             ]
             # _run_pillar_with_slot never raises — return_exceptions=False is safe
+            _t["pillar_dispatch_start"] = time.monotonic()
             raw_results = await asyncio.gather(*coros, return_exceptions=False)
+            _t["pillar_dispatch_end"] = time.monotonic()
         else:
             # Legacy path — no budget, no per-pillar timeouts
+            _t["pillar_dispatch_start"] = time.monotonic()
             raw_results = await asyncio.gather(
                 _pillars.run_safety(request, self._http),
                 _pillars.run_hallucination(request, self._http),
@@ -205,6 +212,7 @@ class VeldrixSDK:
                 _pillars.run_compliance(request, self._http),
                 return_exceptions=True,
             )
+            _t["pillar_dispatch_end"] = time.monotonic()
 
         pillar_results: dict[str, PillarResult] = {}
 
@@ -226,7 +234,9 @@ class VeldrixSDK:
                 pillar_results[name] = raw
 
         # ── Aggregate TrustScore ──────────────────────────────────────────────
+        _t["enforcement_start"] = time.monotonic()
         trust_score = _aggregate_trust_score(pillar_results)
+        _t["enforcement_end"] = time.monotonic()
         elapsed_ms  = round((time.monotonic() - started_at) * 1000)
 
         # ── Build degradation metadata ────────────────────────────────────────
@@ -238,6 +248,25 @@ class VeldrixSDK:
             name: (r.latency_ms or 0) for name, r in pillar_results.items()
         }
 
+        # ── Build structured timings ──────────────────────────────────────────
+        pillar_dispatch_ms = round(
+            (_t.get("pillar_dispatch_end", time.monotonic()) -
+             _t.get("pillar_dispatch_start", _t["start"])) * 1000
+        )
+        enforcement_ms = round(
+            (_t.get("enforcement_end", time.monotonic()) -
+             _t.get("enforcement_start", _t["start"])) * 1000
+        )
+        timings = {
+            "pillar_dispatch_ms":  pillar_dispatch_ms,
+            "enforcement_ms":      enforcement_ms,
+            "response_assembly_ms": 0,   # updated below after assembly
+            "audit_enqueue_ms":    0,    # fire-and-forget
+            "total_ms":            elapsed_ms,
+            "per_pillar_ms":       per_pillar_ms,
+        }
+
+        _t["assembly_start"] = time.monotonic()
         result = AnalysisResult(
             request_id=request_id,
             trust_score=trust_score,
@@ -248,6 +277,10 @@ class VeldrixSDK:
             degraded=len(timed_out_pillars) > 0,
             pillars_timed_out=timed_out_pillars,
             per_pillar_ms=per_pillar_ms,
+            timings_ms=timings if emit_diagnostics else None,
+        )
+        timings["response_assembly_ms"] = round(
+            (time.monotonic() - _t["assembly_start"]) * 1000
         )
 
         # Audit write is fire-and-forget — response is returned immediately.

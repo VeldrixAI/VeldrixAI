@@ -69,29 +69,54 @@ async def _record_audit_trail(
     try:
         # Map internal pillar IDs → frontend keys; normalize scores from 0-100 → 0-1
         pillar_scores = {}
+        pillar_confidence = {}
+        per_pillar_ms = {}
+        all_flags = []
+        
         for pillar_id, result in report.pillar_results.items():
             key = _PILLAR_ID_MAP.get(pillar_id, pillar_id)
             pillar_scores[key] = round(result.score.value / 100.0, 4) if result.score is not None else None
-        verdict = report.final_score.risk_level.value if report.final_score.risk_level else "unknown"
-        client = get_internal_client()
-        resp = await client.post(
-            target_url,
-            json={
-                "action_type": "trust_evaluation",
-                "entity_type": "trust_evaluate",
-                "user_id": user_id,
-                "metadata": {
-                    "request_id": request_id,
-                    "overall_score": composite_score,
-                    "verdict": verdict,
-                    "pillar_scores": pillar_scores,
-                    "total_latency_ms": report.execution_time_ms,
-                    "prompt_preview": prompt_preview[:300] if prompt_preview else None,
-                    "response_preview": response_preview[:300] if response_preview else None,
-                },
+            pillar_confidence[key] = round(result.score.confidence, 4) if result.score is not None and result.score.confidence is not None else None
+            per_pillar_ms[key] = round(result.execution_time_ms, 1) if result.execution_time_ms is not None else None
+            if result.flags:
+                all_flags.extend(result.flags)
+        
+        # Derive verdict from composite score and flags (business rules)
+        # This ensures consistent verdict logic across all code paths
+        if composite_score >= 0.85 and not all_flags:
+            verdict = "ALLOW"
+        elif composite_score >= 0.60 and not all_flags:
+            verdict = "WARN"
+        elif all_flags:
+            verdict = "BLOCK"
+        else:
+            verdict = "REVIEW"
+        
+        payload = {
+            "action_type": "trust_evaluation",
+            "entity_type": "trust_evaluate",
+            "user_id": user_id,
+            "metadata": {
+                "request_id": request_id,
+                "overall_score": composite_score,
+                "verdict": verdict,
+                "pillar_scores": pillar_scores,
+                "pillar_confidence": pillar_confidence,
+                "per_pillar_ms": per_pillar_ms,
+                "total_latency_ms": report.execution_time_ms,
+                "prompt_preview": prompt_preview[:300] if prompt_preview else None,
+                "response_preview": response_preview[:300] if response_preview else None,
+                "all_flags": list(set(all_flags)),  # dedupe
+                "critical_flags": [f for f in all_flags if any(x in f.lower() for x in ["unsafe", "injection", "critical", "blocked", "violation"])],
             },
-        )
-        logger_at.warning("audit_trail_record: saved request_id=%s status=%s", request_id, resp.status_code)
+        }
+        client = get_internal_client()
+        resp = await client.post(target_url, json=payload)
+        if resp.status_code >= 400:
+            logger_at.error("audit_trail_record: FAILED request_id=%s status=%s body=%s", 
+                           request_id, resp.status_code, resp.text[:500])
+        else:
+            logger_at.info("audit_trail_record: saved request_id=%s status=%s verdict=%s", request_id, resp.status_code, verdict)
     except Exception as exc:
         logger_at.error("audit_trail_record failed request_id=%s url=%s: %s", request_id, target_url, exc)
 
@@ -146,6 +171,8 @@ async def evaluate_trust(
     set_request_id(report.request_id)
     
     execution_time = timer.stop()
+    # Use the actual measured latency from the orchestration engine
+    report.execution_time_ms = round(execution_time, 2)
     asyncio.create_task(_record_latency(user_id, execution_time))
 
     logger.info(f"AI safety evaluation completed", extra={

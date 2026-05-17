@@ -54,12 +54,15 @@ class AnalysisResult(BaseModel):
     pillars:             dict[str, PillarResult]
     total_latency_ms:    int
     sdk_version:         str
-    timestamp:           float           = Field(default_factory=time.time)
+    timestamp:           float                       = Field(default_factory=time.time)
     # Latency governor fields — always present, defaults for backward compat
-    budget_tier:         str             = "STANDARD"
-    degraded:            bool            = False
-    pillars_timed_out:   list[str]       = Field(default_factory=list)
-    per_pillar_ms:       dict[str, int]  = Field(default_factory=dict)
+    budget_tier:         str                         = "STANDARD"
+    degraded:            bool                        = False
+    pillars_timed_out:   list[str]                   = Field(default_factory=list)
+    per_pillar_ms:       dict[str, int]              = Field(default_factory=dict)
+    # Structured stage timings — only populated when ?debug=true is requested;
+    # None in production responses to avoid leaking internal timing to callers.
+    timings_ms:          Optional[dict[str, object]] = None
 
 
 class SDKError(Exception):

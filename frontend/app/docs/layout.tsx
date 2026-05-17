@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SIDEBAR_GROUPS } from "@/lib/docs/pages";
+import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import "./docs.css";
 
 export const metadata: Metadata = {
@@ -75,35 +75,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
       <div className="docs-body">
         {/* ── Sidebar ── */}
-        <aside className="docs-sidebar" aria-label="Documentation navigation">
-          <nav>
-            {SIDEBAR_GROUPS.map((group) => (
-              <div key={group.label} className="docs-sidebar-group">
-                <div className="docs-sidebar-group-label">{group.label}</div>
-                <ul className="docs-sidebar-items">
-                  {group.items.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={`/docs/${item.id}`}
-                        className="docs-sidebar-link"
-                      >
-                        {item.label}
-                        {item.badge && (
-                          <span
-                            className={`docs-badge docs-badge-${item.badge.toLowerCase()}`}
-                            aria-label={item.badge}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
-        </aside>
+        <DocsSidebar />
 
         {/* ── Main content ── */}
         <main className="docs-main" id="docs-content">

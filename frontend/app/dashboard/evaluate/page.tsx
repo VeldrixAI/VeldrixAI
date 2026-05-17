@@ -69,6 +69,16 @@ function pillarColor(score: number): string {
   return "#f43f5e";
 }
 
+/* ─── Helper: metadata field ─── */
+function MetaField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(240,242,255,0.35)", marginBottom: 3 }}>{label}</div>
+      <div style={{ fontFamily: mono ? "JetBrains Mono, monospace" : "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.8)" }}>{value}</div>
+    </div>
+  );
+}
+
 /* ─── Helper: pillar icon ─── */
 function PillarIcon({ name }: { name: string }) {
   const colorMap: Record<string, string> = {
@@ -129,13 +139,39 @@ export default function EvaluatePage() {
   /* ─── PDF generation ─── */
   async function generatePdfReport(result: EvaluationResult, auditHash: string): Promise<void> {
     try {
+      // Get the full evaluation data from the results state
+      const fullData = results;
+      
       const res = await fetch("/api/reports/generate-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `Trust Evaluation — ${auditHash.slice(0, 8) || "manual"} — ${new Date().toISOString().slice(0, 10)}`,
           report_type: "trust_evaluation",
-          input_payload: { aggregate_score: result.aggregate_score, pillars: result.pillars, recommendation: result.recommendation },
+          input_payload: {
+            result: {
+              final_score: {
+                value: result.aggregate_score,
+                confidence: 0.95,
+                risk_level: result.aggregate_score >= 80 ? "safe" : result.aggregate_score >= 60 ? "review_required" : "high_risk"
+              },
+              pillar_results: Object.fromEntries(
+                result.pillars.map(p => [
+                  p.name.toLowerCase().replace(/ /g, "_"),
+                  {
+                    metadata: { name: p.name, weight: 0.20 },
+                    score: { value: p.score },
+                    flags: p.flags,
+                    status: p.score >= 80 ? "ok" : p.score >= 60 ? "partial" : "error"
+                  }
+                ])
+              ),
+              metadata: { cache_hit: false, request_id: auditHash }
+            },
+            request_id: auditHash,
+            model: model,
+            provider: provider
+          },
         }),
       });
       if (!res.ok) {
@@ -434,8 +470,69 @@ export default function EvaluatePage() {
             </button>
           </div>
 
-          {/* Pillar Cards Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+          {/* ── Pillar Radar Chart (spider) ── */}
+          <div className="glass-panel" style={{ padding: "32px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.35)" }}>
+              Trust Pillar Radar
+            </h3>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "280px" }}>
+              <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
+                {/* Background hexagon grid */}
+                {[0.2, 0.4, 0.6, 0.8, 1.0].map((r, ri) => (
+                  <polygon
+                    key={ri}
+                    points={Array.from({ length: 5 }, (_, i) => {
+                      const angle = (i * 72 - 90) * Math.PI / 180;
+                      const radius = 100 * r;
+                      return `${130 + radius * Math.cos(angle)},${130 + radius * Math.sin(angle)}`;
+                    }).join(" ")}
+                    fill="transparent"
+                    stroke="rgba(255,255,255,0.04)"
+                    strokeWidth="1"
+                  />
+                ))}
+                {/* Pillar data polygon */}
+                <polygon
+                  points={results.pillars.slice(0, 5).map((p, i) => {
+                    const angle = (i * 72 - 90) * Math.PI / 180;
+                    const radius = (p.score / 100) * 100;
+                    return `${130 + radius * Math.cos(angle)},${130 + radius * Math.sin(angle)}`;
+                  }).join(" ")}
+                  fill="rgba(124,58,237,0.15)"
+                  stroke="#7c3aed"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+                {/* Pillar dots */}
+                {results.pillars.slice(0, 5).map((p, i) => {
+                  const angle = (i * 72 - 90) * Math.PI / 180;
+                  const radius = (p.score / 100) * 100;
+                  return (
+                    <circle
+                      key={i}
+                      cx={130 + radius * Math.cos(angle)}
+                      cy={130 + radius * Math.sin(angle)}
+                      r="4"
+                      fill={pillarColor(p.score)}
+                      stroke="#f0f2ff"
+                      strokeWidth="1"
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+            {/* Legend */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+              {results.pillars.slice(0, 5).map((p) => (
+                <span key={p.name} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", color: pillarColor(p.score), background: `${pillarColor(p.score)}15`, border: `1px solid ${pillarColor(p.score)}30`, borderRadius: "4px", padding: "3px 8px" }}>
+                  {p.name}: {p.score}%
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Pillar Cards Grid ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
             {results.pillars.map((pillar, i) => (
               <div
                 key={pillar.name}
@@ -458,36 +555,47 @@ export default function EvaluatePage() {
               </div>
             ))}
 
-            {/* Sovereign Recommendation — spans remaining space */}
-            {results.recommendation && (
-              <div
-                className="pillar-card-reveal pc-6"
-                style={{ gridColumn: results.pillars.length < 3 ? "1 / span 3" : results.pillars.length % 3 === 0 ? "1 / span 3" : "1 / span 2", padding: "24px", borderRadius: "18px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", display: "flex", alignItems: "center", gap: "20px", transition: "border-color 0.2s" }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.2)")}
-              >
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "14px", color: "#a78bfa", marginBottom: "6px" }}>Sovereign Recommendation</h4>
-                  <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: "12px", color: "rgba(167,139,250,0.7)", lineHeight: 1.6 }}>
-                    {results.recommendation}{" "}
-                    {results.audit_hash && (
-                      <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(167,139,250,0.5)" }}>
-                        Audit ID: {results.audit_hash.slice(0, 8)}
-                      </span>
-                    )}
+          </div>
+
+          {/* ── Sovereign Recommendation & Metadata ── */}
+          {results.recommendation && (
+            <div
+              className="pillar-card-reveal pc-6 glass-panel"
+              style={{ gridColumn: "1 / -1", padding: "24px", borderRadius: "18px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", transition: "border-color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.2)")}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "24px", alignItems: "start" }}>
+                <div>
+                  <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "14px", color: "#a78bfa", marginBottom: "8px" }}>Sovereign Recommendation</h4>
+                  <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: "12px", color: "rgba(167,139,250,0.85)", lineHeight: 1.7 }}>
+                    {results.recommendation}
                   </p>
                 </div>
                 <button
                   onClick={() => generatePdfReport(results, results.audit_hash)}
-                  style={{ padding: "10px", background: "#7c3aed", border: "none", borderRadius: "10px", cursor: "pointer", color: "white", transition: "background 0.2s", flexShrink: 0 }}
+                  style={{ padding: "12px 20px", background: "#7c3aed", border: "none", borderRadius: "12px", cursor: "pointer", color: "white", transition: "background 0.2s", display: "flex", alignItems: "center", gap: "8px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: "12px" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#6d28d9")}
                   onMouseLeave={e => (e.currentTarget.style.background = "#7c3aed")}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export PDF
                 </button>
               </div>
-            )}
-          </div>
+              {/* ── Evaluation Metadata ── */}
+              <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(124,58,237,0.15)" }}>
+                <h5 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "12px" }}>Evaluation Metadata</h5>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+                  <MetaField label="Audit ID" value={results.audit_hash || "—"} mono />
+                  <MetaField label="Overall Score" value={`${results.aggregate_score}/100`} />
+                  <MetaField label="Risk Level" value={results.aggregate_score >= 80 ? "Low" : results.aggregate_score >= 60 ? "Medium" : "High"} />
+                  <MetaField label="Pillars Evaluated" value={String(results.pillars.length)} />
+                  <MetaField label="Provider" value={provider || "—"} />
+                  <MetaField label="Model" value={model || "—"} />
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

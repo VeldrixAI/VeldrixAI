@@ -1,13 +1,9 @@
-from pathlib import Path
-from dotenv import load_dotenv
 import os
 from typing import Optional
 
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-
-load_dotenv(Path(__file__).resolve().parents[5] / ".env")
 
 security = HTTPBearer()
 

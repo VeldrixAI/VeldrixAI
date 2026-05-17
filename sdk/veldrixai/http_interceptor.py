@@ -273,14 +273,13 @@ def _safe_create_task(coro) -> Optional[asyncio.Task]:
 
 # ── Bounded background dispatch helper ───────────────────────────────────────
 
-def _dispatch_in_thread(prompt: str, resp_text: str) -> None:
+def _dispatch_in_thread(prompt: str, resp_text: str, config: Optional["GuardConfig"] = None) -> None:
     """
     Fire-and-forget evaluation submitted to the bounded _INTERCEPT_BG_POOL.
 
     Fix — Issue A: previously spawned a raw daemon thread per call with no cap.
-    Under 500 concurrent AI calls this created 500 OS threads. Now capped at
-    32 workers via ThreadPoolExecutor. Submissions beyond _INTERCEPT_BG_MAX
-    are dropped with a debug log — same semantics as the async queue overflow.
+    Fix — Issue 12: config is now propagated so metadata/timeout_ms are never
+    silently dropped for sync intercepted calls.
 
     Each work item owns its own event loop + fresh AsyncClient.
     NEVER touches the shared singleton client.
@@ -305,9 +304,22 @@ def _dispatch_in_thread(prompt: str, resp_text: str) -> None:
         try:
             client = _VELDRIX_INSTANCE._transport._make_fresh_client()
             from veldrixai.models import GuardConfig
+            # Use caller-supplied config (preserves metadata/timeout_ms) or
+            # fall back to the client default config, then bare background config.
+            if config is not None:
+                _cfg = config
+            elif _VELDRIX_INSTANCE is not None:
+                default = _VELDRIX_INSTANCE._default_cfg
+                _cfg = GuardConfig(
+                    background=True,
+                    timeout_ms=default.timeout_ms,
+                    metadata=dict(default.metadata),
+                )
+            else:
+                _cfg = GuardConfig(background=True)
             trust = loop.run_until_complete(
                 _VELDRIX_INSTANCE._transport.evaluate_with_client(
-                    client, prompt, resp_text, GuardConfig(background=True),
+                    client, prompt, resp_text, _cfg,
                 )
             )
             if _ON_RESULT_CALLBACK is not None:
@@ -349,7 +361,8 @@ def _handle_sync(request: Any, response: Any) -> None:
         prompt, resp_text = _extract_from_httpx(request, response)
         if not prompt and not resp_text:
             return
-        _dispatch_in_thread(prompt or "", resp_text or "")
+        cfg = _VELDRIX_INSTANCE._default_cfg if _VELDRIX_INSTANCE is not None else None
+        _dispatch_in_thread(prompt or "", resp_text or "", config=cfg)
     except Exception as e:
         logger.debug("HTTP intercept sync handler error: %s", e)
 
@@ -424,7 +437,8 @@ def _handle_sync_requests(request: Any, response: Any) -> None:
         resp_txt = _extract_response_text(response.text)
         if not prompt and not resp_txt:
             return
-        _dispatch_in_thread(prompt or "", resp_txt or "")
+        cfg = _VELDRIX_INSTANCE._default_cfg if _VELDRIX_INSTANCE is not None else None
+        _dispatch_in_thread(prompt or "", resp_txt or "", config=cfg)
     except Exception as e:
         logger.debug("requests intercept handler error: %s", e)
 

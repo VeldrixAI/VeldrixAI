@@ -47,7 +47,7 @@ print(response.trust.overall)                # 0.94
 | Prompt Security  | Jailbreaks, prompt injection            |
 | Compliance / PII | GDPR, HIPAA, PII exposure               |
 
-Every result is logged to your dashboard at https://app.veldrix.ai automatically.
+Every result is logged to your dashboard at https://app.veldrixai.ca automatically.
 
 ## Works with any LLM framework
 
@@ -142,7 +142,7 @@ init_flask(app, api_key="vx-live-...")
 
 ## Links
 
-- Dashboard: https://app.veldrix.ai
-- Docs: https://docs.veldrix.ai
+- Dashboard: https://app.veldrixai.ca
+- Docs: https://docs.veldrixai.ca
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
-- API Reference: https://docs.veldrix.ai/api
+- API Reference: https://docs.veldrixai.ca/api

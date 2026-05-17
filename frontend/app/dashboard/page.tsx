@@ -46,9 +46,9 @@ function mapAuditRow(r: AuditRecord) {
     score = rawScore ?? 0.09;
   }
   const ts = r.created_at
-    ? new Date(r.created_at).toLocaleTimeString("en-US", { hour12: false })
+    ? new Date(r.created_at).toTimeString().slice(0, 8)
     : "--:--:--";
-  const shortId = `AUD-${r.id.slice(-6).toUpperCase()}`;
+  const shortId = `AUD-${(r.id ?? "").slice(-6).toUpperCase()}`;
   const action = r.action_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const model = (meta.model as string) || r.entity_type || "—";
   return { ts, id: shortId, action, model, score, riskLabel, status };
@@ -85,6 +85,7 @@ export default function DashboardPage() {
   async function load(r: TimeRange) {
     setLoading(true);
     setLoadError("");
+    setSummary(null);
     try {
       const [s, ts, oc, sdk, auditData] = await Promise.all([
         fetch(`/api/analytics?path=summary&range=${r}`).then((x) => x.json()),
@@ -93,11 +94,16 @@ export default function DashboardPage() {
         fetch(`/api/sdk-stats?range=${r}`).then((x) => x.json()).catch(() => null),
         fetch(`/api/audit-trails?limit=10`).then((x) => x.json()).catch(() => null),
       ]);
-      if (!s.error) {
+      if (!s.error && typeof s.total_evaluations === "number") {
         setSummary(s);
         prevSummaryRef.current = s;
       }
-      setTimeseries(Array.isArray(ts) ? ts : []);
+      setTimeseries(Array.isArray(ts) ? ts.map((p: TimePoint) => ({
+        date: p.date ?? "",
+        requests: Number(p.requests) || 0,
+        approved: Number(p.approved) || 0,
+        blocked: Number(p.blocked) || 0,
+      })) : []);
       setOutcomes(Array.isArray(oc) ? oc : []);
       if (sdk && !sdk.error) setSdkStats(sdk);
       if (auditData && Array.isArray(auditData.records)) {
@@ -125,6 +131,12 @@ export default function DashboardPage() {
     return () => { if (es) es.close(); };
   }, [range]);
 
+  // 30-second polling — refreshes stats even when SSE is unavailable
+  useEffect(() => {
+    const id = setInterval(() => { load(range); }, 30_000);
+    return () => clearInterval(id);
+  }, [range]);
+
   // Ops feed cycling
   useEffect(() => {
     const id = setInterval(() => {
@@ -139,65 +151,73 @@ export default function DashboardPage() {
 
   // Metric counter: Total Audited
   useEffect(() => {
-    if (!summary) return;
-    const el = document.getElementById("stat-total");
-    if (!el) return;
-    const target = summary.total_evaluations;
+    if (!summary || loading) return;
+    let alive = true;
+    const target = summary.total_evaluations ?? 0;
+    const step = Math.max(target / 60, 1);
     let v = 0;
-    const step = target / 60;
     const id = setInterval(() => {
+      if (!alive) return;
+      const el = document.getElementById("stat-total");
+      if (!el) { clearInterval(id); return; }
       v = Math.min(v + step, target);
-      el.textContent = target >= 1000
-        ? (v / 1000).toFixed(1) + "k"
-        : Math.floor(v).toLocaleString();
+      el.textContent = target >= 1000 ? (v / 1000).toFixed(1) + "k" : String(Math.floor(v));
       if (v >= target) clearInterval(id);
     }, 16);
-    return () => clearInterval(id);
-  }, [summary?.total_evaluations]);
+    return () => { alive = false; clearInterval(id); };
+  }, [summary?.total_evaluations, loading]);
 
   // Metric counter: Violations
   useEffect(() => {
-    if (!summary) return;
-    const el = document.getElementById("stat-violations");
-    if (!el) return;
-    const target = summary.failed;
-    let v = 0;
+    if (!summary || loading) return;
+    let alive = true;
+    const target = summary.failed ?? 0;
     const step = Math.max(target / 60, 1);
+    let v = 0;
     const id = setInterval(() => {
+      if (!alive) return;
+      const el = document.getElementById("stat-violations");
+      if (!el) { clearInterval(id); return; }
       v = Math.min(v + step, target);
-      el.textContent = Math.floor(v).toLocaleString();
+      el.textContent = String(Math.floor(v));
       if (v >= target) clearInterval(id);
     }, 16);
-    return () => clearInterval(id);
-  }, [summary?.failed]);
+    return () => { alive = false; clearInterval(id); };
+  }, [summary?.failed, loading]);
 
   // Metric counter: Compliance
   useEffect(() => {
-    if (!summary) return;
-    const el = document.getElementById("stat-compliance");
-    if (!el) return;
-    const target = summary.approval_rate;
+    if (!summary || loading) return;
+    let alive = true;
+    const target = summary.approval_rate ?? 0;
+    const step = Math.max(target / 60, 0.1);
     let v = 0;
-    const step = target / 60;
     const id = setInterval(() => {
+      if (!alive) return;
+      const el = document.getElementById("stat-compliance");
+      if (!el) { clearInterval(id); return; }
       v = Math.min(v + step, target);
       el.textContent = v.toFixed(1) + "%";
       if (v >= target) clearInterval(id);
     }, 16);
-    return () => clearInterval(id);
-  }, [summary?.approval_rate]);
+    return () => { alive = false; clearInterval(id); };
+  }, [summary?.approval_rate, loading]);
 
   // Derived display values
+  const totalEvals = summary?.total_evaluations ?? 0;
   const totalDisplay = summary
-    ? (summary.total_evaluations >= 1000
-      ? (summary.total_evaluations / 1000).toFixed(1) + "k"
-      : summary.total_evaluations.toLocaleString())
+    ? (totalEvals >= 1000 ? (totalEvals / 1000).toFixed(1) + "k" : String(totalEvals))
     : "—";
-  const violationsDisplay = summary ? summary.failed.toLocaleString() : "—";
+  const violationsDisplay = summary ? String(summary.failed ?? 0) : "—";
   const latencyDisplay = summary?.avg_latency_ms != null ? `${summary.avg_latency_ms}ms` : "—";
-  const complianceDisplay = summary ? `${summary.approval_rate.toFixed(1)}%` : "—";
+  const complianceDisplay = summary ? `${(summary.approval_rate ?? 0).toFixed(1)}%` : "—";
 
-  const latencyOk = summary?.avg_latency_ms == null || summary.avg_latency_ms <= 200;
+  const latencyMs = summary?.avg_latency_ms ?? null;
+  const latencyStatus: "ok" | "warn" | "critical" | "none" =
+    latencyMs == null ? "none"
+    : latencyMs < 300 ? "ok"
+    : latencyMs < 700 ? "warn"
+    : "critical";
 
   // Ops feed: only from real audit rows; empty state when no data yet
   const liveFeedItems = auditRows.slice(0, 4).map(mapAuditRow).map((r) => ({
@@ -238,7 +258,7 @@ export default function DashboardPage() {
     return pts.map((p, i) => ({
       h: `${Math.max(Math.round((p.requests / maxReq) * 90), 5)}%`,
       op: 0.15 + (p.requests / maxReq) * 0.5,
-      tip: i === peakIdx ? `Peak: ${p.requests.toLocaleString()}` : null,
+      tip: i === peakIdx ? `Peak: ${p.requests}` : null,
       peak: i === peakIdx,
     }));
   })() : [];
@@ -348,10 +368,25 @@ export default function DashboardPage() {
                 label="Avg Latency"
                 valueId={null}
                 valueDefault={latencyDisplay}
-                valueColor={latencyOk ? "rgba(240,242,255,0.8)" : "#f43f5e"}
-                trendColor="rgba(240,242,255,0.3)"
+                valueColor={
+                  latencyStatus === "ok" ? "#10b981"
+                  : latencyStatus === "warn" ? "#f59e0b"
+                  : latencyStatus === "critical" ? "#f43f5e"
+                  : "rgba(240,242,255,0.8)"
+                }
+                trendColor={
+                  latencyStatus === "ok" ? "#10b981"
+                  : latencyStatus === "warn" ? "#f59e0b"
+                  : latencyStatus === "critical" ? "#f43f5e"
+                  : "rgba(240,242,255,0.3)"
+                }
                 trendIcon={null}
-                trendText={latencyOk ? "OPTIMIZED PERFORMANCE" : "HIGH LATENCY DETECTED"}
+                trendText={
+                  latencyStatus === "ok" ? "NOMINAL"
+                  : latencyStatus === "warn" ? "ELEVATED"
+                  : latencyStatus === "critical" ? "HIGH LATENCY"
+                  : "AWAITING DATA"
+                }
                 bgIcon={<BigClock />}
               />
               {/* Card 4 */}
@@ -428,10 +463,10 @@ export default function DashboardPage() {
             {sdkStats && sdkStats.total_requests > 0 && (
               <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "32px", flexWrap: "wrap" }}>
                 {[
-                  { label: "SDK Requests", val: sdkStats.total_requests.toString(), color: "#7c3aed" },
+                  { label: "SDK Requests", val: String(sdkStats.total_requests ?? 0), color: "#7c3aed" },
                   { label: "Avg Trust Score", val: sdkStats.avg_trust_score != null ? (sdkStats.avg_trust_score * 100).toFixed(1) + "%" : "—", color: sdkStats.avg_trust_score != null && sdkStats.avg_trust_score >= 0.85 ? "#10b981" : "#f59e0b" },
-                  { label: "SDK Latency", val: sdkStats.avg_latency_ms != null ? sdkStats.avg_latency_ms + "ms" : "—", color: "#06b6d4" },
-                  { label: "Blocked", val: (sdkStats.verdict_breakdown.BLOCK || 0).toString(), color: "#f43f5e" },
+                  { label: "SDK Latency", val: sdkStats.avg_latency_ms != null ? `${Math.round(sdkStats.avg_latency_ms)}ms` : "—", color: "#06b6d4" },
+                  { label: "Blocked", val: String(sdkStats.verdict_breakdown?.BLOCK ?? 0), color: "#f43f5e" },
                 ].map(({ label, val, color }) => (
                   <div key={label}>
                     <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "4px" }}>{label}</div>
@@ -464,7 +499,7 @@ export default function DashboardPage() {
                 <HealthBar label="Avg Latency" value={hudLatencyLabel} valueColor={hudLatencyColor} width={hudLatencyWidth} barColor={hudLatencyColor} delay="hb-2" />
                 <HealthBar
                   label="Compliance Rate"
-                  value={summary ? `${summary.approval_rate.toFixed(1)}%` : "—"}
+                  value={summary ? `${(summary.approval_rate ?? 0).toFixed(1)}%` : "—"}
                   valueColor={summary?.approval_rate != null && summary.approval_rate >= 90 ? "#10b981" : summary?.approval_rate != null && summary.approval_rate >= 70 ? "#f59e0b" : "#06b6d4"}
                   width={summary?.approval_rate != null ? `${Math.round(summary.approval_rate)}%` : "20%"}
                   barColor={summary?.approval_rate != null && summary.approval_rate >= 90 ? "#10b981" : "#06b6d4"}

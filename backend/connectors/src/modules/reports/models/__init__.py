@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, Enum, CheckConstraint, Boolean
+from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, Enum, CheckConstraint, Boolean, Float
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 import uuid
@@ -71,6 +71,24 @@ class AuditTrail(Base):
     request_id = Column(String(100), index=True)
     related_request_id = Column(String(100), index=True)
     actor = Column(String(255))
+
+
+class AuditLogLabel(Base):
+    """Per-pillar ground truth labels for accuracy metric computation."""
+
+    __tablename__ = "audit_log_labels"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_id           = Column(String(100), nullable=False, index=True)
+    pillar_name          = Column(String(50), nullable=False, index=True)
+    predicted_label      = Column(Boolean, nullable=False)
+    predicted_confidence = Column(Float, nullable=False)
+    ground_truth_label   = Column(Boolean, nullable=True)
+    label_source         = Column(String(50), nullable=True)
+    labeled_at           = Column(TIMESTAMP, nullable=True)
+    pillar_latency_ms    = Column(Integer, nullable=True)
+    user_id              = Column(UUID(as_uuid=True), nullable=True, index=True)
+    created_at           = Column(TIMESTAMP, default=datetime.utcnow, index=True)
 
 
 class DeletionLog(Base):

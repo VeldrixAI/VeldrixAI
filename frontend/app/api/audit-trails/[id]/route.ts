@@ -14,6 +14,11 @@ export async function GET(
   const t = await token();
   if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Validate ID format to avoid slow DB queries for invalid IDs
+  if (!id || id === "undefined" || id.length < 8) {
+    return NextResponse.json({ error: "Invalid audit trail ID" }, { status: 400 });
+  }
+
   const res = await fetch(`${CONNECTORS_API_URL}/api/audit-trails/${id}/detail`, {
     headers: { Authorization: `Bearer ${t}` },
   });

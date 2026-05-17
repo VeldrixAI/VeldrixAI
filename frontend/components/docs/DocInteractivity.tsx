@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import { ALL_PAGES, SIDEBAR_GROUPS } from "@/lib/docs/pages";
+import { SIDEBAR_GROUPS } from "@/lib/docs/pages";
 
 interface TocEntry {
   id: string;
@@ -105,17 +105,6 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 export default function DocInteractivity({ slug, toc }: Props) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
-
-  // Mark active sidebar link
-  useEffect(() => {
-    const links = document.querySelectorAll<HTMLAnchorElement>(".docs-sidebar-link");
-    links.forEach((link) => {
-      link.classList.toggle(
-        "active",
-        link.getAttribute("href") === `/docs/${slug}`
-      );
-    });
-  }, [slug]);
 
   // Copy-to-clipboard for code blocks
   useEffect(() => {

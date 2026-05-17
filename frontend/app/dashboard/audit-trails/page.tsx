@@ -127,8 +127,9 @@ export default function AuditTrailsPage() {
 
   // SSE: auto-prepend new SDK analysis rows
   useEffect(() => {
-    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "";
-    if (!coreUrl) return;
+    // Use NEXT_PUBLIC_VELDRIX_CORE_API_URL (same as CORE_API_URL but public for browser)
+    // Falls back to localhost:8001 for local dev, or empty string to disable SSE
+    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_API_URL ?? "http://localhost:8001";
     let es: EventSource;
     try {
       es = new EventSource(`${coreUrl}/api/v1/stream`);
@@ -142,6 +143,14 @@ export default function AuditTrailsPage() {
           if (eventUserId && currentUserIdRef.current && eventUserId !== currentUserIdRef.current) {
             return;
           }
+          
+          // Extract trust_score fields (may be nested or flat depending on source)
+          const trustScore = result.trust_score || {};
+          const verdict = trustScore.verdict || result.verdict || null;
+          const overallScore = trustScore.overall ?? result.overall_score ?? null;
+          const pillarScores = trustScore.pillar_scores || result.pillar_scores || {};
+          const criticalFlags = trustScore.critical_flags || result.critical_flags || [];
+          
           const newRow: AuditRecord = {
             id: result.request_id,
             action_type: "trust_evaluation",
@@ -149,10 +158,10 @@ export default function AuditTrailsPage() {
             entity_id: null,
             metadata: {
               request_id: result.request_id,
-              overall_score: result.trust_score.overall,
-              verdict: result.trust_score.verdict,
-              pillar_scores: result.trust_score.pillar_scores,
-              critical_flags: result.trust_score.critical_flags,
+              overall_score: overallScore,
+              verdict: verdict,
+              pillar_scores: pillarScores,
+              critical_flags: criticalFlags,
               total_latency_ms: result.total_latency_ms,
               sdk_version: result.sdk_version,
               timestamp: result.timestamp,
@@ -234,47 +243,36 @@ export default function AuditTrailsPage() {
   const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
 
   // Helper to extract metadata — handles both SSE real-time rows (flat) and
-  // DB-persisted trust_evaluation rows (nested under metadata.result)
+  // DB-persisted trust_evaluation rows (flat with metadata fields)
   function getMeta(r: AuditRecord) {
     const m = (r.metadata || {}) as Record<string, unknown>;
-    const result = (m.result as Record<string, unknown>) || {};
-    const finalScore = (result.final_score as Record<string, unknown>) || {};
-
-    // SSE rows have flat fields; DB rows nest under .result.
+    
     // Prefer the authoritative top-level r.request_id returned by the backend
     // serializer, then fall back to metadata-embedded copies.
     const requestId =
       r.request_id ||
       (m.request_id as string) ||
-      (result.request_id as string) ||
       null;
 
-    // Derive verdict from risk_level if no explicit verdict
+    // Derive verdict from multiple sources
+    // Priority: 1) top-level verdict, 2) risk_level, 3) verdict from final_score
     const rawVerdict = (m.verdict as string) || null;
-    const riskLevel = (finalScore.risk_level as string) || null;
+    const riskLevel = (m.risk_level as string) || null;
     const verdict = rawVerdict || (riskLevel ? riskToVerdict(riskLevel) : null);
 
     // Score: SSE uses 0-1 range, DB uses 0-100 range
     const sseScore = m.overall_score as number | null ?? null;
-    const dbScore = finalScore.value as number | null ?? null;
-    const overallScore = sseScore ?? (dbScore != null ? dbScore / 100 : null);
+    const dbScore = (m.overall_score as number | null) ?? null;
+    // Convert from 0-1 to 0-100 if needed
+    const overallScore = sseScore != null ? (sseScore <= 1.0 ? sseScore * 100 : sseScore) : null;
 
     // Latency
     const totalLatencyMs = (m.total_latency_ms as number)
-      || (result.execution_time_ms as number)
       || null;
 
     // Pillar scores: SSE has flat map, DB has nested pillar_results
     const ssePillarScores = (m.pillar_scores as Record<string, number>) || null;
-    const dbPillarResults = (result.pillar_results as Record<string, Record<string, unknown>>) || null;
     let pillarScores: Record<string, number> | null = ssePillarScores;
-    if (!pillarScores && dbPillarResults) {
-      pillarScores = {};
-      for (const [key, val] of Object.entries(dbPillarResults)) {
-        const s = (val.score as Record<string, unknown>);
-        if (s?.value != null) pillarScores[key] = (s.value as number) / 100;
-      }
-    }
 
     return {
       requestId,

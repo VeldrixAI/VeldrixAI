@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
   allowedDevOrigins: ['*.replit.dev', '*.riker.replit.dev', '*.repl.co', '*.kirk.replit.dev', '127.0.0.1'],

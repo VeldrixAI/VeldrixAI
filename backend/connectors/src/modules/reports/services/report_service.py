@@ -1,3 +1,4 @@
+import logging
 from sqlalchemy.orm import Session
 from src.modules.reports.models import TrustReport, ReportStatus, ReportType, ActionType
 from src.modules.reports.schemas import GenerateReportRequest
@@ -9,6 +10,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 
 class ReportService:
@@ -87,20 +90,28 @@ class ReportService:
             self.db.commit()
             self.db.refresh(report)
 
-            pdf_content = self.pdf_service.generate_report_pdf(
-                title=report.title or f"{report_type_value.replace('_', ' ').title()} Report",
-                report_type=report_type_value,
-                input_payload=report.input_payload or {},
-                output_summary=report.output_summary,
-                created_at=report.created_at,
-                report_name=report_name,
-                vx_report_id=vx_report_id,
-            )
+            try:
+                pdf_content = self.pdf_service.generate_report_pdf(
+                    title=report.title or f"{report_type_value.replace('_', ' ').title()} Report",
+                    report_type=report_type_value,
+                    input_payload=report.input_payload or {},
+                    output_summary=report.output_summary,
+                    created_at=report.created_at,
+                    report_name=report_name,
+                    vx_report_id=vx_report_id,
+                )
+            except Exception as pdf_error:
+                logger.error("PDF generation failed: %s", pdf_error)
+                self.db.rollback()
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"PDF generation failed: {str(pdf_error)}"
+                )
 
             checksum = compute_checksum(pdf_content)
 
             report.checksum_hash = checksum
-            report.status = "failed" if is_high_risk else "completed"
+            report.status = "completed"  # Always completed - we successfully generated the PDF
             report.output_full_report = {
                 "report_id":       str(report.id),
                 "report_name":     report_name,
@@ -132,9 +143,13 @@ class ReportService:
             return report, pdf_content
 
         except Exception as e:
+            # Delete the failed report row so it doesn't appear in the UI
             if "report" in locals():
-                report.status = "failed"
-                self.db.commit()
+                try:
+                    self.db.delete(report)
+                    self.db.commit()
+                except Exception:
+                    self.db.rollback()
             raise HTTPException(
                 status_code=500,
                 detail=f"Report generation failed: {str(e)}",

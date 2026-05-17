@@ -3,9 +3,16 @@
 .env.*
 *.env
 !.env.example
+!.env.dev.example
 !.env.local.example
+!.env.production.example
 # Explicit allow for checked-in example files
 !backend/.env.example
+!backend/.env.dev.example
+!backend/auth/.env.production.example
+!backend/core/.env.production.example
+!backend/connectors/.env.production.example
+!frontend/.env.production.example
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/

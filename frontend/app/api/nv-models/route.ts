@@ -1,32 +1,34 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { CONNECTORS_API_URL, AUTH_COOKIE } from "@/lib/config";
 
-// Substrings that identify non-generative models (embeddings, safety classifiers, etc.)
-const EXCLUDE_TERMS = [
-  "embed", "reward", "guard", "shield", "parse",
-  "translate", "nvclip", "streampetr", "deplot",
-  "paligemma", "kosmos", "recurrentgemma", "neva",
-  "vila", "gliner", "safety",
+const FALLBACK_MODELS = [
+  "meta/llama-guard-4-12b",
+  "meta/llama-3.1-8b-instruct",
+  "mistralai/mixtral-8x7b-instruct-v0.1",
 ];
 
 export async function GET() {
+  const jar = await cookies();
+  const token = jar.get(AUTH_COOKIE)?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
-    const filePath = path.join(process.cwd(), "..", "nv_models.json");
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const data = JSON.parse(raw) as { data: { id: string }[] };
+    const res = await fetch(`${CONNECTORS_API_URL}/api/models/providers`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-    const models = data.data
-      .filter((m) => {
-        const id = m.id.toLowerCase();
-        return !EXCLUDE_TERMS.some((ex) => id.includes(ex));
-      })
-      .map((m) => m.id);
+    if (!res.ok) {
+      return NextResponse.json({ models: FALLBACK_MODELS });
+    }
 
-    // Deduplicate (some models appear twice in the list)
-    const unique = [...new Set(models)];
-    return NextResponse.json(unique);
+    const data = await res.json();
+    // Extract NVIDIA NIM models from the providers list
+    const nimProvider = Array.isArray(data) ? data.find((p: { provider: string }) => p.provider === "NVIDIA NIM") : null;
+    const models = nimProvider?.models ?? FALLBACK_MODELS;
+    return NextResponse.json({ models });
   } catch {
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ models: FALLBACK_MODELS });
   }
 }

@@ -25,10 +25,11 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 # ── Configuration (from environment, with sensible defaults) ─────────────────
-FAILURE_THRESHOLD: int = int(os.environ.get("CIRCUIT_FAILURE_THRESHOLD", "3"))
-RECOVERY_TIMEOUT: int = int(os.environ.get("CIRCUIT_RECOVERY_TIMEOUT", "60"))
+# Aggressive thresholds for sub-500ms SLA
+FAILURE_THRESHOLD: int = int(os.environ.get("CIRCUIT_FAILURE_THRESHOLD", "2"))  # Trip after 2 failures (was 3)
+RECOVERY_TIMEOUT: int = int(os.environ.get("CIRCUIT_RECOVERY_TIMEOUT", "30"))   # Recover in 30s (was 60)
 HALF_OPEN_SUCCESS_REQUIRED: int = int(
-    os.environ.get("CIRCUIT_HALF_OPEN_SUCCESS_REQUIRED", "2")
+    os.environ.get("CIRCUIT_HALF_OPEN_SUCCESS_REQUIRED", "1")  # Recover after 1 success (was 2)
 )
 
 

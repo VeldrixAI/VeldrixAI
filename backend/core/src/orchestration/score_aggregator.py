@@ -49,27 +49,40 @@ class ScoreAggregator:
             
         Raises:
             ValueError: If insufficient successful pillars
+            
+        Note:
+            PARTIAL (degraded) pillars are included with a confidence penalty.
+            This prevents a single successful pillar from dominating the score
+            when other pillars failed or degraded.
         """
         if not pillar_results:
             raise ValueError("No pillar results to aggregate")
         
-        # Separate successful and failed pillars
+        # Separate successful, partial (degraded), and failed pillars
         successful = [
             r for r in pillar_results.values()
             if r.status == PillarStatus.SUCCESS and r.score is not None
         ]
+        partial = [
+            r for r in pillar_results.values()
+            if r.status == PillarStatus.PARTIAL and r.score is not None
+        ]
         failed = [
             r for r in pillar_results.values()
-            if r.status != PillarStatus.SUCCESS or r.score is None
+            if r.status not in (PillarStatus.SUCCESS, PillarStatus.PARTIAL) or r.score is None
         ]
         
-        if len(successful) < self.min_pillars_required:
+        # Require at least one successful or partial pillar
+        usable_pillars = successful + partial
+        if len(usable_pillars) < self.min_pillars_required:
             raise ValueError(
-                f"Insufficient successful pillars: {len(successful)} < {self.min_pillars_required}"
+                f"Insufficient usable pillars: {len(usable_pillars)} < {self.min_pillars_required}"
             )
         
-        # Calculate weighted score
-        weighted_score, total_weight = self._calculate_weighted_score(successful)
+        # Calculate weighted score (partial pillars get reduced weight)
+        weighted_score, total_weight = self._calculate_weighted_score_with_partial(
+            successful, partial
+        )
         
         # Calculate confidence based on success rate and weight coverage
         confidence = self._calculate_confidence(
@@ -89,25 +102,31 @@ class ScoreAggregator:
         
         logger.info(
             f"Aggregated score: {final_score.value} "
-            f"(confidence: {final_score.confidence}, risk: {risk_level.value})"
+            f"(confidence: {final_score.confidence}, risk: {risk_level.value}) "
+            f"[success={len(successful)}, partial={len(partial)}, failed={len(failed)}]"
         )
         
         return AggregationResult(
             final_score=final_score,
             successful_pillars=len(successful),
-            failed_pillars=len(failed),
+            failed_pillars=len(failed) + len(partial),  # partial counted as non-success
             total_weight_used=total_weight
         )
     
-    def _calculate_weighted_score(
+    def _calculate_weighted_score_with_partial(
         self,
-        successful_pillars: list[PillarResult]
+        successful_pillars: list[PillarResult],
+        partial_pillars: list[PillarResult],
     ) -> Tuple[float, float]:
         """
-        Calculate weighted average score from successful pillars.
+        Calculate weighted average score from successful and partial (degraded) pillars.
+        
+        Partial pillars are included with their full weight but their low confidence
+        is reflected in the overall confidence calculation.
         
         Args:
             successful_pillars: List of successful pillar results
+            partial_pillars: List of partial/degraded pillar results
             
         Returns:
             Tuple of (weighted_score, total_weight_used)
@@ -115,6 +134,7 @@ class ScoreAggregator:
         total_weighted_score = 0.0
         total_weight = 0.0
         
+        # Successful pillars contribute full weight
         for result in successful_pillars:
             weight = result.metadata.weight
             score_value = result.score.value
@@ -122,13 +142,40 @@ class ScoreAggregator:
             total_weighted_score += score_value * weight
             total_weight += weight
         
-        # Normalize by actual weight used (handles partial failures)
+        # Partial (degraded) pillars contribute full weight but typically have score=50
+        # This prevents a single successful pillar from dominating when others degraded
+        for result in partial_pillars:
+            weight = result.metadata.weight
+            score_value = result.score.value
+            
+            total_weighted_score += score_value * weight
+            total_weight += weight
+        
+        # Normalize by actual weight used
         if total_weight > 0:
             weighted_score = total_weighted_score / total_weight
         else:
             weighted_score = 0.0
         
         return weighted_score, total_weight
+    
+    def _calculate_weighted_score(
+        self,
+        successful_pillars: list[PillarResult]
+    ) -> Tuple[float, float]:
+        """
+        Calculate weighted average score from successful pillars only.
+        
+        DEPRECATED: Use _calculate_weighted_score_with_partial instead.
+        Kept for backwards compatibility.
+        
+        Args:
+            successful_pillars: List of successful pillar results
+            
+        Returns:
+            Tuple of (weighted_score, total_weight_used)
+        """
+        return self._calculate_weighted_score_with_partial(successful_pillars, [])
     
     def _calculate_confidence(
         self,

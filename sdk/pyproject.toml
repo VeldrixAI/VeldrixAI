@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "veldrixai"
-version         = "1.0.0"
+version         = "1.0.1"
 description     = "Runtime trust infrastructure for AI applications — five-pillar evaluation via a single decorator"
 readme          = "README.md"
-license         = { file = "LICENSE" }
+license         = "MIT"
+license-files   = ["LICENSE"]
 requires-python = ">=3.10"
 authors         = [{ name = "VeldrixAI", email = "sdk@veldrix.ai" }]
 keywords        = ["ai", "governance", "safety", "trust", "llm", "guardrails", "nvidia", "nim", "compliance"]
 classifiers     = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

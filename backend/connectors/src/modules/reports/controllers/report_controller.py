@@ -39,12 +39,19 @@ async def generate_pdf_on_demand(
         report_type=ReportType.TRUST_EVALUATION,
         input_payload=body.input_payload or {},
     )
-    report, pdf_bytes = ReportService(db).generate_report(
-        user_id=user_id,
-        request=req,
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
-    )
+    
+    try:
+        report, pdf_bytes = ReportService(db).generate_report(
+            user_id=user_id,
+            request=req,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Don't save failed reports - just raise the error
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
     # Emit REPORT_CREATED audit log
     source_request_id = (body.input_payload or {}).get("request_id")
@@ -108,6 +115,7 @@ async def list_reports(
             TrustReport.user_id == user_id,
             TrustReport.is_deleted == False,
             TrustReport.deleted_at.is_(None),
+            TrustReport.status != "failed",  # Don't return failed reports
         )
         .order_by(TrustReport.created_at.desc())
         .offset(skip)

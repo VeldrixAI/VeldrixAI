@@ -1,5 +1,6 @@
 """Latency recording (internal) and analytics (dashboard)."""
 
+import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -12,6 +13,7 @@ from datetime import datetime, timedelta
 import uuid
 
 router = APIRouter(tags=["latency"])
+logger = logging.getLogger(__name__)
 
 SLA_MS = 200.0
 
@@ -25,15 +27,28 @@ class LatencyRecord(BaseModel):
 
 @router.post("/internal/latency", status_code=201)
 def record_latency(body: LatencyRecord, db: Session = Depends(get_db)):
-    row = RequestLatency(
-        user_id=body.user_id,
-        endpoint=body.endpoint,
-        latency_ms=body.latency_ms,
-        status_code=body.status_code,
-    )
-    db.add(row)
-    db.commit()
-    return {"ok": True}
+    """Internal endpoint to record latency from core service."""
+    try:
+        user_uuid = uuid.UUID(body.user_id) if body.user_id else None
+    except (ValueError, TypeError):
+        user_uuid = None
+    
+    try:
+        row = RequestLatency(
+            user_id=user_uuid,
+            endpoint=body.endpoint,
+            latency_ms=body.latency_ms,
+            status_code=body.status_code,
+        )
+        db.add(row)
+        db.commit()
+        logger.debug("recorded latency: user=%s endpoint=%s latency_ms=%.1f", 
+                    user_uuid, body.endpoint, body.latency_ms)
+        return {"ok": True}
+    except Exception as e:
+        logger.error("failed to record latency: %s", e)
+        db.rollback()
+        return {"ok": False, "error": str(e)}
 
 
 def _since(range: str) -> datetime:

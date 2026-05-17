@@ -21,6 +21,7 @@ import io, csv
 from src.db.base import get_db
 from src.core.middleware.auth import get_current_user
 from src.modules.reports.models import AuditTrail
+from datetime import datetime
 
 router = APIRouter(prefix="/api/audit-trails", tags=["audit-trails"])
 logger = logging.getLogger("veldrix.audit")
@@ -139,8 +140,11 @@ Produce the forensic risk thesis and recommendations for this exact request.
 
 async def _call_groq(prompt: str) -> dict:
     groq_key = os.getenv("GROQ_API_KEY")
-    if not groq_key:
-        raise RuntimeError("GROQ_API_KEY not configured")
+    if not groq_key or groq_key.startswith("gsk_REPLACE") or "REPLACE" in groq_key:
+        raise RuntimeError(
+            "GROQ_API_KEY is not configured. "
+            "Add a real Groq API key (from console.groq.com) to backend/.env to enable AI analysis."
+        )
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
@@ -235,26 +239,30 @@ def internal_log_audit(body: InternalAuditRequest, db: Session = Depends(get_db)
         "log_type": "EVALUATION",
         "request_id": request_id,
         "actor": actor,
+        "created_at": datetime.utcnow(),
     }
 
     try:
-        stmt = pg_insert(AuditTrail).values(**row)
+        # Check for existing record with same request_id and action_type
+        existing = None
         if request_id:
-            # Idempotent: if a row with this (request_id, action_type) already exists,
-            # skip the insert entirely rather than creating a duplicate.
-            stmt = stmt.on_conflict_do_nothing(
-                index_elements=["request_id", "action_type"],
-                index_where=AuditTrail.request_id.isnot(None),
-            )
-        result = db.execute(stmt)
+            existing = db.query(AuditTrail).filter(
+                AuditTrail.request_id == request_id,
+                AuditTrail.action_type == body.action_type,
+            ).first()
+        
+        if existing:
+            logger.info("internal_log_audit: duplicate suppressed request_id=%s", request_id)
+            return {"ok": True, "id": str(existing.id), "inserted": False}
+        
+        entry = AuditTrail(**row)
+        db.add(entry)
         db.commit()
-        inserted = result.rowcount > 0
-        log_id = str(row["id"]) if inserted else "duplicate-suppressed"
         logger.info(
-            "internal_log_audit: request_id=%s inserted=%s id=%s",
-            request_id, inserted, log_id,
+            "internal_log_audit: request_id=%s inserted=True id=%s",
+            request_id, str(row["id"]),
         )
-        return {"ok": True, "id": log_id, "inserted": inserted}
+        return {"ok": True, "id": str(row["id"]), "inserted": True}
     except Exception as exc:
         db.rollback()
         logger.error("internal_log_audit: DB commit FAILED request_id=%s: %s", request_id, exc)
@@ -587,6 +595,34 @@ async def export_csv(
 
 def _serialize(r: AuditTrail) -> dict:
     meta = r.action_metadata or {}
+    pillars_raw: dict = meta.get("pillars", {})
+
+    # Per-pillar latency: prefer dedicated per_pillar_ms map, fall back to pillars.*.latency_ms
+    per_pillar_ms: dict = meta.get("per_pillar_ms", {})
+    if not per_pillar_ms:
+        per_pillar_ms = {
+            k: v.get("latency_ms")
+            for k, v in pillars_raw.items()
+            if v.get("latency_ms") is not None
+        }
+
+    # Per-pillar confidence (persisted since SDK telemetry update)
+    pillar_confidence: dict = meta.get("pillar_confidence", {})
+    if not pillar_confidence:
+        pillar_confidence = {
+            k: v.get("confidence")
+            for k, v in pillars_raw.items()
+            if v.get("confidence") is not None
+        }
+    
+    # Get overall_score - convert from 0-1 to percentage for display
+    overall_score = meta.get("overall_score")
+    if overall_score is not None and overall_score <= 1.0:
+        overall_score = round(overall_score * 100, 1)
+    
+    # Get pillar_scores - ensure they're in 0-1 format for frontend
+    pillar_scores = meta.get("pillar_scores", {})
+
     return {
         "id": str(r.id),
         "action_type": r.action_type,
@@ -601,8 +637,12 @@ def _serialize(r: AuditTrail) -> dict:
         "actor": r.actor,
         # Convenience fields surfaced from metadata for UI
         "verdict": meta.get("verdict"),
-        "overall_score": meta.get("overall_score"),
+        "overall_score": overall_score,
         "total_latency_ms": meta.get("total_latency_ms"),
-        "pillar_scores": meta.get("pillar_scores"),
-        "critical_flags": meta.get("critical_flags", []),
+        "pillar_scores": pillar_scores,
+        "pillar_confidence": pillar_confidence,
+        "per_pillar_ms": per_pillar_ms,
+        "critical_flags": meta.get("critical_flags", []) or meta.get("all_flags", []),
+        # Latency & confidence detail (available after telemetry update)
+        "timings_ms": meta.get("timings_ms"),
     }

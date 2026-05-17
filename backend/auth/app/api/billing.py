@@ -144,12 +144,17 @@ def create_checkout_session(
 ):
     st = _get_stripe()
     price_key = f"{body.plan}_{body.cycle}"
-    price_id = _price_map().get(price_key)
-
-    if not price_id:
+    known_keys = set(_price_map().keys())
+    if price_key not in known_keys:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unknown plan/cycle combination: {price_key}",
+            detail=f"Invalid plan/cycle combination '{price_key}'. Valid options: {', '.join(sorted(known_keys))}",
+        )
+    price_id = _price_map()[price_key]
+    if not price_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Billing is not yet configured on this server. Please contact support.",
         )
 
     customer_id = _get_or_create_customer(st, current_user, db)
@@ -333,9 +338,18 @@ def create_payment_intent(
     """
     st = _get_stripe()
     price_key = f"{body.plan}_{body.cycle}"
-    price_id = _price_map().get(price_key)
+    known_keys = set(_price_map().keys())
+    if price_key not in known_keys:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid plan/cycle combination '{price_key}'. Valid options: {', '.join(sorted(known_keys))}",
+        )
+    price_id = _price_map()[price_key]
     if not price_id:
-        raise HTTPException(status_code=400, detail=f"Unknown plan/cycle: {price_key}")
+        raise HTTPException(
+            status_code=503,
+            detail="Billing is not yet configured on this server. Please contact support.",
+        )
 
     # Resolve amount from Stripe (source of truth)
     try:

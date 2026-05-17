@@ -67,11 +67,13 @@ function CheckoutInner() {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.client_secret) {
+        if (data.client_secret && data.publishable_key) {
           setClientSecret(data.client_secret);
           setPubKey(data.publishable_key);
           setPaymentIntentId(data.payment_intent_id);
           setPlanInfo(data.plan);
+        } else if (data.client_secret && !data.publishable_key) {
+          setInitError("Stripe is not fully configured on this server. Please contact support.");
         } else {
           setInitError(data.error || "Failed to initialize checkout. Please try again.");
         }

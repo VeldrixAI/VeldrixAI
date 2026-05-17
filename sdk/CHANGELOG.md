@@ -5,6 +5,17 @@ All notable changes to the VeldrixAI Python SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-15
+
+### Fixed
+- `DEFAULT_BASE_URL` now correctly points to `https://api.veldrixai.ca` (was `api.veldrix.ai`)
+- All error message URLs updated to `app.veldrixai.ca`
+- `VeldrixMiddleware` no longer duplicates `DEFAULT_BASE_URL`; imports from `transport.py`
+- `_dispatch_in_thread` now propagates the full client config (metadata, timeout_ms) instead of constructing a bare `GuardConfig` — fixes silent metadata drop on sync intercepted calls
+- `PROVIDER_REGISTRY` mutations (`register_provider`, `unregister_provider`) are now guarded by a `threading.Lock`; `match_provider` takes a snapshot under lock — safe for multi-threaded WSGI apps
+- `GuardedStream._fire_async` background mode now writes the trust result back to `self._trust` via a wrapper coroutine — `stream.trust` is no longer permanently `PENDING` after async background stream evaluation
+- `ClientCircuitBreaker._effective_state` renamed to `_check_and_transition` to make the state-mutating nature explicit and eliminate the maintenance trap
+
 ## [1.0.0] - 2026-01-15
 
 ### Added
