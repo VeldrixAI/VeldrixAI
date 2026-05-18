@@ -71,12 +71,12 @@ jobs:
           script: |
             cd /opt/veldrixai/repo
             git pull origin main
-            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml build --no-cache veldrix-auth veldrix-core veldrix-connectors veldrix-ui
             docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-auth
-            sleep 10
+            sleep 15
             curl -sf http://localhost:8000/health || exit 1
             docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-core
-            sleep 10
+            sleep 15
             curl -sf http://localhost:8001/health || exit 1
             docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-connectors
             sleep 10
