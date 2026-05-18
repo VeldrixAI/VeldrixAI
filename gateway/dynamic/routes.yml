@@ -1,47 +1,59 @@
 # Dynamic Routes for VeldrixAI
 # Path-based routing to microservices (Google/OpenAI style)
+#
+# CRITICAL: All API routers MUST have Host(`api.veldrixai.ca`) constraint.
+# Without it, Traefik intercepts requests to app.veldrixai.ca/api/... and
+# routes them to backend services directly — bypassing Next.js API routes
+# and stripping the auth cookie → "Could not validate credentials".
 
 http:
   routers:
     # ── Auth Service Routes ───────────────────────────────────────────────────
     auth-router:
-      rule: "PathPrefix(`/auth`) || PathPrefix(`/api-keys`) || PathPrefix(`/billing`) || PathPrefix(`/notifications`)"
+      rule: "Host(`api.veldrixai.ca`) && (PathPrefix(`/auth`) || PathPrefix(`/api-keys`) || PathPrefix(`/billing`) || PathPrefix(`/notifications`) || PathPrefix(`/users`))"
       entryPoints:
         - websecure
       middlewares:
         - security-headers
+        - cors
         - rate-limit
       service: auth-service
       tls:
         certResolver: letsencrypt
+      priority: 10
 
     # ── Core Trust Engine Routes ──────────────────────────────────────────────
     core-router:
-      rule: "PathPrefix(`/api/v1/evaluate`) || PathPrefix(`/api/v1/trust`) || PathPrefix(`/api/v1/analyze`) || PathPrefix(`/api/v1/stream`) || PathPrefix(`/api/v1/pillars`)"
+      rule: "Host(`api.veldrixai.ca`) && (PathPrefix(`/api/v1`) || PathPrefix(`/trust`) || PathPrefix(`/health`) || PathPrefix(`/evaluate`) || PathPrefix(`/pillars`) || PathPrefix(`/policy`) || PathPrefix(`/reports`) || PathPrefix(`/audit`) || PathPrefix(`/ws`))"
       entryPoints:
         - websecure
       middlewares:
         - security-headers
+        - cors
         - rate-limit
       service: core-service
       tls:
         certResolver: letsencrypt
+      priority: 10
 
     # ── Connectors Routes (Analytics, Reports, Prompts) ───────────────────────
     connectors-router:
-      rule: "PathPrefix(`/api/analytics`) || PathPrefix(`/api/reports`) || PathPrefix(`/api/prompts`) || PathPrefix(`/api/audit`) || PathPrefix(`/api/latency`) || PathPrefix(`/api/models`)"
+      rule: "Host(`api.veldrixai.ca`) && (PathPrefix(`/api/analytics`) || PathPrefix(`/api/reports`) || PathPrefix(`/api/prompts`) || PathPrefix(`/api/audit`) || PathPrefix(`/api/latency`) || PathPrefix(`/api/models`) || PathPrefix(`/api/metrics`) || PathPrefix(`/connectors`) || PathPrefix(`/api/connectors`) || PathPrefix(`/api/audit-trails`))"
       entryPoints:
         - websecure
       middlewares:
         - security-headers
+        - cors
         - rate-limit
       service: connectors-service
       tls:
         certResolver: letsencrypt
+      priority: 10
 
     # ── Frontend Catch-All ────────────────────────────────────────────────────
+    # Host-only rule — no PathPrefix needed. All app/www/root traffic goes here.
     frontend-router:
-      rule: "PathPrefix(`/`)"
+      rule: "Host(`app.veldrixai.ca`) || Host(`veldrixai.ca`) || Host(`www.veldrixai.ca`)"
       entryPoints:
         - websecure
       middlewares:
@@ -77,6 +89,8 @@ http:
           path: /health
           interval: 30s
           timeout: 5s
+        responseForwarding:
+          flushInterval: "100ms"
 
     # Connectors Service (port 8002)
     connectors-service:
@@ -123,9 +137,17 @@ http:
           - PUT
           - DELETE
           - OPTIONS
+          - PATCH
         accessControlAllowOriginList:
           - "https://veldrixai.ca"
+          - "https://www.veldrixai.ca"
           - "https://app.veldrixai.ca"
-          - "http://localhost:5000"
+          - "https://api.veldrixai.ca"
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+          - "X-API-Key"
+          - "X-Veldrix-Key"
+          - "X-Requested-With"
         accessControlAllowCredentials: true
         accessControlMaxAge: 86400

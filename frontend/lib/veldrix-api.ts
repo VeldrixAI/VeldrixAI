@@ -9,9 +9,9 @@
 
 const BASE = (
   typeof process !== "undefined"
-    ? process.env.NEXT_PUBLIC_VELDRIX_CORE_URL
+    ? (process.env.NEXT_PUBLIC_VELDRIX_CORE_API_URL ?? process.env.NEXT_PUBLIC_VELDRIX_CORE_URL)
     : undefined
-) ?? "http://localhost:8001";
+) ?? "https://api.veldrixai.ca";
 
 const KEY = (
   typeof process !== "undefined"

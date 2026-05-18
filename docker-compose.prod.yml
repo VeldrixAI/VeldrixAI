@@ -275,14 +275,21 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app.veldrixai.ca}
         NEXT_PUBLIC_ENV: production
         NEXT_PUBLIC_VELDRIX_CORE_URL: ${NEXT_PUBLIC_VELDRIX_CORE_URL:-https://api.veldrixai.ca}
+        NEXT_PUBLIC_VELDRIX_CORE_API_URL: ${NEXT_PUBLIC_VELDRIX_CORE_API_URL:-https://api.veldrixai.ca}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     container_name: veldrix-ui
     restart: unless-stopped
     environment:
+      - PORT=5000
+      - HOSTNAME=0.0.0.0
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_VELDRIX_CORE_API_URL=https://api.veldrixai.ca
+      - NEXT_PUBLIC_VELDRIX_AUTH_URL=https://api.veldrixai.ca/auth
+      - NEXT_PUBLIC_VELDRIX_CONNECTORS_URL=https://api.veldrixai.ca
       - VELDRIX_AUTH_API_URL=http://veldrix-auth:8000
       - VELDRIX_CORE_API_URL=http://veldrix-core:8001
       - VELDRIX_CONNECTORS_API_URL=http://veldrix-connectors:8002
-      - NEXT_TELEMETRY_DISABLED=1
     networks:
       - veldrix-network
     healthcheck:
