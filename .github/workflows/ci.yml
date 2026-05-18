@@ -53,3 +53,34 @@ jobs:
       - run: pip install ruff
       - run: cd sdk && ruff check veldrixai/ || true
       - run: cd backend/core && ruff check src/ || true
+
+  
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test-sdk, test-backend, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy to DigitalOcean droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          timeout: 300s
+          script: |
+            cd /opt/veldrixai/repo
+            git pull origin main
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-auth
+            sleep 10
+            curl -sf http://localhost:8000/health || exit 1
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-core
+            sleep 10
+            curl -sf http://localhost:8001/health || exit 1
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-connectors
+            sleep 10
+            curl -sf http://localhost:8002/health || exit 1
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-ui
+            sleep 5
+            echo "Deploy complete"
