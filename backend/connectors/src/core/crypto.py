@@ -52,4 +52,4 @@ def decrypt_secret(token: str) -> str:
     try:
         return _get_fernet().decrypt(token.encode()).decode()
     except InvalidToken as exc:
-        raise ValueError("Connector secret decryption failed — token is invalid or tampered with wrong format") from exc
+        raise ValueError("Connector secret decryption failed — token is invalid or might be tampered with wrong format") from exc
