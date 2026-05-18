@@ -286,10 +286,11 @@ services:
     networks:
       - veldrix-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/"]
-      interval: 60s
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5000/"]
+      interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
     depends_on:
       veldrix-auth:
         condition: service_healthy
