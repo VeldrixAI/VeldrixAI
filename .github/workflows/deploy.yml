@@ -186,6 +186,9 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
+            # Free port 8080 if an old gateway container is still holding it
+            docker stop veldrix-gateway 2>/dev/null || true
+            docker rm   veldrix-gateway 2>/dev/null || true
             docker compose -f docker-compose.prod.yml up -d \
               --no-deps \
               --remove-orphans
