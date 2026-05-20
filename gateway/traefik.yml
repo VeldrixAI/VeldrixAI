@@ -19,13 +19,12 @@ entryPoints:
   traefik:
     address: ":8080"
 
-# Providers - Docker and File-based routes
+# File-only provider — all routing is defined in routes.yml.
+# Docker label discovery is intentionally disabled: Traefik v3 bundles
+# a Docker SDK that negotiates API 1.24, which the host daemon rejects
+# (minimum 1.40). Since every route is declared in the dynamic file
+# provider this causes no functional loss.
 providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
-    network: veldrix-network
-    watch: true
   file:
     filename: /etc/traefik/dynamic/routes.yml
     watch: true
@@ -34,7 +33,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL:-admin@veldrixai.ca}
+      email: admin@veldrixai.ca
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
