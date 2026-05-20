@@ -16,7 +16,7 @@ concurrency:
 
 env:
   REGISTRY:      ghcr.io
-  IMAGE_PREFIX:  ghcr.io/${{ github.repository_owner }}/veldrixai
+  IMAGE_PREFIX:  ghcr.io/veldrixai/veldrixai
   IMAGE_TAG:     ${{ github.sha }}
 
 jobs:

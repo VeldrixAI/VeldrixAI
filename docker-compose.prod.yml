@@ -153,7 +153,7 @@ services:
   # AUTH SERVICE — Authentication, API Keys, Billing
   # ═══════════════════════════════════════════════════════════════════════════
   veldrix-auth:
-    image: ${DOCKER_REGISTRY:-ghcr.io/rudraam/veldrixai}-auth:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-auth:${IMAGE_TAG:-latest}
     build:
       context: ./backend/auth
       dockerfile: Dockerfile
@@ -194,7 +194,7 @@ services:
   # CORE SERVICE — Trust Evaluation Engine
   # ═══════════════════════════════════════════════════════════════════════════
   veldrix-core:
-    image: ${DOCKER_REGISTRY:-ghcr.io/rudraam/veldrixai}-core:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-core:${IMAGE_TAG:-latest}
     build:
       context: ./backend/core
       dockerfile: Dockerfile
@@ -232,7 +232,7 @@ services:
   # CONNECTORS SERVICE — Analytics, Reports, Prompts
   # ═══════════════════════════════════════════════════════════════════════════
   veldrix-connectors:
-    image: ${DOCKER_REGISTRY:-ghcr.io/rudraam/veldrixai}-connectors:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-connectors:${IMAGE_TAG:-latest}
     build:
       context: ./backend/connectors
       dockerfile: Dockerfile
@@ -269,7 +269,7 @@ services:
   # FRONTEND — Next.js Application
   # ═══════════════════════════════════════════════════════════════════════════
   veldrix-ui:
-    image: ${DOCKER_REGISTRY:-ghcr.io/rudraam/veldrixai}-frontend:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
