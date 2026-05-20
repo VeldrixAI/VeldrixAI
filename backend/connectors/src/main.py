@@ -7,7 +7,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
-from src.db.base import get_db
+from src.db.base import Base, engine, get_db
+
+# Import all models so SQLAlchemy registers them with Base.metadata
+# before create_all runs. Without these imports the tables are never created.
+import src.modules.reports.models  # noqa: F401
+import src.modules.analytics.models  # noqa: F401
+import src.modules.prompts.models  # noqa: F401
+
+# Create all tables on startup (idempotent — safe to run every boot)
+Base.metadata.create_all(bind=engine)
+
 from src.modules.reports.controllers.report_controller import router as reports_router
 from src.modules.analytics.controller import router as analytics_router
 from src.modules.analytics.audit_controller import router as audit_trails_router
