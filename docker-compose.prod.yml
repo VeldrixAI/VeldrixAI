@@ -188,7 +188,6 @@ services:
           memory: 1G
         reservations:
           memory: 256M
-      replicas: 2
 
   # ═══════════════════════════════════════════════════════════════════════════
   # CORE SERVICE — Trust Evaluation Engine
@@ -226,7 +225,6 @@ services:
           memory: 4G
         reservations:
           memory: 1G
-      replicas: 2
 
   # ═══════════════════════════════════════════════════════════════════════════
   # CONNECTORS SERVICE — Analytics, Reports, Prompts
