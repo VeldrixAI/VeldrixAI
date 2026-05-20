@@ -125,6 +125,12 @@ jobs:
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            NEXT_PUBLIC_API_BASE=https://api.veldrixai.ca
+            NEXT_PUBLIC_APP_URL=https://app.veldrixai.ca
+            NEXT_PUBLIC_ENV=production
+            NEXT_PUBLIC_VELDRIX_CORE_URL=https://api.veldrixai.ca
+            NEXT_PUBLIC_VELDRIX_CORE_API_URL=https://api.veldrixai.ca
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
   # ── 3. Deploy to production server ───────────────────────────────────────────
   deploy:
@@ -145,12 +151,20 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
-      - name: Copy compose file to server
+      - name: Copy config files to server
         run: |
-          scp -i ~/.ssh/deploy_key \
-              -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              deploy@api.veldrixai.ca \
+              "mkdir -p /opt/veldrixai/gateway/dynamic"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               docker-compose.prod.yml \
               deploy@api.veldrixai.ca:/opt/veldrixai/docker-compose.prod.yml
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              gateway/traefik.yml \
+              deploy@api.veldrixai.ca:/opt/veldrixai/gateway/traefik.yml
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              gateway/dynamic/routes.yml \
+              deploy@api.veldrixai.ca:/opt/veldrixai/gateway/dynamic/routes.yml
 
       - name: Deploy — pull images and rolling restart
         run: |
