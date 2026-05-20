@@ -145,11 +145,13 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          # printf preserves newlines; tr strips any Windows-style \r that
+          # corrupts the key and triggers "error in libcrypto"
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H api.veldrixai.ca >> ~/.ssh/known_hosts 2>/dev/null || true
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          # Validate the key loaded correctly before proceeding
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
       - name: Copy config files to server
         run: |
