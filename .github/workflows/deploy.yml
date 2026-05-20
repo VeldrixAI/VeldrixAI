@@ -152,18 +152,19 @@ jobs:
 
       - name: Copy config files to server
         run: |
+          REMOTE="${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}"
+          # Ensure gateway dirs exist inside the repo (where .env lives)
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} \
-              "mkdir -p /opt/veldrixai/gateway/dynamic"
+              "$REMOTE" "mkdir -p /opt/veldrixai/repo/gateway/dynamic"
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               docker-compose.prod.yml \
-              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/docker-compose.prod.yml
+              "$REMOTE":/opt/veldrixai/repo/docker-compose.prod.yml
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               gateway/traefik.yml \
-              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/gateway/traefik.yml
+              "$REMOTE":/opt/veldrixai/repo/gateway/traefik.yml
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               gateway/dynamic/routes.yml \
-              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/gateway/dynamic/routes.yml
+              "$REMOTE":/opt/veldrixai/repo/gateway/dynamic/routes.yml
 
       - name: Deploy — pull images and rolling restart
         run: |
@@ -171,7 +172,8 @@ jobs:
               -o StrictHostKeyChecking=no \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'ENDSSH'
             set -e
-            cd /opt/veldrixai
+            # Run from repo dir so docker compose picks up the existing .env file
+            cd /opt/veldrixai/repo
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"
