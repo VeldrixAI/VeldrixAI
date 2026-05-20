@@ -73,6 +73,7 @@ async def clean_redis(redis_client):
 
 # ── Test: multi-worker convergence ────────────────────────────────────────────
 
+@pytest.mark.integration
 async def test_multi_worker_trips_at_global_threshold(clean_redis):
     """
     Four simulated workers share failure counts via Redis.
@@ -107,6 +108,7 @@ async def test_multi_worker_trips_at_global_threshold(clean_redis):
         assert await w.get_state(provider) == "OPEN"
 
 
+@pytest.mark.integration
 async def test_half_open_exactly_one_probe(clean_redis):
     """
     After recovery_timeout, exactly ONE worker across all four should get the
@@ -144,6 +146,7 @@ async def test_half_open_exactly_one_probe(clean_redis):
     assert half_open_winners == 1, f"Expected 1 HALF_OPEN winner, got {half_open_winners}"
 
 
+@pytest.mark.integration
 async def test_record_success_closes_half_open(clean_redis):
     """HALF_OPEN → success → CLOSED, and failures reset."""
     import redis.asyncio as aioredis
@@ -208,6 +211,7 @@ async def test_redis_unreachable_triggers_fallback(caplog):
 
 # ── Test: TTL self-healing ────────────────────────────────────────────────────
 
+@pytest.mark.integration
 async def test_keys_expire_after_ttl(clean_redis):
     """
     After failure_window × 3 with no activity, Redis keys expire and
@@ -240,6 +244,7 @@ async def test_keys_expire_after_ttl(clean_redis):
 
 # ── Test: reset() admin function ─────────────────────────────────────────────
 
+@pytest.mark.integration
 async def test_reset_clears_open_state(clean_redis):
     """reset() should force CLOSED regardless of prior failures."""
     threshold = 2

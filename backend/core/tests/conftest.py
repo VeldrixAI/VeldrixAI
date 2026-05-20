@@ -7,7 +7,15 @@ are intercepted by mocking route_inference in individual test modules.
 """
 
 import os
+import pytest
 
 # Ensure NVIDIA NIM is included in the active provider registry
 os.environ.setdefault("NVIDIA_API_KEY", "test")
 os.environ.setdefault("NVIDIA_API_BASE_URL", "https://integrate.api.nvidia.com/v1")
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "integration: tests that require external services (Redis, DB, network)"
+    )
