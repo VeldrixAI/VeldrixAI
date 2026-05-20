@@ -172,37 +172,17 @@ jobs:
           ssh-keyscan -H ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
-      - name: Clean server git state
-        run: |
-          # Reset BEFORE scp so the incoming files land on a clean working tree.
-          # Without this, a subsequent manual 'git pull' on the server would abort
-          # because the scp'd files appear as local modifications.
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} \
-              "cd /opt/veldrixai/repo && git reset --hard HEAD 2>/dev/null || true"
-
-      - name: Copy config files to server
-        run: |
-          REMOTE="${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}"
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              "$REMOTE" "mkdir -p /opt/veldrixai/repo/gateway/dynamic"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              docker-compose.prod.yml \
-              "$REMOTE":/opt/veldrixai/repo/docker-compose.prod.yml
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              gateway/traefik.yml \
-              "$REMOTE":/opt/veldrixai/repo/gateway/traefik.yml
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              gateway/dynamic/routes.yml \
-              "$REMOTE":/opt/veldrixai/repo/gateway/dynamic/routes.yml
-
-      - name: Deploy — pull images and rolling restart
+      - name: Deploy — update server and rolling restart
         run: |
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'ENDSSH'
             set -e
             cd /opt/veldrixai/repo
+
+            echo "=== Syncing repo to origin/main ==="
+            git fetch origin main
+            git reset --hard origin/main
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"

@@ -150,33 +150,17 @@ jobs:
           ssh-keyscan -H ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
-      - name: Copy config files to server
-        run: |
-          REMOTE="${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}"
-          # Ensure gateway dirs exist inside the repo (where .env lives)
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              "$REMOTE" "mkdir -p /opt/veldrixai/repo/gateway/dynamic"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              docker-compose.prod.yml \
-              "$REMOTE":/opt/veldrixai/repo/docker-compose.prod.yml
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              gateway/traefik.yml \
-              "$REMOTE":/opt/veldrixai/repo/gateway/traefik.yml
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              gateway/dynamic/routes.yml \
-              "$REMOTE":/opt/veldrixai/repo/gateway/dynamic/routes.yml
-
-      - name: Deploy — pull images and rolling restart
+      - name: Deploy — update server and rolling restart
         run: |
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'ENDSSH'
             set -e
-            # Run from repo dir so docker compose picks up the existing .env file.
-            # Reset any server-side git modifications (e.g. from previous scp steps)
-            # so a future manual git pull won't abort.
             cd /opt/veldrixai/repo
-            git reset --hard HEAD 2>/dev/null || true
+
+            echo "=== Syncing repo to origin/main ==="
+            git fetch origin main
+            git reset --hard origin/main
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"
