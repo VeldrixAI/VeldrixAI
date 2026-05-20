@@ -195,12 +195,10 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
-            # Stop the gateway first so ports 80/443/8080 are free before
-            # docker compose up binds them to the new Traefik container.
-            # --no-deps was removed: compose now respects depends_on order,
-            # preventing parallel-recreate race conditions on shared containers.
-            docker stop veldrix-gateway 2>/dev/null || true
-            docker rm   veldrix-gateway 2>/dev/null || true
+            # Full down+up eliminates 'No such container' races caused by
+            # docker compose holding stale container IDs after in-place
+            # recreates. Named volumes are NOT removed so no data is lost.
+            docker compose -f docker-compose.prod.yml down --timeout 30 2>/dev/null || true
             docker compose -f docker-compose.prod.yml up -d
 
             echo "=== Waiting 20s for services to settle ==="

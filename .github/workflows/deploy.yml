@@ -173,8 +173,7 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
-            docker stop veldrix-gateway 2>/dev/null || true
-            docker rm   veldrix-gateway 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml down --timeout 30 2>/dev/null || true
             docker compose -f docker-compose.prod.yml up -d
 
             echo "=== Waiting 20s for services to settle ==="
