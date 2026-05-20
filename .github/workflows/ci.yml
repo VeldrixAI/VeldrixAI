@@ -195,13 +195,13 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
-            for port in 80 443 8080; do
-              docker ps --format "{{.ID}} {{.Ports}}" | grep ":${port}->" | awk '{print $1}' \
-                | xargs -r docker stop 2>/dev/null || true
-              docker ps -a --format "{{.ID}} {{.Ports}}" | grep ":${port}->" | awk '{print $1}' \
-                | xargs -r docker rm 2>/dev/null || true
-            done
-            docker compose -f docker-compose.prod.yml up -d --no-deps
+            # Stop the gateway first so ports 80/443/8080 are free before
+            # docker compose up binds them to the new Traefik container.
+            # --no-deps was removed: compose now respects depends_on order,
+            # preventing parallel-recreate race conditions on shared containers.
+            docker stop veldrix-gateway 2>/dev/null || true
+            docker rm   veldrix-gateway 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml up -d
 
             echo "=== Waiting 20s for services to settle ==="
             sleep 20
