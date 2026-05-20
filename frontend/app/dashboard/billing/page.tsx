@@ -77,7 +77,16 @@ function CardBase({ children, style, className }: { children: React.ReactNode; s
 }
 
 const BillingVelocityChart = dynamic(
-  () => import("@/components/charts/BillingVelocityChart"),
+  () =>
+    import("@/components/charts/BillingVelocityChart").catch(() => ({
+      default: () => (
+        <div style={{ height: "220px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "var(--vx-font-body, 'DM Sans', sans-serif)", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
+            Chart unavailable
+          </span>
+        </div>
+      ),
+    })),
   {
     ssr: false,
     loading: () => (

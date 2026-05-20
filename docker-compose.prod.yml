@@ -22,8 +22,13 @@ services:
     image: traefik:v3.2
     container_name: veldrix-gateway
     restart: unless-stopped
-    command:
-      - "--configFile=/etc/traefik/traefik.yml"
+    # Ensure acme.json has 600 permissions before Traefik starts.
+    # Traefik refuses to read/write the cert store if permissions are wrong,
+    # causing it to fall back to a self-signed certificate (HTTPS broken).
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "touch /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json && exec traefik --configFile=/etc/traefik/traefik.yml"
     ports:
       - "80:80"       # HTTP (redirects to HTTPS)
       - "443:443"     # HTTPS
@@ -240,6 +245,7 @@ services:
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY required}}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - REDIS_URL=redis://redis:6379/2
