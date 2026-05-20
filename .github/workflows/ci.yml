@@ -195,14 +195,17 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
-            # Full down+up eliminates 'No such container' races caused by
-            # docker compose holding stale container IDs after in-place
-            # recreates. Named volumes are NOT removed so no data is lost.
+            # Tear down cleanly (volumes preserved), then bring everything up.
+            # docker compose up may exit non-zero due to a 'No such container'
+            # race when auth briefly crashes on first startup before postgres
+            # accepts connections — that is a transient restart, not a real
+            # failure. We ignore compose's exit code and use our own health
+            # checks below as the authoritative gate.
             docker compose -f docker-compose.prod.yml down --timeout 30 2>/dev/null || true
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d 2>/dev/null || true
 
-            echo "=== Waiting 20s for services to settle ==="
-            sleep 20
+            echo "=== Waiting 60s for services to settle (including restart loops) ==="
+            sleep 60
 
             echo "=== Health checks ==="
             # Services have no host port bindings — run curl inside each container.

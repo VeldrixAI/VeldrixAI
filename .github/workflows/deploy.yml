@@ -174,10 +174,10 @@ jobs:
 
             echo "=== Rolling restart ==="
             docker compose -f docker-compose.prod.yml down --timeout 30 2>/dev/null || true
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d 2>/dev/null || true
 
-            echo "=== Waiting 20s for services to settle ==="
-            sleep 20
+            echo "=== Waiting 60s for services to settle (including restart loops) ==="
+            sleep 60
 
             echo "=== Health checks ==="
             # Services have no host port bindings — run curl inside each container.
