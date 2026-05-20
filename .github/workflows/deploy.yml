@@ -187,22 +187,27 @@ jobs:
             sleep 20
 
             echo "=== Health checks ==="
-            curl -sf http://localhost:8000/health && echo "  auth        ✓" || {
+            # Services have no host port bindings — run curl inside each container.
+            docker exec veldrix-auth curl -sf http://localhost:8000/health \
+              && echo "  auth        ✓" || {
               echo "  auth        ✗ — last 50 log lines:"
               docker logs --tail 50 veldrix-auth 2>&1 || true
               exit 1
             }
-            curl -sf http://localhost:8001/health && echo "  core        ✓" || {
+            docker exec veldrix-core curl -sf http://localhost:8001/health \
+              && echo "  core        ✓" || {
               echo "  core        ✗ — last 50 log lines:"
               docker logs --tail 50 veldrix-core 2>&1 || true
               exit 1
             }
-            curl -sf http://localhost:8002/health && echo "  connectors  ✓" || {
+            docker exec veldrix-connectors curl -sf http://localhost:8002/health \
+              && echo "  connectors  ✓" || {
               echo "  connectors  ✗ — last 50 log lines:"
               docker logs --tail 50 veldrix-connectors 2>&1 || true
               exit 1
             }
-            curl -sf http://localhost:5000         && echo "  frontend    ✓" || echo "  frontend    ✗ (non-blocking)"
+            docker inspect --format='{{.State.Running}}' veldrix-ui 2>/dev/null \
+              | grep -q true && echo "  frontend    ✓" || echo "  frontend    ✗ (non-blocking)"
 
             echo "=== Pruning old images ==="
             docker image prune -f
