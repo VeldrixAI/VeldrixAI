@@ -194,9 +194,21 @@ jobs:
             sleep 20
 
             echo "=== Health checks ==="
-            curl -sf http://localhost:8000/health && echo "  auth        ✓" || (echo "  auth        ✗" && exit 1)
-            curl -sf http://localhost:8001/health && echo "  core        ✓" || (echo "  core        ✗" && exit 1)
-            curl -sf http://localhost:8002/health && echo "  connectors  ✓" || (echo "  connectors  ✗" && exit 1)
+            curl -sf http://localhost:8000/health && echo "  auth        ✓" || {
+              echo "  auth        ✗ — last 50 log lines:"
+              docker logs --tail 50 veldrix-auth 2>&1 || true
+              exit 1
+            }
+            curl -sf http://localhost:8001/health && echo "  core        ✓" || {
+              echo "  core        ✗ — last 50 log lines:"
+              docker logs --tail 50 veldrix-core 2>&1 || true
+              exit 1
+            }
+            curl -sf http://localhost:8002/health && echo "  connectors  ✓" || {
+              echo "  connectors  ✗ — last 50 log lines:"
+              docker logs --tail 50 veldrix-connectors 2>&1 || true
+              exit 1
+            }
             curl -sf http://localhost:5000         && echo "  frontend    ✓" || echo "  frontend    ✗ (non-blocking)"
 
             echo "=== Pruning old images ==="

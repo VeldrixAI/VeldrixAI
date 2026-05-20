@@ -163,8 +163,8 @@ services:
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET required}
-      - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:?VELDRIX_VAULT_KEY required}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY (or JWT_SECRET) required}}
+      - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:-}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
