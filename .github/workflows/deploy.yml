@@ -145,34 +145,31 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          # printf preserves newlines; tr strips any Windows-style \r that
-          # corrupts the key and triggers "error in libcrypto"
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.DROPLET_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H api.veldrixai.ca >> ~/.ssh/known_hosts 2>/dev/null || true
-          # Validate the key loaded correctly before proceeding
+          ssh-keyscan -H ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
       - name: Copy config files to server
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              deploy@api.veldrixai.ca \
+              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} \
               "mkdir -p /opt/veldrixai/gateway/dynamic"
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               docker-compose.prod.yml \
-              deploy@api.veldrixai.ca:/opt/veldrixai/docker-compose.prod.yml
+              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/docker-compose.prod.yml
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               gateway/traefik.yml \
-              deploy@api.veldrixai.ca:/opt/veldrixai/gateway/traefik.yml
+              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/gateway/traefik.yml
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               gateway/dynamic/routes.yml \
-              deploy@api.veldrixai.ca:/opt/veldrixai/gateway/dynamic/routes.yml
+              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/opt/veldrixai/gateway/dynamic/routes.yml
 
       - name: Deploy — pull images and rolling restart
         run: |
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              deploy@api.veldrixai.ca << 'ENDSSH'
+              ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'ENDSSH'
             set -e
             cd /opt/veldrixai
 
