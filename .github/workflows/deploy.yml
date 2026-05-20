@@ -172,8 +172,11 @@ jobs:
               -o StrictHostKeyChecking=no \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'ENDSSH'
             set -e
-            # Run from repo dir so docker compose picks up the existing .env file
+            # Run from repo dir so docker compose picks up the existing .env file.
+            # Reset any server-side git modifications (e.g. from previous scp steps)
+            # so a future manual git pull won't abort.
             cd /opt/veldrixai/repo
+            git reset --hard HEAD 2>/dev/null || true
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"

@@ -54,31 +54,7 @@ jobs:
       - run: cd sdk && ruff check veldrixai/ || true
       - run: cd backend/core && ruff check src/ || true
 
-  
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [test-sdk, test-backend, lint]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - name: Deploy to DigitalOcean droplet
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DROPLET_HOST }}
-          username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          timeout: 300s
-          script: |
-            cd /opt/veldrixai/repo
-            git pull origin main
-            docker compose -f docker-compose.prod.yml build veldrix-auth veldrix-core veldrix-connectors veldrix-ui
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-auth
-            sleep 20
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-core
-            sleep 20
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-connectors
-            sleep 15
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans veldrix-ui
-            sleep 10
-            curl -sf https://api.veldrixai.ca/health || exit 1
-            echo "Deploy complete"
+  # Deploy is handled exclusively by deploy.yml (GHCR image pull + rolling restart).
+  # Removed the old appleboy/ssh-action deploy job that built images on the server —
+  # it conflicted with deploy.yml's scp step which modified tracked files in the
+  # server git repo, causing 'git pull' to abort with local-changes errors.
