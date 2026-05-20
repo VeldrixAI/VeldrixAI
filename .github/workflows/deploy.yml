@@ -186,9 +186,14 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             echo "=== Rolling restart ==="
-            # Free port 8080 if an old gateway container is still holding it
-            docker stop veldrix-gateway 2>/dev/null || true
-            docker rm   veldrix-gateway 2>/dev/null || true
+            # Free ports 80/443/8080 from any container holding them
+            # (catches renamed/orphan Traefik instances from previous deploys)
+            for port in 80 443 8080; do
+              docker ps --format "{{.ID}} {{.Ports}}" | grep ":${port}->" | awk '{print $1}' \
+                | xargs -r docker stop 2>/dev/null || true
+              docker ps -a --format "{{.ID}} {{.Ports}}" | grep ":${port}->" | awk '{print $1}' \
+                | xargs -r docker rm 2>/dev/null || true
+            done
             docker compose -f docker-compose.prod.yml up -d \
               --no-deps \
               --remove-orphans
