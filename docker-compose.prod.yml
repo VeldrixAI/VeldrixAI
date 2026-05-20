@@ -203,6 +203,7 @@ services:
     restart: unless-stopped
     environment:
       - APP_ENV=production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY required}}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:?NVIDIA_API_KEY required}
       - VELDRIX_AUTH_URL=http://veldrix-auth:8000
       - REDIS_URL=redis://redis:6379/1

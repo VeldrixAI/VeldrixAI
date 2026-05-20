@@ -516,7 +516,7 @@ export default function BillingPage() {
             {[
               {
                 label: "SDK Requests",
-                value: sdkStats ? sdkStats.total_requests.toLocaleString() : "—",
+                value: sdkStats != null ? (sdkStats.total_requests ?? 0).toLocaleString() : "—",
                 sub: "Last 30 days",
                 color: "var(--vx-violet)",
               },
