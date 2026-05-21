@@ -24,6 +24,14 @@ from src.sdk.models import AnalysisRequest, AnalysisResult
 router = APIRouter(prefix="/api/v1", tags=["Analysis"])
 logger = logging.getLogger("veldrix.api")
 
+# Monthly evaluation quotas per plan tier (-1 = unlimited)
+_PLAN_QUOTAS: dict[str, int] = {
+    "free":       1_000,
+    "grow":      25_000,
+    "scale":    150_000,
+    "enterprise": -1,
+}
+
 
 @router.post(
     "/analyze",
@@ -44,6 +52,20 @@ async def analyze(
     sdk:     VeldrixSDK = Depends(get_sdk),
     caller:  dict       = Depends(require_api_key),
 ):
+    # ── Quota enforcement ─────────────────────────────────────────────────────
+    plan_tier  = caller.get("plan_tier", "free")
+    eval_count = caller.get("eval_count_month", 0)
+    quota      = _PLAN_QUOTAS.get(plan_tier, 1_000)
+    if quota != -1 and eval_count > quota:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Monthly evaluation quota of {quota:,} exceeded on the {plan_tier!r} plan. "
+                "Upgrade at app.veldrixai.ca/dashboard/billing"
+            ),
+            headers={"X-Quota-Limit": str(quota), "X-Quota-Used": str(eval_count)},
+        )
+
     # ── Read budget from middleware (may be absent if middleware not mounted) ──
     budget    = getattr(http_request.state, "latency_budget", None)
     collector = getattr(http_request.app.state, "latency_collector", None)

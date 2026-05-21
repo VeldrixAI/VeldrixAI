@@ -76,7 +76,12 @@ async def require_api_key(
         )
         if resp.status_code == 200:
             data = resp.json()
-            return {"user_id": data.get("user_id"), "email": data.get("email")}
+            return {
+                "user_id": data.get("user_id"),
+                "email": data.get("email"),
+                "plan_tier": data.get("plan_tier", "free"),
+                "eval_count_month": data.get("eval_count_month", 0),
+            }
         else:
             raise HTTPException(status_code=401, detail="Invalid API key")
     except httpx.HTTPError as e:

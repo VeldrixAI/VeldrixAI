@@ -176,6 +176,7 @@ services:
       - VELDRIX_UI_URL=${VELDRIX_UI_URL:-https://app.veldrixai.ca}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
     networks:
       - veldrix-network
@@ -218,6 +219,7 @@ services:
       - CONNECTORS_URL=http://veldrix-connectors:8002
       - REDIS_URL=redis://redis:6379/1
       - CIRCUIT_BREAKER_BACKEND=redis
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
     networks:
       - veldrix-network
@@ -256,6 +258,8 @@ services:
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - REDIS_URL=redis://redis:6379/2
+      - CONNECTOR_ENCRYPTION_KEY=${CONNECTOR_ENCRYPTION_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
     networks:
       - veldrix-network

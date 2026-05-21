@@ -25,4 +25,5 @@ def validate_api_key(body: ValidateKeyRequest, db: Session = Depends(get_db)):
         "user_id": str(user.id),
         "email": user.email,
         "plan_tier": user.plan_tier,
+        "eval_count_month": user.eval_count_month,
     }

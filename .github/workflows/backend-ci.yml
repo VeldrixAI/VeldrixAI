@@ -135,7 +135,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: "mock-secret"
           AWS_REGION: us-east-1
           S3_BUCKET_NAME: mock-bucket
-        run: pytest tests/ -v --tb=short 2>/dev/null || echo "No connectors tests yet — skipping"
+        run: pytest tests/ -v --tb=short
 
   # ── SDK (multi-python) ────────────────────────────────────────────────────────
   sdk:
@@ -158,7 +158,7 @@ jobs:
         run: pip install -e "sdk[dev]"
 
       - name: Lint
-        run: ruff check sdk/veldrixai/ || true
+        run: ruff check sdk/veldrixai/
 
       - name: Run SDK tests
         run: pytest sdk/tests/ -v --tb=short
