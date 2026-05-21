@@ -119,6 +119,8 @@ export default function BillingPage() {
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [timeseries, setTimeseries] = useState<{ ts: string; requests: number }[]>([]);
   const [sdkStats, setSdkStats] = useState<SdkStats | null>(null);
+  const [billingConfigured, setBillingConfigured] = useState<boolean | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/billing/status")
@@ -130,11 +132,19 @@ export default function BillingPage() {
       .then((r) => r.json())
       .then((data) => { if (data && !data.error) setSdkStats(data); })
       .catch(() => {});
+
+    fetch("/api/billing/configured")
+      .then((r) => r.json())
+      .then((data) => setBillingConfigured(data?.configured ?? false))
+      .catch(() => setBillingConfigured(false));
   }, []);
 
   useEffect(() => {
     const rangeParam = period === "1y" ? "365d" : period;
-    fetch(`/api/analytics?path=timeseries&range=${rangeParam}`)
+    // Map 90d/1y to the largest supported range (30d) for now;
+    // the chart will still render with the available data window.
+    const queryRange = rangeParam === "365d" || rangeParam === "90d" ? "30d" : rangeParam;
+    fetch(`/api/analytics?path=timeseries&range=${queryRange}`)
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setTimeseries(data); })
       .catch(() => {});
@@ -164,6 +174,14 @@ export default function BillingPage() {
 
   const [portalLoading, setPortalLoading] = useState(false);
 
+  const handleUpgrade = (targetPlan: string) => {
+    if (billingConfigured === false) {
+      setShowContactModal(true);
+      return;
+    }
+    router.push(`/dashboard/billing/checkout?plan=${targetPlan}&cycle=monthly`);
+  };
+
   const openPortal = async () => {
     setPortalLoading(true);
     try {
@@ -182,7 +200,7 @@ export default function BillingPage() {
   // Chart data — real timeseries only; empty array renders empty state
   const rawCounts = timeseries.map((d) => d.requests);
   const labels = timeseries.map((d) =>
-    new Date(d.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    new Date((d as any).date ?? (d as any).ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })
   );
   const maxCount = rawCounts.length > 0 ? Math.max(...rawCounts) : 0;
   const chartData = rawCounts.map((count, i) => ({ date: labels[i], count }));
@@ -291,7 +309,7 @@ export default function BillingPage() {
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.86"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
-          onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
+          onClick={() => handleUpgrade(nextTier)}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>upgrade</span>
             Upgrade Plan
@@ -378,7 +396,7 @@ export default function BillingPage() {
                   RESETS {usage.resetDate}
                 </span>
                 <button
-                  onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
+                  onClick={() => handleUpgrade(nextTier)}
                   style={{
                   fontFamily: "var(--vx-font-body)",
                   fontWeight: 600,
@@ -464,7 +482,7 @@ export default function BillingPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {currentTier !== "scale" && currentTier !== "enterprise" && (
               <button
-                onClick={() => router.push(`/dashboard/billing/checkout?plan=${nextTier}&cycle=monthly`)}
+                onClick={() => handleUpgrade(nextTier)}
                 style={{
                 width: "100%",
                 padding: "11px 16px",
@@ -479,7 +497,7 @@ export default function BillingPage() {
                 textTransform: "uppercase",
                 cursor: "pointer",
               }}>
-                Upgrade to {PLAN_META[nextTier]?.name ?? "Scale"}
+                {billingConfigured === false ? "Contact Sales" : `Upgrade to ${PLAN_META[nextTier]?.name ?? "Scale"}`}
               </button>
             )}
             {billingStatus?.stripe_customer_id && (
@@ -750,7 +768,7 @@ export default function BillingPage() {
                 ))}
               </div>
               <button
-                onClick={() => router.push(`/dashboard/billing/checkout?plan=${p.id}&cycle=monthly`)}
+                onClick={() => handleUpgrade(p.id)}
                 style={{
                 width: "100%",
                 padding: "11px 16px",
@@ -1007,5 +1025,84 @@ export default function BillingPage() {
       </div>
 
     </div>
+
+      {/* ── Contact Sales Modal (shown when billing is not configured) ─── */}
+      {showContactModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(5,8,16,0.82)",
+            backdropFilter: "blur(10px)",
+            zIndex: 200,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowContactModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(135deg, #0f0d1f 0%, #1a1040 60%, #0a0e24 100%)",
+              border: "1px solid rgba(124,58,237,0.35)",
+              borderRadius: "20px",
+              padding: "40px",
+              maxWidth: "480px",
+              width: "90%",
+              position: "relative",
+              boxShadow: "0 24px 64px rgba(124,58,237,0.25)",
+            }}
+          >
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8), rgba(6,182,212,0.6), transparent)" }} />
+            <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "24px", letterSpacing: "-0.5px", color: "#fff", marginBottom: "12px" }}>
+              Enterprise Billing
+            </div>
+            <p style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "14px", color: "rgba(240,242,255,0.6)", lineHeight: 1.7, marginBottom: "28px" }}>
+              Billing is being activated on this server. To upgrade your plan, contact our enterprise team — we&apos;ll get you set up within one business day.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <a
+                href="mailto:enterprise@veldrixai.ca"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "13px 20px",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                  color: "#fff",
+                  fontFamily: "var(--vx-font-display)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>mail</span>
+                Contact Enterprise Sales
+              </a>
+              <button
+                onClick={() => setShowContactModal(false)}
+                style={{
+                  padding: "11px 20px",
+                  borderRadius: "12px",
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  color: "rgba(240,242,255,0.45)",
+                  fontFamily: "var(--vx-font-body)",
+                  fontWeight: 500,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }

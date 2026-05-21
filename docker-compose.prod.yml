@@ -167,7 +167,14 @@ services:
       - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:-}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_GROW_MONTHLY=${STRIPE_PRICE_GROW_MONTHLY:-}
+      - STRIPE_PRICE_GROW_ANNUAL=${STRIPE_PRICE_GROW_ANNUAL:-}
+      - STRIPE_PRICE_SCALE_MONTHLY=${STRIPE_PRICE_SCALE_MONTHLY:-}
+      - STRIPE_PRICE_SCALE_ANNUAL=${STRIPE_PRICE_SCALE_ANNUAL:-}
+      - VELDRIX_UI_URL=${VELDRIX_UI_URL:-https://app.veldrixai.ca}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
       - REDIS_URL=redis://redis:6379/0
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
     networks:
@@ -204,8 +211,11 @@ services:
     environment:
       - APP_ENV=production
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY required}}
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:?NVIDIA_API_KEY required}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
       - VELDRIX_AUTH_URL=http://veldrix-auth:8000
+      - VELDRIX_CONNECTORS_URL=http://veldrix-connectors:8002
+      - CONNECTORS_URL=http://veldrix-connectors:8002
       - REDIS_URL=redis://redis:6379/1
       - CIRCUIT_BREAKER_BACKEND=redis
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}

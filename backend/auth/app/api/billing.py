@@ -119,6 +119,29 @@ def _get_or_create_customer(stripe_module, user: User, db: Session) -> str:
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
 
+@router.get("/configured")
+def billing_configured():
+    """
+    Public endpoint — no auth required.
+    Returns whether Stripe billing is fully configured on this server.
+    Frontend uses this to gate checkout UI and show 'Contact Sales' if not configured.
+    """
+    secret_ok = bool(settings.STRIPE_SECRET_KEY)
+    prices_ok = all([
+        settings.STRIPE_PRICE_GROW_MONTHLY,
+        settings.STRIPE_PRICE_GROW_ANNUAL,
+        settings.STRIPE_PRICE_SCALE_MONTHLY,
+        settings.STRIPE_PRICE_SCALE_ANNUAL,
+    ])
+    publishable_ok = bool(settings.STRIPE_PUBLISHABLE_KEY)
+    return {
+        "configured": secret_ok and prices_ok and publishable_ok,
+        "stripe_active": secret_ok,
+        "prices_configured": prices_ok,
+        "publishable_key_set": publishable_ok,
+    }
+
+
 @router.get("/status", response_model=BillingStatus)
 def get_billing_status(
     current_user: User = Depends(get_current_user),

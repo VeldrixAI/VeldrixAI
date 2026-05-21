@@ -50,19 +50,23 @@ _HTTP_LIMITS = httpx.Limits(
     keepalive_expiry=60.0,
 )
 
-# Fast-fail probe timeout for the PRIMARY provider (priority=1, NVIDIA NIM).
-# Aggressive timeout to keep p95 under 500ms. If NIM doesn't respond in 150ms,
-# we route to Groq which typically responds in 40-80ms.
-# Production: set VELDRIX_PROBE_TIMEOUT_S=0.15 for sub-300ms p50.
-_PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "0.15"))
+# Per-provider timeout (seconds) overrides.
+# These cap the asyncio.wait_for budget per provider call in the sequential fallback.
+# Defaults match the provider config timeout_seconds (3s NIM, 2s Groq) but can be
+# raised via env vars if upstream latency is higher than expected.
+# IMPORTANT: do NOT set these below 2s — LLM inference typically takes 0.5–3s for
+# completion and aggressively short timeouts cause every call to degrade silently.
+_PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "10.0"))
 
-# Secondary provider timeout (Groq) - faster models, tighter budget
-_FALLBACK_TIMEOUT_S: float = float(os.environ.get("VELDRIX_FALLBACK_TIMEOUT_S", "0.25"))
+# Secondary provider timeout (Groq / other fast providers)
+_FALLBACK_TIMEOUT_S: float = float(os.environ.get("VELDRIX_FALLBACK_TIMEOUT_S", "12.0"))
 
-# Speculative execution: race primary and fallback simultaneously
-# When enabled, we start NIM and Groq calls at the same time, take the first response
-# This adds ~10-20ms overhead but guarantees sub-200ms p99 even when NIM is slow
-_SPECULATIVE_ENABLED: bool = os.environ.get("VELDRIX_SPECULATIVE_EXECUTION", "true").lower() == "true"
+# Speculative execution: race primary and fallback simultaneously.
+# Disabled by default — speculative execution provides marginal p95 gains but
+# doubles API cost and is counterproductive when both providers need >1s.
+# Enable via VELDRIX_SPECULATIVE_EXECUTION=true only if both providers reliably
+# respond in under 2s.
+_SPECULATIVE_ENABLED: bool = os.environ.get("VELDRIX_SPECULATIVE_EXECUTION", "false").lower() == "true"
 
 # ── Module-level connection pool (one client per provider) ───────────────────
 _clients: dict[str, httpx.AsyncClient] = {}
@@ -315,17 +319,17 @@ async def route_inference(
                 try:
                     content = await asyncio.wait_for(
                         _call_provider(primary, messages, temperature, max_tokens, model_override, pillar_name, 1),
-                        timeout=_PROBE_TIMEOUT_S,
+                        timeout=primary.timeout_seconds,
                     )
                     return content, primary.name
                 except Exception as e:
                     return None, e
-            
+
             async def _call_fallback():
                 try:
                     content = await asyncio.wait_for(
                         _call_provider(fallback, messages, temperature, max_tokens, model_override, pillar_name, 1),
-                        timeout=_FALLBACK_TIMEOUT_S,
+                        timeout=fallback.timeout_seconds,
                     )
                     return content, fallback.name
                 except Exception as e:
@@ -389,16 +393,12 @@ async def route_inference(
                     pillar_name=pillar_name,
                     attempt=attempt,
                 )
-                # Apply aggressive timeouts to ALL providers for p95 control.
-                # Primary (NIM): 150ms probe - fail fast to Groq
-                # Fallback (Groq): 250ms - tight budget, Groq is fast
-                # Tertiary: use provider timeout
-                if provider.priority == 1:
-                    content = await asyncio.wait_for(_call, timeout=_PROBE_TIMEOUT_S)
-                elif provider.priority == 2:
-                    content = await asyncio.wait_for(_call, timeout=_FALLBACK_TIMEOUT_S)
-                else:
-                    content = await _call
+                # Use the provider's configured timeout_seconds as the asyncio budget.
+                # The httpx client already enforces this at the socket level; the outer
+                # wait_for is a safety guard against stalled coroutines.
+                # Never override with the global probe/fallback values here — those are
+                # only for speculative-execution fast-fail and are intentionally short.
+                content = await asyncio.wait_for(_call, timeout=provider.timeout_seconds)
                 await _cb_record_success(provider.name)
                 return content, provider.name
 

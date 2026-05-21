@@ -58,15 +58,29 @@ function CheckoutInner() {
   const stripeRef = useRef<any>(null);
   const elementsRef = useRef<any>(null);
 
-  // Step 1 — create PaymentIntent on mount
+  // Step 1 — verify billing is configured, then create PaymentIntent
   useEffect(() => {
-    fetch("/api/billing/create-payment-intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan, cycle }),
-    })
+    fetch("/api/billing/configured")
       .then((r) => r.json())
+      .then((cfg) => {
+        if (!cfg.configured) {
+          setInitError(
+            "Billing is not yet active on this server. Please contact enterprise@veldrixai.ca to activate your subscription."
+          );
+          return;
+        }
+        return fetch("/api/billing/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan, cycle }),
+        });
+      })
+      .then((res) => {
+        if (!res) return; // billing not configured — error already set
+        return res.json();
+      })
       .then((data) => {
+        if (!data) return;
         if (data.client_secret && data.publishable_key) {
           setClientSecret(data.client_secret);
           setPubKey(data.publishable_key);
@@ -242,13 +256,31 @@ function CheckoutInner() {
               background: "rgba(244,63,94,0.08)",
               border: "1px solid rgba(244,63,94,0.25)",
               borderRadius: "12px",
-              padding: "14px 20px",
+              padding: "20px 24px",
               marginBottom: "24px",
-              color: "var(--vx-rose)",
               fontFamily: "var(--vx-font-body)",
               fontSize: "13px",
             }}>
-              {initError}
+              <p style={{ color: "var(--vx-rose)", margin: "0 0 14px" }}>{initError}</p>
+              <a
+                href="mailto:enterprise@veldrixai.ca"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 18px",
+                  borderRadius: "9px",
+                  background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: "11px",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                }}
+              >
+                Contact Enterprise Sales →
+              </a>
             </div>
           )}
 

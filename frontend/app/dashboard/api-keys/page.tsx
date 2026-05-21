@@ -64,7 +64,8 @@ export default function ApiKeysPage() {
       .then((r) => r.json())
       .then((data) => {
         const score = data.avg_trust_score;
-        setGovHealth(score != null ? Math.round(score) : null);
+        // avg_trust_score is 0-1; multiply to get a 0-100 percentage
+        setGovHealth(score != null ? Math.round(score * 100) : null);
       })
       .catch(() => {});
   }, []);
