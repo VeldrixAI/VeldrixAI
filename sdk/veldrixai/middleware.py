@@ -41,17 +41,15 @@ Fix — Flask unbounded thread spawning:
 from __future__ import annotations
 import asyncio
 import atexit
-import json
 import logging
 import threading as _threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Optional, Set
+from typing import Callable, Optional, Set
 
 from veldrixai.client import Veldrix
+from veldrixai.transport import DEFAULT_BASE_URL
 
 logger = logging.getLogger("veldrix.middleware")
-
-from veldrixai.transport import DEFAULT_BASE_URL
 
 # Strong-reference set for fire-and-forget middleware eval tasks.
 # asyncio.create_task() without storing the reference allows GC to collect the

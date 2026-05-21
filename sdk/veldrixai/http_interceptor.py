@@ -85,6 +85,7 @@ from veldrixai.transport import _MAX_PAYLOAD_CHARS
 
 if TYPE_CHECKING:
     from veldrixai.client import Veldrix
+    from veldrixai.models import GuardConfig
 
 logger = logging.getLogger("veldrix.interceptor.http")
 

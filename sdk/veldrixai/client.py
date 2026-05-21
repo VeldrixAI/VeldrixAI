@@ -9,12 +9,11 @@ The single object developers instantiate. Provides:
 """
 
 from __future__ import annotations
-import asyncio
 import functools
 import inspect
 import logging
 import os
-from typing import Any, Callable, Optional, overload
+from typing import Callable, Optional, overload
 
 from veldrixai.models      import GuardedResponse, TrustResult, GuardConfig
 from veldrixai.transport   import Transport, DEFAULT_BASE_URL

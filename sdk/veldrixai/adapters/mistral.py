@@ -1,6 +1,5 @@
 """Mistral AI SDK adapter."""
-from typing import Any, Optional
-from veldrixai.adapters.openai import extract_prompt
+from typing import Any
 
 
 def extract_response(result: Any) -> str:
