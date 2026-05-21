@@ -1024,9 +1024,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-    </div>
 
-      {/* ── Contact Sales Modal (shown when billing is not configured) ─── */}
+      {/* ── Contact Sales Modal (position:fixed — inside root div is fine) ── */}
       {showContactModal && (
         <div
           style={{
@@ -1104,5 +1103,7 @@ export default function BillingPage() {
           </div>
         </div>
       )}
+
+    </div>
   );
 }
