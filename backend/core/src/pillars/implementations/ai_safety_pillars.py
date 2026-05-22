@@ -18,6 +18,7 @@ Architecture:
 
 from __future__ import annotations
 
+import asyncio  # noqa: F401  — kept for test-mock target (patch asyncio.sleep via this namespace)
 import json
 import logging
 import os
