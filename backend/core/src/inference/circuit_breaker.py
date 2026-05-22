@@ -141,7 +141,7 @@ def get_all_states() -> Dict[str, str]:
 # When the Redis backend is initialised, these delegate to it.
 # Otherwise they wrap the synchronous in-process implementation.
 
-from typing import Optional as _Optional, TYPE_CHECKING as _TYPE_CHECKING
+from typing import Optional as _Optional, TYPE_CHECKING as _TYPE_CHECKING  # noqa: E402
 if _TYPE_CHECKING:
     from src.inference.circuit_breaker_redis import RedisCircuitBreaker
 

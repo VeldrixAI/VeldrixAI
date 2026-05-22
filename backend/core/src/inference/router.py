@@ -24,7 +24,6 @@ from typing import Optional
 
 import httpx
 
-from src.inference import circuit_breaker
 from src.inference.circuit_breaker import (
     async_is_available as _cb_is_available,
     async_record_success as _cb_record_success,

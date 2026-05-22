@@ -1,8 +1,14 @@
 """Core domain types for AI output safety evaluation."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from src.types.scoring import SafetyScore
+    from src.pillars.types import PillarResult
 
 
 @dataclass

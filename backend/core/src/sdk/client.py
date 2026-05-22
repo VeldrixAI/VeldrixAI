@@ -63,7 +63,6 @@ async def _run_pillar_with_slot(
     Never raises — always returns a PillarResult.
     """
     start = time.perf_counter()
-    timed_out = False
     try:
         result = await asyncio.wait_for(coro, timeout=slot_ms / 1000.0)
         elapsed_ms = int((time.perf_counter() - start) * 1000)
@@ -71,7 +70,6 @@ async def _run_pillar_with_slot(
             collector.record_pillar(name, elapsed_ms, timed_out=False)
         return result
     except asyncio.TimeoutError:
-        timed_out = True
         elapsed_ms = slot_ms  # consumed the full slot
         if collector:
             collector.record_pillar(name, elapsed_ms, timed_out=True)

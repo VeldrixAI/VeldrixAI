@@ -175,7 +175,7 @@ async def evaluate_trust(
     report.execution_time_ms = round(execution_time, 2)
     asyncio.create_task(_record_latency(user_id, execution_time))
 
-    logger.info(f"AI safety evaluation completed", extra={
+    logger.info("AI safety evaluation completed", extra={
         "request_id": report.request_id,
         "entity_id": report.entity_id,
         "model": input_data.model,

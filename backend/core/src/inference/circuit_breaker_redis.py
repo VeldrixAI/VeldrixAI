@@ -147,7 +147,7 @@ class RedisCircuitBreaker:
         self._key_ttl = recovery_timeout * 3
         self._fallback_after = fallback_after
 
-        self._client: Optional["redis.asyncio.Redis"] = None  # type: ignore[name-defined]
+        self._client: Optional["redis.asyncio.Redis"] = None  # type: ignore[name-defined]  # noqa: F821
         self._sha_failure: Optional[str] = None
         self._sha_success: Optional[str] = None
         self._sha_availability: Optional[str] = None
@@ -176,7 +176,7 @@ class RedisCircuitBreaker:
 
     # ── Redis client lifecycle ────────────────────────────────────────────────
 
-    async def _get_client(self) -> "redis.asyncio.Redis":  # type: ignore[name-defined]
+    async def _get_client(self) -> "redis.asyncio.Redis":  # type: ignore[name-defined]  # noqa: F821
         if self._client is None:
             import redis.asyncio as aioredis  # type: ignore[import]
             self._client = aioredis.from_url(

@@ -1,8 +1,13 @@
 """Pillar-specific types and result models for AI safety evaluation."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from src.types.scoring import SafetyScore
 
 
 class PillarStatus(Enum):

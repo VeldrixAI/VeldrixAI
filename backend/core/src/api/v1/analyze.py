@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.v1.dependencies import get_sdk, require_api_key
 from src.sdk.client import VeldrixSDK
-from src.sdk.models import AnalysisRequest, AnalysisResult
+from src.sdk.models import AnalysisRequest
 
 router = APIRouter(prefix="/api/v1", tags=["Analysis"])
 logger = logging.getLogger("veldrix.api")
@@ -171,7 +171,7 @@ async def health_providers() -> dict:
       degraded — exactly 1 provider CLOSED
       critical — 0 providers CLOSED
     """
-    from src.inference.providers import get_active_providers, PROVIDER_REGISTRY  # noqa: PLC0415
+    from src.inference.providers import get_active_providers  # noqa: PLC0415
     from src.inference import circuit_breaker                                     # noqa: PLC0415
 
     _ALL_KNOWN = {"nvidia_nim", "groq", "bedrock", "oss_fallback"}

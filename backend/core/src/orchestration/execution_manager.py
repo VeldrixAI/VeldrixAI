@@ -3,7 +3,6 @@
 import asyncio
 import logging
 from typing import Dict, List
-from datetime import datetime
 
 from src.pillars.pillar_engine import PillarEngine
 from src.pillars.types import PillarResult, PillarStatus, PillarError

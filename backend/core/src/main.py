@@ -10,23 +10,23 @@ from dotenv import load_dotenv
 # Load .env before any module reads os.getenv — must happen before all local imports
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from src.api.trust_controller import router as trust_router
-from src.api.v1.analyze import router as analyze_v1_router
-from src.api.internal import router as internal_router
-from src.core.sse import router as sse_router
-from src.core.startup import warmup, shutdown
-from src.middlewares.error_handler import (
+from src.api.trust_controller import router as trust_router  # noqa: E402
+from src.api.v1.analyze import router as analyze_v1_router  # noqa: E402
+from src.api.internal import router as internal_router  # noqa: E402
+from src.core.sse import router as sse_router  # noqa: E402
+from src.core.startup import warmup, shutdown  # noqa: E402
+from src.middlewares.error_handler import (  # noqa: E402
     validation_exception_handler,
     generic_exception_handler,
 )
-from src.middleware.latency_budget import LatencyBudgetMiddleware
-from src.telemetry.latency_collector import LatencyCollector
-from src.telemetry.adaptive_tuner import run_adaptive_tuner
-from src.evaluation.background_worker import BackgroundEvaluationWorker
+from src.middleware.latency_budget import LatencyBudgetMiddleware  # noqa: E402
+from src.telemetry.latency_collector import LatencyCollector  # noqa: E402
+from src.telemetry.adaptive_tuner import run_adaptive_tuner  # noqa: E402
+from src.evaluation.background_worker import BackgroundEvaluationWorker  # noqa: E402
 
 
 logging.basicConfig(
