@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, status
 
 from src.core.http_pool import get_internal_client
@@ -81,14 +81,22 @@ async def _record_audit_trail(
             if result.flags:
                 all_flags.extend(result.flags)
         
-        # Derive verdict from composite score and flags (business rules)
-        # This ensures consistent verdict logic across all code paths
-        if composite_score >= 0.85 and not all_flags:
-            verdict = "ALLOW"
-        elif composite_score >= 0.60 and not all_flags:
-            verdict = "WARN"
-        elif all_flags:
+        # Derive verdict: score is the primary signal.
+        # Only hard safety violations (injection, explicit content, critical policy) force BLOCK
+        # regardless of aggregate score — informational flags (uncertain_claims, etc.) do not.
+        _BLOCK_TRIGGERS = {
+            "content_unsafe", "explicit_content_detected",
+            "prompt_injection_detected",
+            "policy_violation_critical", "policy_violation_high",
+        }
+        block_flags = [f for f in all_flags if f in _BLOCK_TRIGGERS]
+
+        if block_flags or composite_score < 0.40:
             verdict = "BLOCK"
+        elif composite_score >= 0.85:
+            verdict = "ALLOW"
+        elif composite_score >= 0.60:
+            verdict = "WARN"
         else:
             verdict = "REVIEW"
         
@@ -254,7 +262,7 @@ async def evaluate_trust(
         data=response_data,
         metadata={
             "request_id": report.request_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "execution_time_ms": execution_time,
             "composite_trust_score": composite_trust_score,
             "cache_hit": cache_hit,

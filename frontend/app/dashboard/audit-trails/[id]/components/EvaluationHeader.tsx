@@ -16,7 +16,11 @@ const VERDICT_COLORS: Record<string, string> = {
 
 function fmtTs(ts: string | null) {
   if (!ts) return "—";
-  return new Date(ts).toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  return new Date(ts).toLocaleString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    timeZoneName: "short",
+  });
 }
 
 function fmtRelative(ts: string | null): string {

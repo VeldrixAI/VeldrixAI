@@ -36,12 +36,15 @@ const VERDICT_STYLE: Record<string, { bg: string; border: string; color: string 
 };
 
 function fmtTs(ts: string) {
-  const d = new Date(ts);
-  return d.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  return new Date(ts).toLocaleString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    timeZoneName: "short",
+  });
 }
 
 function fmtShort(ts: string) {
-  return new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default function AuditTrailsPage() {
@@ -455,10 +458,10 @@ export default function AuditTrailsPage() {
                           {m.overallScore != null ? (
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                               <div style={{ width: "50px", height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
-                                <div style={{ width: `${m.overallScore * 100}%`, height: "100%", background: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e", borderRadius: "2px" }}/>
+                                <div style={{ width: `${m.overallScore}%`, height: "100%", background: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e", borderRadius: "2px" }}/>
                               </div>
-                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e" }}>
-                                {(m.overallScore * 100).toFixed(1)}%
+                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e" }}>
+                                {m.overallScore.toFixed(1)}%
                               </span>
                             </div>
                           ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
@@ -678,7 +681,7 @@ export default function AuditTrailsPage() {
                     { key: "Action", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}>{selected.action_type.replace(/_/g, " ")}</span> },
                     m.requestId ? { key: "Request ID", value: <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", wordBreak: "break-all" }}>{m.requestId}</code> } : null,
                     (vs && m.verdict) ? { key: "Verdict", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color }}>{m.verdict}</span> } : null,
-                    m.overallScore != null ? { key: "Trust Score", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "14px", color: m.overallScore >= 0.85 ? "#10b981" : m.overallScore >= 0.6 ? "#f59e0b" : "#f43f5e" }}>{(m.overallScore * 100).toFixed(1)}%</span> } : null,
+                    m.overallScore != null ? { key: "Trust Score", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "14px", color: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e" }}>{m.overallScore.toFixed(1)}%</span> } : null,
                     m.totalLatencyMs != null ? { key: "Latency", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "rgba(240,242,255,0.7)" }}>{m.totalLatencyMs}ms</span> } : null,
                     m.sdkVersion ? { key: "SDK Version", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{m.sdkVersion}</span> } : null,
                     { key: "Timestamp", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{fmtTs(selected.created_at)}</span> },

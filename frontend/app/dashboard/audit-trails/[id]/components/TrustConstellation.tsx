@@ -99,8 +99,8 @@ export default function TrustConstellation({
     };
   });
 
-  // Weighted trust score (0-1 → 0-100 for display)
-  const displayScore = trustScore != null ? Math.round(trustScore * 100) : null;
+  // trustScore arrives as 0-100 (already converted by backend serializer)
+  const displayScore = trustScore != null ? Math.round(trustScore) : null;
   const scoreColor =
     displayScore == null      ? "#06B6D4"
     : displayScore >= 85      ? "#10B981"
