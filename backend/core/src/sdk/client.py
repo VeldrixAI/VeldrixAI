@@ -46,7 +46,7 @@ from src.sdk.models import (
 from src.sdk.telemetry import SDKTelemetry
 
 if TYPE_CHECKING:
-    from src.config.latency_tiers import LatencyBudget, PillarSlots
+    from src.config.latency_tiers import LatencyBudget
     from src.telemetry.latency_collector import LatencyCollector
 
 logger = logging.getLogger("veldrix.sdk")
