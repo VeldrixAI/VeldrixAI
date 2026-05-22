@@ -4,29 +4,21 @@ POST /api/v1/analyze — VeldrixAI trust analysis endpoint.
 Single entry point for all trust evaluations.  Runs all five pillars in
 parallel and returns a unified AnalysisResult with per-pillar breakdown.
 
-Latency governor:
-  LatencyBudgetMiddleware attaches a LatencyBudget to request.state before
-  this handler runs.  The budget carries the SLA tier and per-pillar slot
-  allocations.  When background=True the evaluation is queued via
-  BackgroundEvaluationWorker and this handler returns in <10 ms.
+Latency governing:
+  - LatencyBudgetMiddleware attaches a LatencyBudget to request.state
+  - The SDK client always applies a hard total-budget timeout (500ms default)
+  - Latency is recorded synchronously inside sdk.analyze() — every request
+    creates exactly one row in request_latency (via connectors HTTP API)
 
-Latency recording (v2.0):
-  Every successful SDK evaluation produces a latency record in the
-  request_latency table (via fire-and-forget task with strong reference).
-  This ensures the dashboard's avg / p95 metrics reflect real SDK traffic.
-  Failures are logged at WARNING level so they are visible in production.
+  This file is a thin route handler.  All latency logic lives in client.py.
 """
 from __future__ import annotations
 
-import asyncio
 import logging
-import time
-from typing import Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.v1.dependencies import get_sdk, require_api_key
-from src.core.http_pool import get_internal_client
 from src.sdk.client import VeldrixSDK
 from src.sdk.models import AnalysisRequest
 
@@ -41,25 +33,6 @@ _PLAN_QUOTAS: dict[str, int] = {
     "enterprise": -1,
 }
 
-# Strong-reference set for fire-and-forget latency recording tasks.
-# Prevents GC from collecting the task before it runs (same pattern as
-# middleware.py's _MIDDLEWARE_TASKS and http_interceptor.py's _INTERCEPT_TASKS).
-_LATENCY_TASKS: Set[asyncio.Task] = set()
-
-_CONNECTORS_URL: Optional[str] = None
-
-
-def _get_connectors_url() -> str:
-    """Lazy-resolve the connectors service URL (cached after first read)."""
-    global _CONNECTORS_URL
-    if _CONNECTORS_URL is None:
-        import os
-        _CONNECTORS_URL = os.getenv(
-            "VELDRIX_CONNECTORS_URL",
-            os.getenv("CONNECTORS_URL", "http://localhost:8002"),
-        )
-    return _CONNECTORS_URL
-
 
 @router.post(
     "/analyze",
@@ -69,8 +42,8 @@ def _get_connectors_url() -> str:
         "Submits a prompt+response pair through all five VeldrixAI trust pillars "
         "(Safety, Hallucination, Bias, Prompt Security, Compliance) in parallel "
         "and returns a unified TrustScore with per-pillar breakdown.\n\n"
-        "Set `background: true` in the request body (or X-Veldrix-SLA-Tier: BACKGROUND) "
-        "to return immediately while evaluation runs asynchronously."
+        "Latency is always bounded by a hard total-budget timeout (500ms default). "
+        "Set `background: true` to return immediately."
     ),
 )
 async def analyze(
@@ -80,7 +53,6 @@ async def analyze(
     sdk:     VeldrixSDK = Depends(get_sdk),
     caller:  dict       = Depends(require_api_key),
 ):
-    request_start = time.monotonic()
     user_id = caller.get("user_id")
 
     # ── Quota enforcement ─────────────────────────────────────────────────────
@@ -102,7 +74,6 @@ async def analyze(
     collector = getattr(http_request.app.state, "latency_collector", None)
     bg_worker = getattr(http_request.app.state, "background_worker", None)
 
-    # Determine whether this is a background request
     is_background = (
         payload.background
         or (budget is not None and budget.background_mode)
@@ -127,8 +98,9 @@ async def analyze(
         }
 
     # ── SYNC MODE — evaluate within budget ───────────────────────────────────
+    # Latency recording and timeout enforcement happen inside sdk.analyze().
     try:
-        result = await sdk.analyze(
+        return await sdk.analyze(
             payload,
             user_id=user_id,
             actor_email=caller.get("email"),
@@ -137,74 +109,17 @@ async def analyze(
             request_id=getattr(http_request.state, "request_id", None),
             emit_diagnostics=debug,
         )
-
-        # ── Record latency to connectors (fire-and-forget with strong ref) ────
-        # Every successful SDK call records its total_latency_ms so the
-        # dashboard's avg/p95 SLA metrics include SDK evaluation times.
-        elapsed_ms = round((time.monotonic() - request_start) * 1000)
-        if user_id and elapsed_ms > 0:
-            _fire_latency_record(user_id, "/api/v1/analyze", float(elapsed_ms))
-
-        return result
-
     except Exception as exc:
-        # Even on failure, record the latency so the dashboard shows the error
-        elapsed_ms = round((time.monotonic() - request_start) * 1000)
-        if user_id and elapsed_ms > 0:
-            _fire_latency_record(user_id, "/api/v1/analyze", float(elapsed_ms), status_code=500)
-
-        logger.error("analyze endpoint unhandled error: %s", exc, exc_info=True)
+        logger.error(
+            "VELDRIX_ANALYZE_ERROR user=%s error=%s",
+            user_id, exc, exc_info=True,
+        )
         raise HTTPException(status_code=500, detail="Internal analysis error")
-
-
-def _fire_latency_record(user_id: str, endpoint: str, latency_ms: float, status_code: int = 200) -> None:
-    """Fire-and-forget latency POST to connectors with strong task reference.
-
-    Uses the same strong-reference pattern as ASGI middleware and HTTP
-    interceptor to prevent GC from collecting the task before it runs.
-    """
-    connectors_url = _get_connectors_url()
-    latency_url = f"{connectors_url}/internal/latency"
-
-    async def _record():
-        try:
-            client = get_internal_client()
-            resp = await client.post(
-                latency_url,
-                json={
-                    "user_id": user_id,
-                    "endpoint": endpoint,
-                    "latency_ms": latency_ms,
-                    "status_code": status_code,
-                },
-            )
-            if resp.status_code >= 400:
-                logger.warning(
-                    "latency_record_failed status=%d user=%s endpoint=%s ms=%.1f",
-                    resp.status_code, user_id, endpoint, latency_ms,
-                )
-            else:
-                logger.debug(
-                    "latency_recorded user=%s endpoint=%s ms=%.1f",
-                    user_id, endpoint, latency_ms,
-                )
-        except Exception as exc:
-            logger.warning(
-                "latency_record_error user=%s endpoint=%s ms=%.1f error=%s",
-                user_id, endpoint, latency_ms, exc,
-            )
-
-    task = asyncio.create_task(_record())
-    _LATENCY_TASKS.add(task)
-    task.add_done_callback(_LATENCY_TASKS.discard)
 
 
 # ── Health and metadata endpoints ─────────────────────────────────────────────
 
-@router.get(
-    "/pillars",
-    summary="List all trust pillars and their weights",
-)
+@router.get("/pillars", summary="List all trust pillars and their weights")
 async def list_pillars() -> dict:
     return {
         "pillars": [
@@ -217,25 +132,16 @@ async def list_pillars() -> dict:
     }
 
 
-@router.get(
-    "/health",
-    summary="SDK and NIM connectivity health check",
-)
+@router.get("/health", summary="SDK and NIM connectivity health check")
 async def health(sdk: VeldrixSDK = Depends(get_sdk)) -> dict:
-    return {
-        "status":      "ok",
-        "sdk_version": sdk.VERSION,
-        "nim_base_url": "configured",
-    }
+    return {"status": "ok", "sdk_version": sdk.VERSION, "nim_base_url": "configured"}
 
 
-@router.get(
-    "/health/providers",
-    summary="Multi-provider inference health and circuit-breaker state",
-)
+@router.get("/health/providers", summary="Multi-provider inference health and circuit-breaker state")
 async def health_providers() -> dict:
     from src.inference.providers import get_active_providers
     from src.inference import circuit_breaker
+    from datetime import datetime, timezone
 
     _ALL_KNOWN = {"nvidia_nim", "groq", "bedrock", "oss_fallback"}
     active_names = {p.name for p in get_active_providers()}
@@ -251,19 +157,9 @@ async def health_providers() -> dict:
         1 for name in active_names
         if circuit_breaker._get_circuit(name).state.value == "CLOSED"
     )
+    status = "healthy" if closed_count >= 2 else ("degraded" if closed_count == 1 else "critical")
+    evaluation_capable = any(circuit_breaker.is_available(name) for name in active_names)
 
-    if closed_count >= 2:
-        status = "healthy"
-    elif closed_count == 1:
-        status = "degraded"
-    else:
-        status = "critical"
-
-    evaluation_capable = any(
-        circuit_breaker.is_available(name) for name in active_names
-    )
-
-    from datetime import datetime, timezone
     return {
         "status": status,
         "active_providers": sorted(active_names),
@@ -273,10 +169,7 @@ async def health_providers() -> dict:
     }
 
 
-@router.get(
-    "/health/circuit-breaker",
-    summary="Distributed circuit breaker state across all providers",
-)
+@router.get("/health/circuit-breaker", summary="Distributed circuit breaker state across all providers")
 async def health_circuit_breaker() -> dict:
     from src.inference.providers import get_active_providers
     from src.inference import circuit_breaker as cb
