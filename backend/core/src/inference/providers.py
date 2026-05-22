@@ -47,8 +47,8 @@ def _build_registry() -> list[ProviderConfig]:
             api_key_env="NVIDIA_API_KEY",
             model_id=os.environ.get("NVIDIA_MODEL_ID", "meta/llama-3.1-70b-instruct"),
             priority=1,
-            timeout_seconds=float(os.environ.get("NVIDIA_TIMEOUT_S", "30.0")),
-            max_retries=2,
+            timeout_seconds=float(os.environ.get("NVIDIA_TIMEOUT_S", "4.0")),
+            max_retries=1,
             supports_json_mode=False,
             health_endpoint=None,
         ))
@@ -64,8 +64,8 @@ def _build_registry() -> list[ProviderConfig]:
             api_key_env="GROQ_API_KEY",
             model_id=os.environ.get("GROQ_MODEL_ID", "llama-3.3-70b-versatile"),
             priority=2,
-            timeout_seconds=float(os.environ.get("GROQ_TIMEOUT_S", "30.0")),
-            max_retries=2,
+            timeout_seconds=float(os.environ.get("GROQ_TIMEOUT_S", "8.0")),
+            max_retries=1,
             supports_json_mode=True,
             health_endpoint=None,
         ))

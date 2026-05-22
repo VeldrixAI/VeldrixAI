@@ -7,7 +7,7 @@ from typing import Dict, List
 from src.pillars.pillar_engine import PillarEngine
 from src.pillars.types import PillarResult, PillarStatus, PillarError
 from src.domain.types import TrustEvaluationInput, TrustEvaluationContext
-from src.types.scoring import TrustScore
+from src.types.scoring import TrustScore, RiskLevel
 
 
 logger = logging.getLogger(__name__)
@@ -140,14 +140,12 @@ class ExecutionManager:
         error_message: str,
         execution_time: float
     ) -> PillarResult:
-        """Create a failed PillarResult."""
+        """Return a degraded PillarResult — score=50, PARTIAL, never null score."""
         return PillarResult(
             metadata=pillar.metadata,
-            status=PillarStatus.FAILED,
-            score=None,
+            status=PillarStatus.PARTIAL,
+            score=TrustScore(value=50.0, confidence=0.3, risk_level=RiskLevel.REVIEW_REQUIRED),
             execution_time_ms=execution_time,
-            error=PillarError(
-                code=error_code,
-                message=error_message
-            )
+            flags=[f"pillar_{error_code.lower()}"],
+            error=PillarError(code=error_code, message=error_message),
         )

@@ -42,7 +42,7 @@ function mapAuditRow(r: AuditRecord) {
   } else if (verdict === "REVIEW" || verdict === "WARN") {
     status = "FLAGGED"; riskLabel = "ELEVATED"; score = rawScore ?? 0.62;
   } else {
-    status = "PASSED"; riskLabel = rawScore != null && rawScore > 0.45 ? "ELEVATED" : "LOW";
+    status = "PASSED"; riskLabel = rawScore != null && rawScore < 0.70 ? "ELEVATED" : "LOW";
     score = rawScore ?? 0.09;
   }
   const ts = r.created_at

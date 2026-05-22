@@ -37,7 +37,7 @@ class OrchestrationEngine:
     def __init__(
         self,
         registry: PillarRegistry,
-        execution_timeout: float = 8.0,
+        execution_timeout: float = 10.0,
         min_pillars_required: int = 1
     ):
         """

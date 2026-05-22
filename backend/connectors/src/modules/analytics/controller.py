@@ -148,11 +148,16 @@ async def get_sdk_stats(
                 pillar_totals[pillar].append(score)
         ts = meta.get("timestamp")
         if ts:
-            from datetime import datetime as dt
-            day = dt.fromtimestamp(ts).strftime("%Y-%m-%d")
-            daily_counts[day] = daily_counts.get(day, 0) + 1
-        total_latency += meta.get("total_latency_ms", 0)
-        score_sum += meta.get("overall_score", 0)
+            try:
+                if isinstance(ts, (int, float)):
+                    day = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                else:
+                    day = datetime.fromisoformat(str(ts)).strftime("%Y-%m-%d")
+                daily_counts[day] = daily_counts.get(day, 0) + 1
+            except (TypeError, ValueError):
+                pass
+        total_latency += meta.get("total_latency_ms") or 0
+        score_sum += meta.get("overall_score") or 0
 
     return {
         "total_requests": total,
