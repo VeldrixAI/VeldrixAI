@@ -7,6 +7,9 @@ from app.services.api_key_service import ApiKeyService
 from app.core.dependencies import get_current_user
 from typing import List
 from uuid import UUID
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 
@@ -73,4 +76,29 @@ def update_api_key(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found"
         )
+    return api_key
+
+
+@router.post("/{key_id}/activate", response_model=ApiKeyResponse)
+def activate_api_key(
+    key_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Reactivate a previously deactivated API key.
+    
+    Only keys that exist and belong to the authenticated user can be reactivated.
+    Permanently deleted keys cannot be revived.
+    
+    After activation, only SDK requests authenticated with this key will be
+    connected to the trust evaluation pipeline — inactive keys are rejected
+    at the auth gateway before any pillar evaluation begins.
+    """
+    api_key = ApiKeyService.activate_api_key(db, key_id, current_user.id)
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found or was permanently deleted"
+        )
+    logger.info("API key %s reactivated by user %s", api_key.id, current_user.id)
     return api_key

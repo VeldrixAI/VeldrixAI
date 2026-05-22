@@ -9,6 +9,13 @@ Latency governor integration:
   timeouts.  Without a budget the original unbounded behaviour is preserved
   (backward compatible).  Telemetry is emitted to the LatencyCollector
   singleton when one is supplied.
+
+Diagnostics (v2.0):
+  - LATENCY_PROFILE log at INFO for every evaluation with pillar breakdown
+  - LATENCY_SLA_BREACH warning when ANY pillar exceeds 250ms (threshold
+    calibrated for STANDARD tier 250ms slots)
+  - structured timing stages in the result for debug mode
+  - per-pillar timeout recovery with EVALUATION_TIMEOUT flag
 """
 from __future__ import annotations
 
@@ -48,6 +55,9 @@ _WEIGHTS: dict[str, float] = {
 # Ordered list matching asyncio.gather() call order
 _PILLAR_NAMES = ["safety", "hallucination", "bias", "prompt_security", "compliance"]
 
+# SLA breach threshold for individual pillars (250ms = STANDARD slot size)
+_PILLAR_SLA_MS = 250
+
 
 async def _run_pillar_with_slot(
     name: str,
@@ -61,20 +71,31 @@ async def _run_pillar_with_slot(
     On TimeoutError: returns a PillarResult with status=ERROR, score=None,
     and the EVALUATION_TIMEOUT flag.  The collector records the timed-out sample.
     Never raises — always returns a PillarResult.
+
+    If slot_ms <= 0, uses a minimum of 10ms guard so asyncio.wait_for does not
+    immediately cancel the coroutine with a non-positive timeout.
     """
+    effective_slot = max(slot_ms, 10)
     start = time.perf_counter()
     try:
-        result = await asyncio.wait_for(coro, timeout=slot_ms / 1000.0)
+        result = await asyncio.wait_for(coro, timeout=effective_slot / 1000.0)
         elapsed_ms = int((time.perf_counter() - start) * 1000)
         if collector:
             collector.record_pillar(name, elapsed_ms, timed_out=False)
+        # Log SLA breach warning when pillar exceeds the 250ms threshold
+        if elapsed_ms > _PILLAR_SLA_MS:
+            logger.warning(
+                "LATENCY_SLA_BREACH pillar=%s ms=%d threshold=%d slot_ms=%d",
+                name, elapsed_ms, _PILLAR_SLA_MS, slot_ms,
+            )
         return result
     except asyncio.TimeoutError:
         elapsed_ms = slot_ms  # consumed the full slot
         if collector:
             collector.record_pillar(name, elapsed_ms, timed_out=True)
         logger.warning(
-            "veldrix.pillar.timeout pillar=%s slot_ms=%d", name, slot_ms
+            "veldrix.pillar.timeout pillar=%s slot_ms=%d elapsed_budget=%d",
+            name, slot_ms, elapsed_ms,
         )
         return PillarResult(
             pillar=name,
@@ -85,17 +106,35 @@ async def _run_pillar_with_slot(
             error=f"Pillar exceeded {slot_ms} ms slot",
             latency_ms=elapsed_ms,
         )
-    except Exception as exc:
+    except asyncio.CancelledError:
+        # Event loop is shutting down — return degraded result without re-raising
         elapsed_ms = int((time.perf_counter() - start) * 1000)
-        if collector:
-            collector.record_pillar(name, elapsed_ms, timed_out=False)
         logger.error(
-            "veldrix.pillar.error pillar=%s error=%s", name, exc
+            "veldrix.pillar.cancelled pillar=%s elapsed_ms=%d",
+            name, elapsed_ms,
         )
         return PillarResult(
             pillar=name,
             status=PillarStatus.ERROR,
             score=None,
+            confidence=0.0,
+            flags=["EVALUATION_CANCELLED"],
+            error="Pillar evaluation was cancelled (event loop shutdown?)",
+            latency_ms=elapsed_ms,
+        )
+    except Exception as exc:
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        if collector:
+            collector.record_pillar(name, elapsed_ms, timed_out=False)
+        logger.error(
+            "veldrix.pillar.error pillar=%s error=%s elapsed_ms=%d",
+            name, exc, elapsed_ms,
+        )
+        return PillarResult(
+            pillar=name,
+            status=PillarStatus.ERROR,
+            score=None,
+            confidence=0.0,
             flags=["EVALUATION_ERROR"],
             error=str(exc)[:200],
             latency_ms=elapsed_ms,
@@ -114,8 +153,6 @@ class VeldrixSDK:
     VERSION = "1.0.0"
 
     def __init__(self, http_client: Optional[httpx.AsyncClient] = None):
-        # http_client is accepted for API compatibility and passed to pillar
-        # functions, but pillar implementations use NIMClientRegistry internally.
         self._http      = http_client
         self._telemetry = SDKTelemetry()
 
@@ -144,13 +181,10 @@ class VeldrixSDK:
             request_id = str(uuid.uuid4())
         started_at = time.monotonic()
 
+        budget_tier = budget.tier if budget else "STANDARD"
         logger.info(
-            "veldrix.analyze.start",
-            extra={
-                "request_id": request_id,
-                "prompt_len": len(request.prompt),
-                "tier": budget.tier if budget else "unbounded",
-            },
+            "veldrix.analyze.start request_id=%s prompt_len=%d tier=%s",
+            request_id, len(request.prompt), budget_tier,
         )
 
         slots = budget.pillar_slots if budget else None
@@ -159,43 +193,14 @@ class VeldrixSDK:
         _t = {"start": time.monotonic()}
 
         # ── Build per-pillar coroutines ────────────────────────────────────────
-        # If a budget is supplied, wrap each coroutine in _run_pillar_with_slot
-        # so it has an independent asyncio timeout.  All five run concurrently
-        # via gather — wall time ≈ max(slot_values), not sum(slot_values).
         if slots:
             coros = [
-                _run_pillar_with_slot(
-                    "safety",
-                    _pillars.run_safety(request, self._http),
-                    slots.safety_ms,
-                    collector,
-                ),
-                _run_pillar_with_slot(
-                    "hallucination",
-                    _pillars.run_hallucination(request, self._http),
-                    slots.hallucination_ms,
-                    collector,
-                ),
-                _run_pillar_with_slot(
-                    "bias",
-                    _pillars.run_bias(request, self._http),
-                    slots.bias_ms,
-                    collector,
-                ),
-                _run_pillar_with_slot(
-                    "prompt_security",
-                    _pillars.run_prompt_security(request, self._http),
-                    slots.prompt_security_ms,
-                    collector,
-                ),
-                _run_pillar_with_slot(
-                    "compliance",
-                    _pillars.run_compliance(request, self._http),
-                    slots.compliance_ms,
-                    collector,
-                ),
+                _run_pillar_with_slot("safety",          _pillars.run_safety(request, self._http),          slots.safety_ms,          collector),
+                _run_pillar_with_slot("hallucination",   _pillars.run_hallucination(request, self._http),   slots.hallucination_ms,   collector),
+                _run_pillar_with_slot("bias",            _pillars.run_bias(request, self._http),            slots.bias_ms,            collector),
+                _run_pillar_with_slot("prompt_security", _pillars.run_prompt_security(request, self._http), slots.prompt_security_ms, collector),
+                _run_pillar_with_slot("compliance",      _pillars.run_compliance(request, self._http),      slots.compliance_ms,      collector),
             ]
-            # _run_pillar_with_slot never raises — return_exceptions=False is safe
             _t["pillar_dispatch_start"] = time.monotonic()
             raw_results = await asyncio.gather(*coros, return_exceptions=False)
             _t["pillar_dispatch_end"] = time.monotonic()
@@ -218,8 +223,8 @@ class VeldrixSDK:
             if isinstance(raw, Exception):
                 # Only reachable on the legacy path (return_exceptions=True)
                 logger.error(
-                    "veldrix.pillar.error",
-                    extra={"pillar": name, "error": str(raw), "request_id": request_id},
+                    "veldrix.pillar.error pillar=%s error=%s request_id=%s",
+                    name, raw, request_id,
                 )
                 pillar_results[name] = PillarResult(
                     pillar=name,
@@ -258,10 +263,11 @@ class VeldrixSDK:
         timings = {
             "pillar_dispatch_ms":  pillar_dispatch_ms,
             "enforcement_ms":      enforcement_ms,
-            "response_assembly_ms": 0,   # updated below after assembly
-            "audit_enqueue_ms":    0,    # fire-and-forget
+            "response_assembly_ms": 0,
+            "audit_enqueue_ms":    0,
             "total_ms":            elapsed_ms,
             "per_pillar_ms":       per_pillar_ms,
+            "budget_tier":         budget_tier,
         }
 
         _t["assembly_start"] = time.monotonic()
@@ -271,7 +277,7 @@ class VeldrixSDK:
             pillars=pillar_results,
             total_latency_ms=elapsed_ms,
             sdk_version=self.VERSION,
-            budget_tier=budget.tier if budget else "STANDARD",
+            budget_tier=budget_tier,
             degraded=len(timed_out_pillars) > 0,
             pillars_timed_out=timed_out_pillars,
             per_pillar_ms=per_pillar_ms,
@@ -282,8 +288,6 @@ class VeldrixSDK:
         )
 
         # Audit write is fire-and-forget — response is returned immediately.
-        # The task is scheduled in the running event loop and will complete
-        # asynchronously (same pattern as trust_controller._record_audit_trail).
         asyncio.create_task(self._telemetry.record(
             result,
             prompt_preview=request.prompt[:200] if request.prompt else None,
@@ -292,32 +296,36 @@ class VeldrixSDK:
             actor_email=actor_email,
         ))
 
-        # Structured latency profile — emitted at INFO for every evaluation.
-        # Downstream log aggregation (Datadog, CloudWatch) can alert on SLA breaches.
+        # ── Structured latency diagnostics ────────────────────────────────────
         logger.info(
-            "LATENCY_PROFILE request_id=%s total_ms=%.1f pillars=%s",
-            request_id,
-            float(elapsed_ms),
-            {k: f"{v:.1f}" for k, v in per_pillar_ms.items()},
+            "LATENCY_PROFILE request_id=%s total_ms=%d tier=%s pillars=%s",
+            request_id, elapsed_ms, budget_tier,
+            {k: f"{v}ms" for k, v in per_pillar_ms.items()},
         )
         for _pillar, _ms in per_pillar_ms.items():
-            if _ms > 400:
+            if _ms > _PILLAR_SLA_MS:
                 logger.warning(
-                    "LATENCY_SLA_BREACH pillar=%s ms=%.1f threshold=400",
-                    _pillar, float(_ms),
+                    "LATENCY_SLA_BREACH pillar=%s ms=%d threshold=%d tier=%s",
+                    _pillar, _ms, _PILLAR_SLA_MS, budget_tier,
                 )
 
+        # Log trailing diagnostics about the dispatch vs slot ratio
+        if slots and pillar_dispatch_ms > 0:
+            max_slot = max(
+                slots.safety_ms, slots.hallucination_ms,
+                slots.bias_ms, slots.prompt_security_ms, slots.compliance_ms,
+            )
+            logger.info(
+                "LATENCY_SLOT report request_id=%s dispatch_ms=%d max_slot_ms=%d ratio=%.2f",
+                request_id, pillar_dispatch_ms, max_slot,
+                pillar_dispatch_ms / max_slot if max_slot > 0 else 0,
+            )
+
         logger.info(
-            "veldrix.analyze.complete",
-            extra={
-                "request_id":      request_id,
-                "trust_score":     trust_score.overall,
-                "verdict":         trust_score.verdict,
-                "latency_ms":      elapsed_ms,
-                "tier":            result.budget_tier,
-                "degraded":        result.degraded,
-                "timed_out":       timed_out_pillars,
-            },
+            "veldrix.analyze.complete request_id=%s trust_score=%.4f verdict=%s "
+            "latency_ms=%d tier=%s degraded=%s timed_out=%s",
+            request_id, trust_score.overall, trust_score.verdict,
+            elapsed_ms, budget_tier, result.degraded, timed_out_pillars or [],
         )
 
         return result

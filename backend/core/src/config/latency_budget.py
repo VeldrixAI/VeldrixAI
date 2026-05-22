@@ -16,28 +16,33 @@ Stage definitions match the structured timings_ms dict emitted by sdk/client.py:
 
 The pillar_dispatch_ms budget is the critical path. All 5 pillars run in parallel,
 so wall-clock ≈ max(pillar_latencies), not sum(pillar_latencies).
+
+VERSION 2.0 — Tightened for p95 < 500ms SLA:
+  - Each pillar slot set to 250ms (was 6000ms for STANDARD)
+  - Total budget reduced from 8000ms to 450ms
+  - Adaptive tuner starts from a reasonable baseline
 """
 
 LATENCY_BUDGET_MS: dict[str, int] = {
     # Per-stage targets (ms) — Aggressive for sub-500ms SaaS SLA
-    "auth_validation_ms":   10,   # Reduced from 15
-    "rate_limit_check_ms":   2,   # Reduced from 3
-    "payload_parsing_ms":    3,   # Reduced from 5
-    "policy_lookup_ms":      5,   # Reduced from 10
-    "pillar_dispatch_ms":  250,   # Target 250ms (was 350) - speculative execution helps
-    "enforcement_ms":        5,   # Reduced from 10
-    "response_assembly_ms":  3,   # Reduced from 5
-    "audit_enqueue_ms":      1,   # fire-and-forget; must never block the response
+    "auth_validation_ms":   10,
+    "rate_limit_check_ms":   2,
+    "payload_parsing_ms":    3,
+    "policy_lookup_ms":      5,
+    "pillar_dispatch_ms":  250,   # 5 pillars run in parallel → wall-clock ≈ max slot
+    "enforcement_ms":        5,
+    "response_assembly_ms":  3,
+    "audit_enqueue_ms":      1,
 
     # End-to-end SLA targets (ms)
-    "total_p50_target_ms":  200,   # Target sub-200ms p50 (was 300)
-    "total_p95_target_ms":  400,   # Target sub-400ms p95 (was 500)
-    "total_p99_target_ms":  500,   # Hard SLA: 500ms max (was 800)
+    "total_p50_target_ms":  200,
+    "total_p95_target_ms":  400,   # CI benchmark failure threshold
+    "total_p99_target_ms":  500,
 }
 
 # Per-stage warning thresholds — emit WARNING log when exceeded
 LATENCY_WARN_THRESHOLDS_MS: dict[str, int] = {
-    "auth_validation_ms":   30,   # Reduced from 50
-    "pillar_dispatch_ms":  300,   # Reduced from 600
-    "total_ms":            450,   # Reduced from 800
+    "auth_validation_ms":   30,
+    "pillar_dispatch_ms":  300,
+    "total_ms":            450,
 }

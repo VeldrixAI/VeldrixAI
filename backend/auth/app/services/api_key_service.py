@@ -76,6 +76,26 @@ class ApiKeyService:
         return False
 
     @staticmethod
+    def activate_api_key(db: Session, key_id: UUID, user_id: UUID) -> Optional[ApiKey]:
+        """Reactivate a previously deactivated API key.
+        
+        Returns the ApiKey if found and activated, None if not found.
+        Only keys that exist and belong to the user can be reactivated.
+        Keys that were permanently deleted cannot be revived.
+        """
+        api_key = db.query(ApiKey).filter(
+            ApiKey.id == key_id,
+            ApiKey.user_id == user_id,
+        ).first()
+        if api_key:
+            api_key.is_active = True
+            api_key.last_used_at = None  # Reset last-used so the activation is clean
+            db.commit()
+            db.refresh(api_key)
+            return api_key
+        return None
+
+    @staticmethod
     def delete_api_key_permanently(db: Session, key_id: UUID, user_id: UUID) -> bool:
         """Permanently delete an API key from database."""
         api_key = db.query(ApiKey).filter(

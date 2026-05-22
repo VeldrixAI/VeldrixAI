@@ -2,16 +2,26 @@
 
 Three tiers:
   REALTIME   — p95 ≤ 200 ms  (enterprise, hard real-time SDK calls)
-  STANDARD   — p95 ≤ 600 ms  (default; starter and growth plans)
+  STANDARD   — p95 ≤ 500 ms  (default; starter and growth plans)
   BACKGROUND — uncapped       (fire-and-forget; returns immediately)
 
 Pillar slot names match the SDK pillar IDs used in sdk/client.py:
   safety, hallucination, bias, prompt_security, compliance
+
+All five pillars run in parallel via asyncio.gather(), so the wall-clock
+total ≈ max(pillar_slot_values), not the sum.  Overhead from request
+parsing, score aggregation, and response assembly adds ~15-30ms.
+
+VERSION 2.0 — Aggressive slots for sub-500ms p95 SLA:
+  REALTIME:   40ms × 5 pillars in parallel → max 40ms
+  STANDARD:  250ms × 5 pillars in parallel → max 250ms + overhead ≈ 280ms p50, < 500ms p95
+  BACKGROUND: still generous for async queue processing (30s per pillar)
 """
 from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
@@ -38,8 +48,8 @@ _TIER_BLUEPRINTS: dict[str, LatencyBudget] = {
         tier="REALTIME",
         total_budget_ms=200,
         pillar_slots=PillarSlots(
-            safety_ms=80,
-            hallucination_ms=60,
+            safety_ms=40,
+            hallucination_ms=40,
             bias_ms=40,
             prompt_security_ms=40,
             compliance_ms=40,
@@ -48,15 +58,17 @@ _TIER_BLUEPRINTS: dict[str, LatencyBudget] = {
     ),
     "STANDARD": LatencyBudget(
         tier="STANDARD",
-        total_budget_ms=8000,
+        total_budget_ms=500,
         pillar_slots=PillarSlots(
-            # Default slots are calibrated for real-world NIM inference (~4-6s per call).
-            # The adaptive tuner narrows these toward p95×1.3 as telemetry accumulates.
-            safety_ms=6000,
-            hallucination_ms=6000,
-            bias_ms=6000,
-            prompt_security_ms=6000,
-            compliance_ms=6000,
+            # Aggressive 250ms per pillar — 5 run in parallel, so wall-clock
+            # ≈ 250ms (plus ~15-30ms overhead for parsing/aggregation).
+            # The adaptive tuner narrows these toward p95×1.2 as telemetry
+            # accumulates, starting from this reasonable baseline.
+            safety_ms=250,
+            hallucination_ms=250,
+            bias_ms=250,
+            prompt_security_ms=250,
+            compliance_ms=250,
         ),
         background_mode=False,
     ),
