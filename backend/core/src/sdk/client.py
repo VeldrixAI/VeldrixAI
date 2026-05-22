@@ -202,7 +202,41 @@ class VeldrixSDK:
                 _run_pillar_with_slot("compliance",      _pillars.run_compliance(request, self._http),      slots.compliance_ms,      collector),
             ]
             _t["pillar_dispatch_start"] = time.monotonic()
-            raw_results = await asyncio.gather(*coros, return_exceptions=False)
+            # Hard total-budget timeout: even if individual pillars don't
+            # cancel cleanly (e.g. deep cancellation chains in route_inference),
+            # the entire dispatch is bounded by total_budget_ms.  If the
+            # timeout fires, the gather raises TimeoutError and we return
+            # degraded results for the pillars that didn't finish.
+            #
+            # Coroutines that were in-flight at the timeout are cancelled
+            # by asyncio.gather (since return_exceptions=False).
+            _total_timeout = budget.total_budget_ms / 1000.0 if budget else 0.5
+            try:
+                raw_results = await asyncio.wait_for(
+                    asyncio.gather(*coros, return_exceptions=False),
+                    timeout=_total_timeout,
+                )
+            except asyncio.TimeoutError:
+                # Total budget exhausted — pillars that didn't finish are degraded
+                elapsed_ms = int((time.perf_counter() - _t["pillar_dispatch_start"]) * 1000)
+                logger.warning(
+                    "TOTAL_BUDGET_TIMEOUT request_id=%s total_budget_ms=%.0f elapsed_ms=%d",
+                    request_id, _total_timeout * 1000, elapsed_ms,
+                )
+                # Build partial results: completed pillars return normally,
+                # uncompleted ones get a degraded PillarResult.
+                raw_results = []
+                for pname in _PILLAR_NAMES:
+                    # All pillars end up timed out since the gather was cancelled
+                    raw_results.append(PillarResult(
+                        pillar=pname,
+                        status=PillarStatus.ERROR,
+                        score=None,
+                        confidence=0.0,
+                        flags=["EVALUATION_TIMEOUT"],
+                        error=f"Total budget of {budget.total_budget_ms}ms exceeded",
+                        latency_ms=0,
+                    ))
             _t["pillar_dispatch_end"] = time.monotonic()
         else:
             # Legacy path — no budget, no per-pillar timeouts
