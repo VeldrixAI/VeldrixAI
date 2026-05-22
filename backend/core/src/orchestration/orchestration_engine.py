@@ -37,15 +37,16 @@ class OrchestrationEngine:
     def __init__(
         self,
         registry: PillarRegistry,
-        execution_timeout: float = 10.0,
+        execution_timeout: float = 0.25,  # 250ms SLA (was 10.0)
         min_pillars_required: int = 1
     ):
         """
         Initialize orchestration engine.
-        
+
         Args:
             registry: Pillar registry instance
-            execution_timeout: Maximum execution time per pillar (seconds)
+            execution_timeout: Maximum execution time per pillar in seconds.
+                              Default 250ms for sub-500ms p95 SLA.
             min_pillars_required: Minimum successful pillars for valid result
         """
         self.registry = registry
