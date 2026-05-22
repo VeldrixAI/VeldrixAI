@@ -25,7 +25,7 @@ from typing import Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from src.api.v1.dependencies import get_sdk, require_api_key, AUTH_SERVICE_URL
+from src.api.v1.dependencies import get_sdk, require_api_key
 from src.core.http_pool import get_internal_client
 from src.sdk.client import VeldrixSDK
 from src.sdk.models import AnalysisRequest
