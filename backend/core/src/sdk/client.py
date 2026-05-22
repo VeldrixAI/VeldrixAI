@@ -252,7 +252,7 @@ async def _dispatch_pillars(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _sync_record_latency(
+async def _sync_record_latency(
     user_id: str | None,
     latency_ms: float,
     status_code: int = 200,
@@ -429,7 +429,7 @@ class VeldrixSDK:
         # ── Synchronous latency DB write ──────────────────────────────────────
         # This runs in the SAME request-response cycle, not fire-and-forget.
         # Every request creates exactly one row in request_latency.
-        _sync_record_latency(user_id, float(elapsed_ms))
+        await _sync_record_latency(user_id, float(elapsed_ms))
 
         # ── Fire-and-forget telemetry (audit trail + SSE) ─────────────────────
         asyncio.create_task(self._telemetry.record(
