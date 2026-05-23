@@ -357,7 +357,8 @@ def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Ma
     )
 
     fig, axes = plt.subplots(1, 2, figsize=(7.5, 3.4),
-                              gridspec_kw={"width_ratios": [3, 1], "wspace": 0.04})
+                              gridspec_kw={"width_ratios": [3, 1], "wspace": 0.04},
+                              constrained_layout=True)
 
     # Left: Score + Weight % + Contribution
     sns.heatmap(
@@ -384,8 +385,6 @@ def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Ma
     axes[0].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
     axes[1].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
     axes[1].set_title("", pad=10)
-
-    plt.tight_layout()
     return _png(fig)
 
 
@@ -721,6 +720,81 @@ def _cover(data: dict, s: dict) -> list:
 
 
 
+# ── AUTO FINDINGS / RECOMMENDATIONS ─────────────────────────────────────────
+
+_PILLAR_GUIDANCE = {
+    "Safety": {
+        "fail": ("CRITICAL", "Safety score critically low ({s:.1f}/100). Harmful or policy-violating content detected in model output.", "Enable hard-block enforcement on Safety pillar at threshold 0.85. Audit all flagged responses immediately."),
+        "warn": ("HIGH",     "Safety score below target ({s:.1f}/100). Borderline harmful content present in some responses.",          "Lower soft-block threshold to 0.80 and enable rewriting for borderline cases."),
+        "pass": ("PASS",     "Safety checks passed. No harmful content detected ({s:.1f}/100).",                                        None),
+    },
+    "Hallucination": {
+        "fail": ("HIGH",     "Hallucination risk elevated ({s:.1f}/100). Factually unreliable responses detected at significant rate.", "Deploy RAG layer to ground responses. Enable hallucination hard-block for high-stakes queries."),
+        "warn": ("MEDIUM",   "Hallucination risk above threshold ({s:.1f}/100). Some unverified claims present.",                       "Add RAG grounding for knowledge-intensive queries. Surface confidence scores to end-users."),
+        "pass": ("PASS",     "Factual integrity checks passed. Low hallucination risk ({s:.1f}/100).",                                  None),
+    },
+    "Bias": {
+        "fail": ("HIGH",     "Bias score critically low ({s:.1f}/100). Significant demographic bias or ethical violations detected.",   "Block/rewrite biased responses. Initiate bias audit across demographic groups."),
+        "warn": ("MEDIUM",   "Bias below target ({s:.1f}/100). Measurable demographic bias in some responses.",                         "Enable bias-aware rewriting. Conduct quarterly bias audits."),
+        "pass": ("PASS",     "No significant bias or ethical violations detected ({s:.1f}/100).",                                       None),
+    },
+    "Prompt Security": {
+        "fail": ("CRITICAL", "Prompt security score critically low ({s:.1f}/100). Injection attempts or serious policy violations detected.", "Enable hard-block on all injection patterns immediately. Tighten system prompt context."),
+        "warn": ("HIGH",     "Prompt security below target ({s:.1f}/100). Signs of prompt manipulation detected.",                           "Enable soft-block with human review for borderline violations."),
+        "pass": ("PASS",     "No prompt injection or policy violations detected ({s:.1f}/100).",                                             None),
+    },
+    "Compliance": {
+        "fail": ("HIGH",     "Compliance score critically low ({s:.1f}/100). PII leakage or regulatory violations detected.",           "Enable PII auto-masking immediately. Block high legal-risk responses."),
+        "warn": ("MEDIUM",   "Compliance below target ({s:.1f}/100). Responses may carry regulatory risk.",                             "Enable disclaimer injection and PII masking for email/phone/ID patterns."),
+        "pass": ("PASS",     "No significant compliance violations or PII leakage detected ({s:.1f}/100).",                             None),
+    },
+}
+_DEFAULT_GUIDANCE = {
+    "fail": ("MEDIUM", "Score below minimum threshold ({s:.1f}/100).",  "Investigate pillar failures and review flagged responses."),
+    "warn": ("LOW",    "Score below target ({s:.1f}/100).",              "Monitor this pillar and review borderline responses."),
+    "pass": ("PASS",   "Pillar checks passed ({s:.1f}/100).",            None),
+}
+
+
+def _auto_findings(
+    pillar_scores: dict,
+    pillar_weights: dict,
+    overall: float,
+    risk_level: str,
+) -> tuple[list, list]:
+    findings, recommendations = [], []
+    for name, score in pillar_scores.items():
+        g = _PILLAR_GUIDANCE.get(name, _DEFAULT_GUIDANCE)
+        tier = "fail" if score < 70 else "warn" if score < 85 else "pass"
+        sev, desc, rec = g[tier]
+        findings.append({
+            "pillar":       name,
+            "severity":     sev,
+            "description":  desc.format(s=score),
+            "action":       rec or "Continue monitoring. No immediate action required.",
+        })
+        if rec:
+            label = "[CRITICAL] " if sev == "CRITICAL" else ""
+            recommendations.append({
+                "title": f"{label}{name} — {sev.title()} Risk",
+                "body":  rec,
+            })
+
+    if risk_level.upper() in ("HIGH_RISK", "CRITICAL", "BLOCK"):
+        recommendations.insert(0, {
+            "title": "Immediate Action Required — Trust Score Below Safe Threshold",
+            "body":  (f"Overall trust score {overall:.1f}/100 classified as {risk_level.replace('_', ' ')}. "
+                      "Do not deploy without human review. Enforce hard-block below 70 on critical pillars."),
+        })
+    if not recommendations:
+        recommendations.append({
+            "title": "Maintain Current Governance Configuration",
+            "body":  (f"All pillars passed with overall score {overall:.1f}/100. "
+                      "Continue monitoring. Schedule quarterly audits as usage scales."),
+        })
+    return findings, recommendations
+
+
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
 def generate_veldrix_pdf(report_data: dict) -> bytes:
@@ -923,10 +997,20 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
         s["caption"]))
     story.append(PageBreak())
 
+    # Auto-derive findings/recs from scores when not supplied by caller
+    _findings_raw  = report_data.get("findings")       or []
+    _recs_raw      = report_data.get("recommendations") or []
+    _risk_lv       = str(report_data.get("risk_level", "")).upper()
+    if not _findings_raw or not _recs_raw:
+        _af, _ar = _auto_findings(pillar_scores, pw, overall, _risk_lv)
+        if not _findings_raw:
+            _findings_raw = _af
+        if not _recs_raw:
+            _recs_raw = _ar
+
     # ── FINDINGS ──
     story.extend(_divider("4. Findings & Risk Assessment", s))
-    findings = report_data.get("findings") or []
-    story.append(_findings_table(findings))
+    story.append(_findings_table(_findings_raw))
     story.append(Spacer(1, 5 * mm))
 
     # ── METHODOLOGY ──
@@ -943,7 +1027,7 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
 
     # ── RECOMMENDATIONS ──
     story.extend(_divider("6. Recommendations", s))
-    recs = report_data.get("recommendations") or []
+    recs = _recs_raw
     for i, rec in enumerate(recs, 1):
         story.append(KeepTogether([
             Paragraph(f"{i}. {rec['title']}", s["finding"]),
