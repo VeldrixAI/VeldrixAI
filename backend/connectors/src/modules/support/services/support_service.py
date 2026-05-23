@@ -3,16 +3,27 @@ import logging
 import random
 import string
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.orm import Session
 
 from src.modules.support.models import SupportTicket
 from src.modules.support.schemas.support_schema import SubmitTicketRequest
 
 logger = logging.getLogger(__name__)
+
+_TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "emails"
+
+_jinja_env = Environment(
+    loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+    autoescape=select_autoescape(["html"]),
+    trim_blocks=True,
+    lstrip_blocks=True,
+)
 
 SUPPORT_INBOX = "rudramani031@veldrixai.ca"
 
@@ -115,55 +126,43 @@ body{{background:#050810;color:#f0f2ff;font-family:-apple-system,'DM Sans',sans-
 
 def _html_confirmation(ticket: SupportTicket) -> str:
     sla          = _PRIORITY_SLA.get(ticket.priority, "1–2 business days")
+    color        = _PRIORITY_COLOR.get(ticket.priority, "#f59e0b")
     frontend_url = os.getenv("VELDRIX_UI_URL", "https://veldrixai.ca")
+    support_addr = os.getenv("EMAIL_SUPPORT_ADDRESS", "rudramani031@veldrixai.ca")
     ts           = ticket.created_at.strftime("%b %d, %Y at %H:%M UTC")
     cat          = ticket.category.replace("_", " ").title()
-    return f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8">
-<style>
-*{{margin:0;padding:0;box-sizing:border-box}}
-body{{background:#050810;color:#f0f2ff;font-family:-apple-system,'DM Sans',sans-serif;font-weight:300}}
-.wrap{{max-width:560px;margin:0 auto;padding:48px 24px;text-align:center}}
-.logo{{font-size:22px;font-weight:800;color:#a78bfa;margin-bottom:32px;letter-spacing:-0.5px}}
-.check{{display:inline-flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);font-size:30px;margin-bottom:24px}}
-.title{{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}}
-.sub{{font-size:14px;color:rgba(240,242,255,0.45);line-height:1.7;margin-bottom:36px}}
-.tbox{{display:inline-block;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:16px;padding:24px 40px;margin-bottom:28px}}
-.tlbl{{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,242,255,0.3);margin-bottom:10px}}
-.tid{{font-family:monospace;font-size:26px;font-weight:700;letter-spacing:4px;color:#a78bfa}}
-.card{{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;margin-bottom:20px;text-align:left}}
-.row{{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px}}
-.row:last-child{{border-bottom:none}}
-.lbl{{color:rgba(240,242,255,0.35)}}
-.val{{font-weight:500}}
-.sla{{background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.18);border-radius:10px;padding:13px 18px;font-size:13px;color:rgba(16,185,129,0.85);margin-bottom:24px}}
-.footer{{font-size:11px;color:rgba(240,242,255,0.2);margin-top:28px;line-height:1.9;border-top:1px solid rgba(255,255,255,0.06);padding-top:24px}}
-</style></head>
-<body>
-<div class="wrap">
-  <div class="logo">Veldrix<span style="color:#06b6d4">AI</span></div>
-  <div class="check">&#10003;</div>
-  <div class="title">Ticket Received</div>
-  <p class="sub">Your support request has been logged and our team has been notified. We&rsquo;ll respond within your SLA window.</p>
-  <div class="tbox">
-    <div class="tlbl">Your Ticket Number</div>
-    <div class="tid">{ticket.ticket_id}</div>
-  </div>
-  <div class="card">
-    <div class="row"><span class="lbl">Subject</span><span class="val">{ticket.subject}</span></div>
-    <div class="row"><span class="lbl">Category</span><span class="val">{cat}</span></div>
-    <div class="row"><span class="lbl">Priority</span><span class="val">{ticket.priority.title()}</span></div>
-    <div class="row"><span class="lbl">Submitted</span><span class="val">{ts}</span></div>
-  </div>
-  <div class="sla">&#9201; Expected response: <strong>{sla}</strong></div>
-  <p class="footer">VeldrixAI &middot; Runtime Trust Infrastructure<br>
-  {frontend_url} &middot; support@veldrixai.ca<br><br>
-  To follow up, reply to this email and include your ticket ID.<br>
-  &copy; 2026 VeldrixAI Inc. All rights reserved.</p>
-</div>
-</body>
-</html>"""
+
+    _alpha = "20"  # 12% opacity hex suffix for background
+    _border = "40"  # 25% opacity hex suffix for border
+
+    try:
+        template = _jinja_env.get_template("ticket-confirmation.html")
+        return template.render(
+            brand_name="VeldrixAI",
+            brand_url=frontend_url,
+            support_email=support_addr,
+            current_year=datetime.utcnow().year,
+            user_name=ticket.user_email.split("@")[0],
+            ticket_id=ticket.ticket_id,
+            subject=ticket.subject,
+            category=cat,
+            priority=ticket.priority,
+            priority_color=color,
+            priority_bg=f"{color}{_alpha}",
+            priority_border=f"{color}{_border}",
+            description=ticket.description,
+            sla=sla,
+            submitted_at=ts,
+        )
+    except Exception as exc:
+        logger.warning("[Support] Jinja2 render failed, using fallback: %s", exc)
+        # Plain fallback — ensures email still sends even if template is missing
+        return (
+            f"<p>Hi, your ticket <strong>{ticket.ticket_id}</strong> has been received.</p>"
+            f"<p>Subject: {ticket.subject}</p>"
+            f"<p>Expected response: {sla}</p>"
+            f"<p>VeldrixAI Support &mdash; {support_addr}</p>"
+        )
 
 
 class SupportService:

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>{% block title %}VeldrixAI{% endblock %}</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .email-outer { background-color: #050810 !important; }
+      .email-card  { background-color: #0B0F1E !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#050810;font-family:'DM Sans',Arial,sans-serif;">
+
+<div style="display:none;font-size:1px;color:#050810;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+  {% block preheader %}VeldrixAI — Runtime Trust Infrastructure{% endblock %}
+</div>
+
+<table class="email-outer" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background-color:#050810;min-height:100vh;">
+  <tr>
+    <td align="center" style="padding:40px 20px;">
+
+      <table class="email-card" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background-color:#0B0F1E;border-radius:20px;overflow:hidden;border:1px solid rgba(124,58,237,0.2);">
+
+        <!-- HEADER BAND -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0f0a1e 0%,#1a0f3a 60%,#0a1428 100%);padding:40px 48px 36px;border-bottom:1px solid rgba(124,58,237,0.25);">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="44" valign="middle">
+                  <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#7C3AED,#4F46E5);text-align:center;line-height:44px;font-family:'Syne',Arial,sans-serif;font-weight:800;font-size:22px;color:#ffffff;">V</div>
+                </td>
+                <td width="12"></td>
+                <td valign="middle">
+                  <div style="font-family:'Syne',Arial,sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;line-height:1;color:#a78bfa;">
+                    VeldrixAI
+                  </div>
+                  <div style="font-family:'DM Sans',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-top:3px;">
+                    Runtime Trust Infrastructure
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- GRADIENT ACCENT LINE -->
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#7C3AED,#4F46E5,#06B6D4);padding:0;"></td>
+        </tr>
+
+        <!-- BODY CONTENT -->
+        <tr>
+          <td style="padding:48px 48px 40px;">
+            {% block content %}{% endblock %}
+          </td>
+        </tr>
+
+        <!-- CTA SECTION -->
+        {% block cta_section %}{% endblock %}
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:32px 48px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01);">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center">
+                  <div style="font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.5px;line-height:1.8;font-family:'DM Sans',Arial,sans-serif;">
+                    &copy; {{ current_year }} VeldrixAI Inc. &middot; All rights reserved<br>
+                    Questions? <a href="mailto:{{ support_email }}"
+                       style="color:rgba(124,58,237,0.7);text-decoration:none;">{{ support_email }}</a><br>
+                    <a href="{{ brand_url }}/unsubscribe"
+                       style="color:rgba(255,255,255,0.2);text-decoration:underline;">Unsubscribe</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="{{ brand_url }}/privacy"
+                       style="color:rgba(255,255,255,0.2);text-decoration:underline;">Privacy Policy</a>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

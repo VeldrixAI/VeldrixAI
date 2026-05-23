@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "noreply@veldrixai.ca"
     EMAIL_FROM_NAME: str = "VeldrixAI"
+    EMAIL_SUPPORT_ADDRESS: str = "rudramani031@veldrixai.ca"
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_PATH), case_sensitive=True, extra="ignore"

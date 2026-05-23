@@ -88,6 +88,19 @@ jobs:
           VELDRIX_CONNECTORS_API_URL:   https://api.veldrixai.ca
           JWT_SECRET:                   ci-test-secret
 
+      - name: Auth email service tests
+        run: |
+          pip install -r backend/auth/requirements.txt pytest --quiet
+          cd backend/auth && pytest tests/test_email_service.py -v --tb=short
+        env:
+          RESEND_API_KEY:         "re_test_placeholder"
+          EMAIL_FROM:             "noreply@veldrixai.ca"
+          EMAIL_FROM_NAME:        "VeldrixAI"
+          EMAIL_SUPPORT_ADDRESS:  "rudramani031@veldrixai.ca"
+          VELDRIX_UI_URL:         "https://app.veldrix.com"
+          DATABASE_URL:           "postgresql://ci:ci@localhost/ci"
+          JWT_SECRET_KEY:         "ci-test-secret"
+
       - name: Lint
         run: |
           pip install ruff --quiet

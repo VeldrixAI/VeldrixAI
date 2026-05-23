@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket_number }} Received{% endblock %}
+{% block preheader %}Your support ticket has been received. We'll respond within 24 hours during business days.{% endblock %}
+
+{% block content %}
+
+<!-- Alert band -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;margin-bottom:32px;">
+  <tr>
+    <td style="padding:18px 22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,158,11,0.7);margin-bottom:4px;">
+              Support Ticket Received
+            </div>
+            <div style="font-family:'Courier New',monospace;font-size:28px;font-weight:700;color:#f59e0b;letter-spacing:-1px;">
+              #{{ ticket_number }}
+            </div>
+          </td>
+          <td align="right" valign="middle">
+            <div style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:100px;padding:6px 14px;font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#f59e0b;letter-spacing:1px;text-transform:uppercase;">
+              {{ ticket_priority }}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Greeting -->
+<p style="font-family:'DM Sans',Arial,sans-serif;font-size:16px;font-weight:300;line-height:1.75;color:rgba(240,242,255,0.7);margin:0 0 28px;">
+  Hi {{ user_name }}, we've received your support request and a member of the
+  VeldrixAI team will respond within <strong style="color:#F0F2FF;">24 business hours</strong>.
+</p>
+
+<!-- Ticket detail card -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:32px;">
+  <tr>
+    <td style="padding:24px 28px;">
+      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:14px;">Your Request</div>
+      <div style="font-family:'Syne',Arial,sans-serif;font-weight:700;font-size:16px;color:#F0F2FF;margin-bottom:12px;">{{ ticket_subject }}</div>
+      <div style="height:1px;background:rgba(255,255,255,0.05);margin-bottom:14px;"></div>
+      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:300;color:rgba(240,242,255,0.5);line-height:1.8;">
+        {{ ticket_body | truncate(400) }}
+      </div>
+    </td>
+  </tr>
+</table>
+
+<!-- Status tracker (3-step) -->
+<div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:18px;">
+  Request Status
+</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+  <tr>
+    <td width="33%" align="center" valign="top">
+      <div style="width:32px;height:32px;border-radius:50%;background:#10B981;margin:0 auto 8px;text-align:center;line-height:32px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#fff;">
+        &#10003;
+      </div>
+      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:#10B981;">Received</div>
+    </td>
+    <td valign="top" style="padding-top:16px;">
+      <div style="height:1px;background:rgba(255,255,255,0.1);"></div>
+    </td>
+    <td width="33%" align="center" valign="top">
+      <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);margin:0 auto 8px;text-align:center;line-height:32px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.35);">02</div>
+      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.3);">In Review</div>
+    </td>
+    <td valign="top" style="padding-top:16px;">
+      <div style="height:1px;background:rgba(255,255,255,0.1);"></div>
+    </td>
+    <td width="33%" align="center" valign="top">
+      <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);margin:0 auto 8px;text-align:center;line-height:32px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.35);">03</div>
+      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.3);">Resolved</div>
+    </td>
+  </tr>
+</table>
+
+<!-- Contact note -->
+<p style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:rgba(240,242,255,0.4);margin:0;">
+  To add more detail or follow up, reply to this email or visit your
+  <a href="{{ ticket_url }}" style="color:#7C3AED;text-decoration:none;">ticket page</a>.
+  Our support address is
+  <a href="mailto:{{ support_email }}" style="color:#7C3AED;text-decoration:none;">{{ support_email }}</a>.
+</p>
+
+{% endblock %}
+
+{% block cta_section %}
+<tr>
+  <td style="padding:4px 48px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="border-radius:10px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);">
+          <a href="{{ ticket_url }}"
+             style="display:inline-block;padding:14px 32px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:500;color:#f59e0b;text-decoration:none;">
+            View Ticket #{{ ticket_number }} &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{% endblock %}

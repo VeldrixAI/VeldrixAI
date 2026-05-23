@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.db.models import User
 from app.schemas.user import UserRegister, UserLogin, Token, UserResponse
 from app.services.auth_service import AuthService
+from app.services.email_service import email_service
 from app.core.dependencies import get_current_user
 
 limiter = Limiter(key_func=get_remote_address)
@@ -25,10 +26,12 @@ def register(request: Request, user_data: UserRegister, db: Session = Depends(ge
 
     user = AuthService.create_user(db, user_data.email, user_data.password)
 
-    # Send welcome email (best-effort — never blocks registration response)
+    # Send welcome email — best-effort, never blocks the registration response
     try:
-        from app.utils.email import send_welcome_email
-        send_welcome_email(to_email=user.email, to_name=user.email.split("@")[0])
+        email_service.send_auth_welcome(
+            to_email=user.email,
+            user_name=user.email.split("@")[0],
+        )
     except Exception:
         pass
 
@@ -58,3 +61,21 @@ def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/onboarding/complete", status_code=200)
+def complete_onboarding(current_user: User = Depends(get_current_user)):
+    """
+    Called by the frontend when a user finishes the onboarding wizard.
+    Fires the onboarding-complete email (best-effort — never fails the request).
+    """
+    plan = (current_user.plan_tier or "free").title()
+    try:
+        email_service.send_onboarding_complete(
+            to_email=current_user.email,
+            user_name=current_user.email.split("@")[0],
+            plan_name=plan,
+        )
+    except Exception:
+        pass
+    return {"success": True, "message": "Onboarding complete"}
