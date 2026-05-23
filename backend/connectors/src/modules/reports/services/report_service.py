@@ -52,6 +52,15 @@ class ReportService:
             risk_level = (eval_result.get("final_score") or {}).get("risk_level", "") or payload.get("risk_level", "")
             enforcement = (eval_result.get("final_score") or {}).get("enforcement_action", "") or payload.get("verdict", "")
             overall_score = (eval_result.get("final_score") or {}).get("value") or payload.get("overall_score")
+            # Normalize to 0-100. The core engine emits 0-100 via final_score.value;
+            # the frontend audit-trail sends overall_score as 0.0-1.0 (TrustResult.overall).
+            if overall_score is not None:
+                try:
+                    overall_score = float(overall_score)
+                    if overall_score <= 1.0:
+                        overall_score = round(overall_score * 100, 1)
+                except (TypeError, ValueError):
+                    overall_score = None
             is_high_risk = (
                 str(risk_level).upper() in ("HIGH_RISK", "HIGH", "CRITICAL")
                 or str(enforcement).upper() in ("BLOCK", "BLOCKED")

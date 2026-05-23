@@ -56,6 +56,12 @@ export default function ReportsPage() {
         (r: Report) => r.status !== "failed"
       );
       setReports(validReports);
+      // Derive avg trust score from loaded reports (scores stored as 0-100)
+      const scored = validReports.filter((r: Report) => r.overall_score != null && r.overall_score > 0);
+      if (scored.length > 0) {
+        const avg = scored.reduce((s: number, r: Report) => s + (r.overall_score as number), 0) / scored.length;
+        setAvgTrustScore(Math.round(avg));
+      }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Failed to load reports", "error");
     } finally {
@@ -73,7 +79,11 @@ export default function ReportsPage() {
       .then((r) => r.json())
       .then((data) => {
         const score = data.avg_trust_score;
-        setAvgTrustScore(score != null ? Math.round(score) : null);
+        // Only use sdk-stats as supplemental source if reports didn't already set a value.
+        // avg_trust_score from sdk-stats is 0.0-1.0 so multiply by 100.
+        if (score != null) {
+          setAvgTrustScore((prev) => prev ?? Math.round(score * 100));
+        }
       })
       .catch(() => {});
   }, [loadReports]);

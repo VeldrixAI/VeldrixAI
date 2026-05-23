@@ -30,7 +30,7 @@ let toastId = 0;
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("account");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string) => {
@@ -48,19 +48,6 @@ export default function SettingsPage() {
           <h1 className="vx-page-title">Settings</h1>
           <p className="vx-page-desc">Manage your VeldrixAI workspace, policies, and security.</p>
         </div>
-      </div>
-
-      <div className="vx-search-input" style={{ marginBottom: "1.25rem" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          type="text"
-          placeholder="Search settings..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
       </div>
 
       <div className="vx-tabs">

@@ -63,12 +63,31 @@ export default function ApiKeysPage() {
     fetch("/api/analytics?path=sdk-stats&range=30d")
       .then((r) => r.json())
       .then((data) => {
+        // Primary: ALLOW verdict rate (most meaningful governance signal)
+        const vb = data.verdict_breakdown ?? {};
+        const total: number = data.total_requests ?? 0;
+        if (total > 0) {
+          const allowCount: number = vb.ALLOW ?? 0;
+          setGovHealth(Math.round((allowCount / total) * 100));
+          return;
+        }
+        // Secondary: avg_trust_score (0-1 → 0-100)
         const score = data.avg_trust_score;
-        // avg_trust_score is 0-1; multiply to get a 0-100 percentage
-        setGovHealth(score != null ? Math.round(score * 100) : null);
+        if (score != null) {
+          setGovHealth(Math.round(score * 100));
+        }
+        // else govHealth stays null — key-activity fallback runs in next effect
       })
       .catch(() => {});
   }, []);
+
+  // Fallback: no SDK evals yet — derive health from active key ratio
+  useEffect(() => {
+    if (govHealth === null && apiKeys.length > 0) {
+      const activeCount = apiKeys.filter((k: ApiKey) => k.is_active).length;
+      setGovHealth(Math.round((activeCount / apiKeys.length) * 100));
+    }
+  }, [govHealth, apiKeys]);
 
   async function handleCreateKey() {
     const finalName = newKeyName.trim() || generateUniqueName();
