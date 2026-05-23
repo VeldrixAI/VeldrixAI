@@ -152,11 +152,15 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Derived — must be declared before the counter useEffects that reference it
+  const totalEvals = Math.max(auditTotal, summary?.total_evaluations ?? 0);
+
   // Metric counter: Total Audited
   useEffect(() => {
     if (loading) return;
     let alive = true;
     const target = totalEvals;
+    const step = Math.max(target / 60, 1);
     let v = 0;
     const id = setInterval(() => {
       if (!alive) return;
@@ -207,7 +211,6 @@ export default function DashboardPage() {
 
   // Derived display values — prefer the live audit-trail total (updated by SSE),
   // fall back to analytics summary if audit API hasn't loaded yet.
-  const totalEvals = Math.max(auditTotal, summary?.total_evaluations ?? 0);
   const totalDisplay = (auditTotal > 0 || summary)
     ? (totalEvals >= 1000 ? (totalEvals / 1000).toFixed(1) + "k" : String(totalEvals))
     : "—";
