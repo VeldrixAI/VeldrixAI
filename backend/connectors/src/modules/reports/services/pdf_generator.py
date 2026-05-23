@@ -5,7 +5,7 @@ Produces branded, chart-rich governance intelligence reports using ReportLab + m
 
 import io
 import math
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 # ReportLab
@@ -20,11 +20,14 @@ from reportlab.platypus import (
 )
 from reportlab.pdfgen import canvas as rl_canvas
 
-# Matplotlib for charts
+# Matplotlib / Seaborn for charts
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.gridspec as gridspec
+from matplotlib.colors import LinearSegmentedColormap
+import seaborn as sns
 import numpy as np
 
 
@@ -72,6 +75,7 @@ class VX:
 # ── MATPLOTLIB STYLE ──────────────────────────────────────────────────────────
 
 def _apply_style() -> None:
+    sns.set_theme(style="whitegrid", palette="muted", font="DejaVu Sans")
     plt.rcParams.update({
         "figure.facecolor": "#ffffff",
         "axes.facecolor": "#f8fafc",
@@ -188,136 +192,199 @@ def chart_pillar_bars(scores: dict, title: str = "Trust Pillar Scores") -> bytes
     return _png(fig)
 
 
-def chart_enforcement_donut(actions: dict, title: str = "Enforcement Actions") -> bytes:
-    fig, ax = plt.subplots(figsize=(4.2, 3.8))
-    
-    # Handle empty actions
-    if not actions:
-        ax.text(0.5, 0.5, "No enforcement data", 
-                ha="center", va="center", transform=ax.transAxes,
-                fontsize=9, color="#64748b")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        return _png(fig)
-    
-    labels = list(actions.keys())
-    values = list(actions.values())
-    color_map = {
-        "Allow":      VX.EMERALD_HEX,
-        "Block":      VX.ROSE_HEX,
-        "Rewrite":    VX.VIOLET_HEX,
-        "Mask":       VX.AMBER_HEX,
-        "Escalate":   VX.CYAN_HEX,
-        "Regenerate": VX.INDIGO_HEX,
-    }
-    chart_colors = [color_map.get(l, "#94a3b8") for l in labels]
+def chart_pillar_scatter(scores: dict, weights: dict, title: str = "Pillar Risk Scatter") -> bytes:
+    """
+    Bubble scatter: x = pillar weight, y = pillar score.
+    Bubble area ∝ weighted contribution. Quadrant shading + status colour.
+    Professional ML-paper aesthetic via seaborn despine.
+    """
+    if not scores:
+        scores = {"Safety": 0, "Hallucination": 0, "Bias": 0, "Prompt Security": 0, "Compliance": 0}
+    default_w = {"Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20, "Prompt Security": 0.15, "Compliance": 0.15}
+    w = {k: weights.get(k, default_w.get(k, 0.20)) for k in scores}
 
-    wedges, _, autotexts = ax.pie(
-        values, labels=None, colors=chart_colors,
-        autopct="%1.1f%%", pctdistance=0.75,
-        startangle=90, counterclock=False,
-        wedgeprops=dict(width=0.52, edgecolor="white", linewidth=2),
+    fig, ax = plt.subplots(figsize=(6.0, 4.2))
+    sns.despine(fig=fig, ax=ax)
+
+    # Quadrant shading
+    ax.axhspan(0,   70,  alpha=0.06, color=VX.ROSE_HEX,    zorder=0)
+    ax.axhspan(70,  85,  alpha=0.05, color=VX.AMBER_HEX,   zorder=0)
+    ax.axhspan(85,  105, alpha=0.05, color=VX.EMERALD_HEX, zorder=0)
+    ax.axhline(70, color=VX.ROSE_HEX,    linewidth=1.0, linestyle="--", alpha=0.5)
+    ax.axhline(85, color=VX.EMERALD_HEX, linewidth=1.0, linestyle="--", alpha=0.5)
+
+    pillar_colors = VX.PILLAR_COLORS
+    x_vals, y_vals, sizes, colors_list, labels_list = [], [], [], [], []
+    for name, score in scores.items():
+        wt = w.get(name, 0.20)
+        contrib = score * wt
+        color = (VX.EMERALD_HEX if score >= 85 else VX.AMBER_HEX if score >= 70 else VX.ROSE_HEX)
+        x_vals.append(wt * 100)
+        y_vals.append(score)
+        sizes.append(max(contrib * 18, 80))
+        colors_list.append(color)
+        labels_list.append(name)
+
+    sc = ax.scatter(x_vals, y_vals, s=sizes, c=colors_list,
+                    alpha=0.82, edgecolors="white", linewidths=1.5, zorder=3)
+
+    for xi, yi, lbl in zip(x_vals, y_vals, labels_list):
+        ax.annotate(lbl, (xi, yi), textcoords="offset points", xytext=(0, 10),
+                    ha="center", fontsize=7.5, fontweight="bold", color="#0f172a",
+                    bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="#e2e8f0", alpha=0.8))
+
+    ax.set_xlabel("Pillar Weight (%)", fontsize=9, color="#475569")
+    ax.set_ylabel("Trust Score (0–100)", fontsize=9, color="#475569")
+    ax.set_xlim(10, 32)
+    ax.set_ylim(0, 108)
+    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=12)
+
+    legend_elements = [
+        mpatches.Patch(color=VX.EMERALD_HEX, alpha=0.7, label="Pass  (≥ 85)"),
+        mpatches.Patch(color=VX.AMBER_HEX,   alpha=0.7, label="Caution (70–84)"),
+        mpatches.Patch(color=VX.ROSE_HEX,    alpha=0.7, label="Fail   (< 70)"),
+    ]
+    ax.legend(handles=legend_elements, fontsize=7.5, loc="lower right",
+              frameon=True, edgecolor="#e2e8f0", framealpha=0.95)
+
+    ax.text(0.02, 0.98, "Bubble area ∝ weighted contribution",
+            transform=ax.transAxes, fontsize=7, color="#94a3b8",
+            va="top", ha="left", style="italic")
+    plt.tight_layout()
+    return _png(fig)
+
+
+def chart_verdict_pie(scores: dict, verdict: str = "", title: str = "Pillar Verdict Distribution") -> bytes:
+    """
+    Pie chart: per-pillar PASS / CAUTION / FAIL breakdown.
+    Uses matplotlib wedge styling; verdict label in centre.
+    """
+    if not scores:
+        scores = {"Safety": 0, "Hallucination": 0, "Bias": 0, "Prompt Security": 0, "Compliance": 0}
+
+    cats = {"Pass": 0, "Caution": 0, "Fail": 0}
+    for sc in scores.values():
+        if sc >= 85:   cats["Pass"]    += 1
+        elif sc >= 70: cats["Caution"] += 1
+        else:          cats["Fail"]    += 1
+
+    non_zero = {k: v for k, v in cats.items() if v > 0}
+    if not non_zero:
+        non_zero = {"No Data": 1}
+
+    cat_colors = {"Pass": VX.EMERALD_HEX, "Caution": VX.AMBER_HEX,
+                  "Fail": VX.ROSE_HEX,    "No Data": "#94a3b8"}
+
+    fig, ax = plt.subplots(figsize=(4.4, 4.0))
+    labels_k = list(non_zero.keys())
+    values_k = list(non_zero.values())
+    chart_colors = [cat_colors[k] for k in labels_k]
+
+    wedges, texts, autotexts = ax.pie(
+        values_k, labels=None, colors=chart_colors,
+        autopct=lambda p: f"{p:.1f}%" if p > 5 else "",
+        pctdistance=0.72, startangle=90, counterclock=False,
+        wedgeprops=dict(width=0.55, edgecolor="white", linewidth=2.5),
+        shadow=False,
     )
     for at in autotexts:
-        at.set_fontsize(8)
+        at.set_fontsize(8.5)
         at.set_fontweight("bold")
-        at.set_color("white")
+        at.set_color("#0f172a")
 
-    total = sum(values)
-    ax.text(0, 0.08, str(total), ha="center", va="center",
-            fontsize=16, fontweight="bold", color="#0f172a")
-    ax.text(0, -0.18, "total evals", ha="center", va="center",
-            fontsize=7.5, color="#64748b")
+    # Centre label — overall verdict
+    vcolor = (VX.EMERALD_HEX if verdict in ("ALLOW", "PASS")
+              else VX.ROSE_HEX   if verdict in ("BLOCK",)
+              else VX.AMBER_HEX  if verdict in ("WARN", "REVIEW")
+              else "#475569")
+    ax.text(0, 0.10, verdict or "—", ha="center", va="center",
+            fontsize=13, fontweight="bold", color=vcolor)
+    ax.text(0, -0.20, "verdict", ha="center", va="center",
+            fontsize=7, color="#94a3b8")
 
-    patches = [mpatches.Patch(color=c, label=l) for l, c in zip(labels, chart_colors)]
-    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.18),
-              ncol=3, fontsize=7.5, frameon=True, edgecolor="#e2e8f0")
+    patches = [mpatches.Patch(color=cat_colors[k], label=f"{k}  ({v}/5)")
+               for k, v in non_zero.items()]
+    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.10),
+              ncol=len(patches), fontsize=7.5, frameon=True, edgecolor="#e2e8f0")
     ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=8)
     plt.tight_layout()
     return _png(fig)
 
 
-def chart_trend_line(trend_data: list[dict], title: str = "Trust Score Trend") -> bytes:
-    fig, ax = plt.subplots(figsize=(6.5, 3.2))
-    
-    # Handle empty or missing trend data
-    if not trend_data:
-        # Show placeholder with no data
-        ax.text(0.5, 0.5, "No trend data available for this evaluation", 
-                ha="center", va="center", transform=ax.transAxes,
-                fontsize=9, color="#64748b")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        return _png(fig)
-    
-    dates = [d["date"] for d in trend_data]
-    x = range(len(dates))
+def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Matrix") -> bytes:
+    """
+    Seaborn annotated heatmap: pillars × metrics (Score, Weight %, Contribution, Risk Index).
+    Diverging colormap from rose → emerald through the pass thresholds.
+    """
+    if not scores:
+        scores = {"Safety": 0, "Hallucination": 0, "Bias": 0, "Prompt Security": 0, "Compliance": 0}
+    default_w = {"Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20, "Prompt Security": 0.15, "Compliance": 0.15}
 
-    series = {
-        "Overall":       ("#0f172a", 2.5, "-"),
-        "Safety":        (VX.ROSE_HEX, 1.5, "--"),
-        "Hallucination": (VX.AMBER_HEX, 1.5, "--"),
-        "Compliance":    (VX.EMERALD_HEX, 1.5, ":"),
-    }
-    for key, (color, lw, ls) in series.items():
-        vals = [d.get(key.lower(), d.get("overall", None)) for d in trend_data]
-        # Filter out None values for plotting
-        valid_vals = [v for v in vals if v is not None]
-        if valid_vals:  # Only plot if we have data
-            ax.plot(x, vals, color=color, linewidth=lw, linestyle=ls,
-                    label=key, marker="o", markersize=3, markerfacecolor=color)
+    pillar_names = list(scores.keys())
+    rows = []
+    annots = []
+    for name in pillar_names:
+        sc  = scores[name]
+        wt  = weights.get(name, default_w.get(name, 0.20))
+        contrib = round(sc * wt, 1)
+        # Risk index: inverted score 0–100; 0 = fully trusted, 100 = fully risky
+        risk_idx = round(max(0, 100 - sc), 1)
+        rows.append([sc, wt * 100, contrib, risk_idx])
+        annots.append([f"{sc:.1f}", f"{wt*100:.0f}%", f"{contrib:.1f}", f"{risk_idx:.1f}"])
 
-    ax.axhspan(70, 90, alpha=0.06, color=VX.AMBER_HEX, label="Caution zone")
-    ax.axhline(y=90, color=VX.EMERALD_HEX, linewidth=0.8, linestyle=":", alpha=0.5)
+    data = np.array(rows, dtype=float)
+    annot_arr = np.array(annots)
+    col_labels = ["Score", "Weight %", "Contribution", "Risk Index"]
 
-    tick_positions = list(range(0, len(dates), max(1, len(dates) // 6)))
-    ax.set_xticks(tick_positions)
-    ax.set_xticklabels([dates[i] for i in tick_positions], rotation=30, ha="right", fontsize=7.5)
-    ax.set_ylim(50, 105)
-    ax.set_ylabel("Score", fontsize=8)
-    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=10)
-    ax.legend(fontsize=7.5, loc="lower right", ncol=2)
-    ax.grid(color="#e2e8f0", linewidth=0.6)
-    plt.tight_layout()
-    return _png(fig)
+    # Normalise each column to 0–1 for consistent heatmap colouring
+    col_min = data.min(axis=0)
+    col_max = data.max(axis=0)
+    col_range = np.where((col_max - col_min) == 0, 1, col_max - col_min)
+    norm_data = (data - col_min) / col_range
 
+    # For Risk Index column: invert so high risk = hot
+    norm_data[:, 3] = 1 - norm_data[:, 3]
 
-def chart_risk_distribution(buckets: dict, title: str = "Response Risk Distribution") -> bytes:
-    fig, ax = plt.subplots(figsize=(4.5, 3.0))
-    
-    # Handle empty buckets
-    if not buckets:
-        ax.text(0.5, 0.5, "No risk distribution data", 
-                ha="center", va="center", transform=ax.transAxes,
-                fontsize=9, color="#64748b")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        return _png(fig)
-    
-    labels = list(buckets.keys())
-    values = list(buckets.values())
-    risk_colors = {
-        "Low":      VX.EMERALD_HEX,
-        "Medium":   VX.AMBER_HEX,
-        "High":     VX.ROSE_HEX,
-        "Critical": "#7c0a02",
-    }
-    bar_colors = [risk_colors.get(l, VX.VIOLET_HEX) for l in labels]
-    bars = ax.bar(labels, values, color=bar_colors, alpha=0.85,
-                  width=0.55, zorder=3, edgecolor="white", linewidth=1.5)
-    for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                str(val), ha="center", va="bottom",
-                fontsize=9, fontweight="bold", color="#0f172a")
-    ax.set_ylabel("# Responses", fontsize=8, color="#64748b")
-    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=10)
-    ax.grid(axis="y", color="#e2e8f0", linewidth=0.6, zorder=1)
+    # Custom diverging cmap: red → amber → green
+    cmap = LinearSegmentedColormap.from_list(
+        "vx_risk",
+        [(0.0, "#f43f5e"), (0.40, "#f59e0b"), (0.75, "#10b981"), (1.0, "#065f46")],
+    )
+    # Risk Index column uses inverted mapping (high = bad)
+    cmap_risk = LinearSegmentedColormap.from_list(
+        "vx_risk_inv",
+        [(0.0, "#10b981"), (0.40, "#f59e0b"), (0.75, "#f43f5e"), (1.0, "#7c0a02")],
+    )
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.5, 3.4),
+                              gridspec_kw={"width_ratios": [3, 1], "wspace": 0.04})
+
+    # Left: Score + Weight % + Contribution
+    sns.heatmap(
+        norm_data[:, :3], ax=axes[0],
+        annot=annot_arr[:, :3], fmt="", cmap=cmap,
+        linewidths=0.5, linecolor="#f1f5f9",
+        xticklabels=col_labels[:3], yticklabels=pillar_names,
+        cbar=False, vmin=0, vmax=1,
+        annot_kws={"size": 8.5, "weight": "bold", "color": "#0f172a"},
+    )
+
+    # Right: Risk Index (own colourmap)
+    sns.heatmap(
+        norm_data[:, 3:4], ax=axes[1],
+        annot=annot_arr[:, 3:4], fmt="", cmap=cmap_risk,
+        linewidths=0.5, linecolor="#f1f5f9",
+        xticklabels=[col_labels[3]], yticklabels=False,
+        cbar=False, vmin=0, vmax=1,
+        annot_kws={"size": 8.5, "weight": "bold", "color": "#0f172a"},
+    )
+
+    axes[0].set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=10)
+    axes[0].tick_params(axis="y", labelsize=8.5, labelcolor="#0f172a")
+    axes[0].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
+    axes[1].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
+    axes[1].set_title("", pad=10)
+
     plt.tight_layout()
     return _png(fig)
 
@@ -653,23 +720,6 @@ def _cover(data: dict, s: dict) -> list:
     return story
 
 
-# ── SAMPLE DATA HELPERS ───────────────────────────────────────────────────────
-
-def _sample_trend() -> list[dict]:
-    base = datetime.utcnow()
-    trend = []
-    for i in range(30):
-        d = base - timedelta(days=29 - i)
-        noise = np.random.uniform(-4, 4)
-        trend.append({
-            "date":          d.strftime("%m/%d"),
-            "overall":       round(min(100, max(50, 78 + noise + i * 0.2)), 1),
-            "safety":        round(min(100, max(50, 88 + noise)), 1),
-            "hallucination": round(min(100, max(50, 75 + noise)), 1),
-            "compliance":    round(min(100, max(50, 80 + noise)), 1),
-        })
-    return trend
-
 
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
@@ -810,56 +860,77 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
     story.append(pt)
     story.append(PageBreak())
 
-    # ── ENFORCEMENT ──
-    story.extend(_divider("3. Enforcement Engine Analysis", s))
+    # ── ML SIGNAL ANALYTICS ──
+    story.extend(_divider("3. ML Signal Analytics", s))
     story.append(Paragraph(
-        "The VeldrixAI Enforcement Engine applied deterministic policy decisions to all evaluated "
-        "responses. The distribution below shows the breakdown of enforcement actions taken "
-        "across the evaluation window. Block and Rewrite actions represent active interventions "
-        "where the model's raw output did not meet policy requirements.",
+        "The following charts characterise the model's safety profile at inference time. "
+        "The scatter plot positions each trust pillar in weight–score space; bubble area "
+        "encodes the weighted contribution to the overall trust score. "
+        "The verdict pie summarises per-pillar classification outcomes. "
+        "The risk matrix heatmap provides a columnar breakdown of score, weight, contribution, "
+        "and inverted risk index for rapid triage.",
         s["body"]))
     story.append(Spacer(1, 3 * mm))
 
-    risk_dist = report_data.get("risk_distribution", {
-        "Low": 7840, "Medium": 1100, "High": 312, "Critical": 48,
+    pillar_weights_for_charts = report_data.get("pillar_weights", {
+        "Safety": 0.25, "Hallucination": 0.25, "Bias": 0.20,
+        "Prompt Security": 0.15, "Compliance": 0.15,
     })
-    donut_img = Image(io.BytesIO(chart_enforcement_donut(enforcement)), width=88 * mm, height=80 * mm)
-    risk_img  = Image(io.BytesIO(chart_risk_distribution(risk_dist)),   width=88 * mm, height=80 * mm)
-    enforce_row = Table([[donut_img, risk_img]], colWidths=[93 * mm, 93 * mm])
-    enforce_row.setStyle(TableStyle([
+    verdict_str = str(report_data.get("risk_level", "")).upper()
+
+    # Row 1: Scatter (left) + Verdict Pie (right)
+    scatter_img = Image(
+        io.BytesIO(chart_pillar_scatter(pillar_scores, pillar_weights_for_charts,
+                                        "Pillar Risk Scatter — Weight vs Score")),
+        width=98 * mm, height=70 * mm,
+    )
+    pie_img = Image(
+        io.BytesIO(chart_verdict_pie(pillar_scores, verdict_str,
+                                     "Pillar Verdict Distribution")),
+        width=74 * mm, height=70 * mm,
+    )
+    row1 = Table([[scatter_img, pie_img]], colWidths=[100 * mm, 76 * mm])
+    row1.setStyle(TableStyle([
+        ("ALIGN",  (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING",  (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+    ]))
+    story.append(row1)
+    story.append(Paragraph(
+        "Figure 2: Pillar risk scatter (left) — bubble area ∝ weighted contribution; "
+        "shading bands indicate Fail (<70), Caution (70–84), and Pass (≥85) zones. "
+        "Pillar verdict distribution (right) — proportion of pillars in each risk category.",
+        s["caption"]))
+    story.append(Spacer(1, 4 * mm))
+
+    # Row 2: Risk Heatmap (full width)
+    heatmap_img = Image(
+        io.BytesIO(chart_risk_heatmap(pillar_scores, pillar_weights_for_charts,
+                                       "Pillar Risk Matrix")),
+        width=174 * mm, height=68 * mm,
+    )
+    row2 = Table([[heatmap_img]], colWidths=[174 * mm])
+    row2.setStyle(TableStyle([
         ("ALIGN",  (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
-    story.append(enforce_row)
+    story.append(row2)
     story.append(Paragraph(
-        "Figure 2: Enforcement Action Distribution (left) and Response Risk Distribution (right).",
-        s["caption"]))
-
-    # ── TREND ──
-    story.extend(_divider("4. Trust Score Trend", s))
-    trend_data = report_data.get("trend_data") or _sample_trend()
-    trend_img = Image(io.BytesIO(chart_trend_line(trend_data)), width=174 * mm, height=75 * mm)
-    trend_tbl = Table([[trend_img]], colWidths=[174 * mm])
-    trend_tbl.setStyle(TableStyle([
-        ("ALIGN",         (0, 0), (-1, -1), "CENTER"),
-        ("TOPPADDING",    (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-    ]))
-    story.append(trend_tbl)
-    story.append(Paragraph(
-        "Figure 3: Overall trust score trend with key pillar overlays. "
-        "Amber band = caution zone (70–90). Green dashed line = target (90).",
+        "Figure 3: Risk matrix heatmap. Columns: Score (0–100), Weight %, Weighted Contribution, "
+        "Risk Index (0 = trusted, 100 = critical). Colour gradient: green → amber → red. "
+        "Risk Index column uses an inverted gradient — darker red indicates higher risk.",
         s["caption"]))
     story.append(PageBreak())
 
     # ── FINDINGS ──
-    story.extend(_divider("5. Findings & Risk Assessment", s))
+    story.extend(_divider("4. Findings & Risk Assessment", s))
     findings = report_data.get("findings") or []
     story.append(_findings_table(findings))
     story.append(Spacer(1, 5 * mm))
 
     # ── METHODOLOGY ──
-    story.extend(_divider("6. Methodology", s))
+    story.extend(_divider("5. Methodology", s))
     story.append(Paragraph(
         report_data.get("methodology",
             "VeldrixAI evaluates every AI response through a five-pillar trust framework. "
@@ -871,7 +942,7 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
         s["body"]))
 
     # ── RECOMMENDATIONS ──
-    story.extend(_divider("7. Recommendations", s))
+    story.extend(_divider("6. Recommendations", s))
     recs = report_data.get("recommendations") or []
     for i, rec in enumerate(recs, 1):
         story.append(KeepTogether([
@@ -884,7 +955,7 @@ def generate_veldrix_pdf(report_data: dict) -> bytes:
     raw = report_data.get("appendix_data")
     if raw:
         story.append(PageBreak())
-        story.extend(_divider("Appendix: Raw Metrics", s))
+        story.extend(_divider("7. Appendix: Raw Metrics", s))
         raw_rows = [[
             Paragraph("Metric", ParagraphStyle("th", fontName="Helvetica-Bold", fontSize=8,
                        textColor=colors.white)),
