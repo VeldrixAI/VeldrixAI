@@ -1,17 +1,55 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 /* ── Constants ─────────────────────────────────────────────────────────────── */
 
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  bug_report: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    </svg>
+  ),
+  billing: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  ),
+  sdk_integration: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+    </svg>
+  ),
+  api_keys: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+    </svg>
+  ),
+  feature_request: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  ),
+  security: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  ),
+  general: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  ),
+};
+
 const CATEGORIES = [
-  { id: "bug_report",      label: "Bug Report",      icon: "⚡", color: "#f43f5e" },
-  { id: "billing",         label: "Billing",         icon: "💳", color: "#f59e0b" },
-  { id: "sdk_integration", label: "SDK",             icon: "⚙️",  color: "#7c3aed" },
-  { id: "api_keys",        label: "API & Keys",      icon: "🔑", color: "#06b6d4" },
-  { id: "feature_request", label: "Feature Request", icon: "✨", color: "#10b981" },
-  { id: "security",        label: "Security",        icon: "🔒", color: "#fb7185" },
-  { id: "general",         label: "General",         icon: "💬", color: "#94a3b8" },
+  { id: "bug_report",      label: "Bug Report",      color: "#f43f5e" },
+  { id: "billing",         label: "Billing",         color: "#f59e0b" },
+  { id: "sdk_integration", label: "SDK",             color: "#7c3aed" },
+  { id: "api_keys",        label: "API & Keys",      color: "#06b6d4" },
+  { id: "feature_request", label: "Feature Request", color: "#10b981" },
+  { id: "security",        label: "Security",        color: "#fb7185" },
+  { id: "general",         label: "General",         color: "#94a3b8" },
 ] as const;
 
 const PRIORITIES = [
@@ -437,7 +475,7 @@ export default function SupportPage() {
                             boxShadow:active ? `0 2px 12px ${cat.color}22` : "none",
                           }}
                         >
-                          <span style={{ fontSize:"14px" }}>{cat.icon}</span>
+                          <span style={{ opacity: active ? 1 : 0.6 }}>{CATEGORY_ICONS[cat.id]}</span>
                           {cat.label}
                         </button>
                       );
