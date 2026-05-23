@@ -37,7 +37,7 @@ class OrchestrationEngine:
     def __init__(
         self,
         registry: PillarRegistry,
-        execution_timeout: float = 30.0,
+        execution_timeout: float = 10.0,
         min_pillars_required: int = 1
     ):
         """
@@ -46,8 +46,8 @@ class OrchestrationEngine:
         Args:
             registry: Pillar registry instance
             execution_timeout: Maximum execution time per pillar in seconds.
-                              Default 30s — defers to inference provider timeouts
-                              so real LLM scores are returned instead of degraded stubs.
+                              Default 10s — hard ceiling; real inference completes
+                              in 0.3–3s via speculative execution.
             min_pillars_required: Minimum successful pillars for valid result
         """
         self.registry = registry

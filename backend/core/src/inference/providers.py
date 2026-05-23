@@ -64,7 +64,7 @@ def _build_registry() -> list[ProviderConfig]:
             api_key_env="GROQ_API_KEY",
             model_id=os.environ.get("GROQ_MODEL_ID", "llama-3.3-70b-versatile"),
             priority=2,
-            timeout_seconds=float(os.environ.get("GROQ_TIMEOUT_S", "8.0")),
+            timeout_seconds=float(os.environ.get("GROQ_TIMEOUT_S", "3.0")),
             max_retries=1,
             supports_json_mode=True,
             health_endpoint=None,
