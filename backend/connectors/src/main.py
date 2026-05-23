@@ -14,6 +14,7 @@ from src.db.base import Base, engine, get_db
 import src.modules.reports.models  # noqa: F401
 import src.modules.analytics.models  # noqa: F401
 import src.modules.prompts.models  # noqa: F401
+import src.modules.support.models  # noqa: F401
 
 # Create all tables on startup (idempotent — safe to run every boot)
 Base.metadata.create_all(bind=engine)
@@ -25,6 +26,7 @@ from src.modules.analytics.latency_controller import router as latency_router
 from src.modules.analytics.metrics_controller import router as metrics_router
 from src.modules.prompts.controller import router as prompts_router
 from src.modules.models.controller import router as models_router
+from src.modules.support.controllers.support_controller import router as support_router
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,7 @@ app.include_router(latency_router)
 app.include_router(metrics_router)
 app.include_router(prompts_router)
 app.include_router(models_router)
+app.include_router(support_router)
 
 
 @app.get("/health")

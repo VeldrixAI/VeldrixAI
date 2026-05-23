@@ -156,7 +156,7 @@ const navSections = [
 
 const secondaryItems = [
   { href: "/dashboard/profile", label: "Settings", icon: <IcoGear /> },
-  { href: "#support", label: "Support", icon: <IcoHelp /> },
+  { href: "/dashboard/support", label: "Support",  icon: <IcoHelp /> },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -335,10 +335,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {secondaryItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link key={item.href} href={item.href} style={navItemStyle(active)}
-                onClick={item.href === "#support" ? (e) => e.preventDefault() : undefined}>
+              <Link key={item.href} href={item.href} style={navItemStyle(active)}>
                 <span style={{ opacity: active ? 1 : 0.6, flexShrink: 0, color: active ? "#a78bfa" : "currentColor" }}>{item.icon}</span>
                 {item.label}
+                {active && <span style={{
+                  position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+                  width: "3px", height: "60%", borderRadius: "2px 0 0 2px",
+                  background: "linear-gradient(to bottom, #7c3aed, #4f46e5)",
+                }}/>}
               </Link>
             );
           })}
