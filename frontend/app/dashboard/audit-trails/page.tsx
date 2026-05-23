@@ -466,8 +466,15 @@ export default function AuditTrailsPage() {
                             </div>
                           ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
                         </td>
-                        <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.45)", whiteSpace: "nowrap" }}>
-                          {m.totalLatencyMs != null ? `${m.totalLatencyMs}ms` : "—"}
+                        <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
+                          {m.totalLatencyMs != null ? (
+                            <span style={{
+                              fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600,
+                              color: m.totalLatencyMs <= 400 ? "#10b981" : m.totalLatencyMs <= 800 ? "#f59e0b" : "#f43f5e",
+                            }}>
+                              {Math.round(m.totalLatencyMs)}ms
+                            </span>
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
                         </td>
                         <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.35)", whiteSpace: "nowrap" }}>
                           {fmtShort(r.created_at)}

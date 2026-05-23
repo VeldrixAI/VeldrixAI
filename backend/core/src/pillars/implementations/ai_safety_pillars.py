@@ -85,6 +85,9 @@ _RE_DEMOGRAPHICS = re.compile(
 # Matches ```json ... ``` or ``` ... ``` code fences in model output
 _RE_JSON_FENCE = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
 
+# Matches <think>...</think> blocks emitted by reasoning/CoT models (e.g. DeepSeek-R1, QwQ)
+_RE_THINK_TAG = re.compile(r"<think>[\s\S]*?</think>", re.IGNORECASE)
+
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────────
@@ -210,22 +213,44 @@ def _log_latency(pillar_name: str, elapsed_ms: float) -> None:
 
 def _parse_nim_json(raw_content: str, pillar_name: str) -> Optional[Dict[str, Any]]:
     """
-    Parse JSON from a model response, stripping markdown code fences first.
+    Parse JSON from a model response with robust fallbacks for modern LLM output styles.
+
+    Handles in order:
+      1. ``<think>...</think>`` blocks from reasoning/CoT models — stripped before parsing
+      2. Markdown code fences: ``` json {...} ```
+      3. Plain JSON string
+      4. Conversational prefix text: "Here is my analysis:\\n{...}" — first ``{`` located
 
     Returns:
-        Parsed ``dict`` on success, or ``None`` on ``json.JSONDecodeError``.
+        Parsed ``dict`` on success, or ``None`` on total parse failure.
     """
-    fence_match = _RE_JSON_FENCE.search(raw_content)
-    candidate = fence_match.group(1) if fence_match else raw_content.strip()
+    # Strip CoT / reasoning blocks (DeepSeek-R1, QwQ, etc.)
+    content = _RE_THINK_TAG.sub("", raw_content).strip()
+
+    # 1. Check for markdown code fence
+    fence_match = _RE_JSON_FENCE.search(content)
+    candidate = fence_match.group(1).strip() if fence_match else content
+
+    # 2. Try direct parse (handles plain JSON and code-fenced JSON)
     try:
         return json.loads(candidate)
     except json.JSONDecodeError:
-        logger.error(
-            "[%s] JSON parse failure. Raw response (first 400 chars): %.400s",
-            pillar_name,
-            raw_content,
-        )
-        return None
+        pass
+
+    # 3. Model prefixed the JSON with conversational text — locate the opening brace
+    brace_idx = candidate.find("{")
+    if brace_idx > 0:
+        try:
+            return json.loads(candidate[brace_idx:])
+        except json.JSONDecodeError:
+            pass
+
+    logger.error(
+        "[%s] JSON parse failure. Raw response (first 400 chars): %.400s",
+        pillar_name,
+        raw_content,
+    )
+    return None
 
 
 # ── Composite trust score ─────────────────────────────────────────────────────────

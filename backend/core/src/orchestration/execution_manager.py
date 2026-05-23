@@ -23,12 +23,14 @@ class ExecutionManager:
     LATENCY TARGET: 350ms wall-clock for all 5 pillars in parallel.
     """
 
-    def __init__(self, timeout_seconds: float = 0.25):  # 250ms per pillar (was 400ms)
+    def __init__(self, timeout_seconds: float = 30.0):
         """
         Initialize execution manager.
 
         Args:
-            timeout_seconds: Maximum execution time per pillar (default 250ms — sub-500ms SLA)
+            timeout_seconds: Maximum execution time per pillar in seconds.
+                             Default 30s — defers to inference provider timeouts
+                             so pillars return real LLM scores, not timeout stubs.
         """
         self.timeout_seconds = timeout_seconds
     

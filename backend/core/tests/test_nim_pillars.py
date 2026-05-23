@@ -95,6 +95,23 @@ def test_parse_nim_json_empty_returns_none():
     assert result is None
 
 
+def test_parse_nim_json_prefix_text():
+    """Model prepends conversational text before JSON — first '{' located and parsed."""
+    raw = 'Here is my analysis:\n{"risk_score": 0.4, "categories": ["S3"]}'
+    result = _parse_nim_json(raw, "test")
+    assert result is not None
+    assert result["risk_score"] == pytest.approx(0.4)
+    assert result["categories"] == ["S3"]
+
+
+def test_parse_nim_json_strips_think_tags():
+    """Reasoning/CoT <think>...</think> blocks are stripped before JSON parse."""
+    raw = "<think>Let me reason through this carefully.</think>\n{\"risk_score\": 0.1, \"categories\": []}"
+    result = _parse_nim_json(raw, "test")
+    assert result is not None
+    assert result["risk_score"] == pytest.approx(0.1)
+
+
 # ════════════════════════════════════════════════════════════════════════════════
 # ── Unit: compute_composite_trust_score ──────────────────────────────────────
 # ════════════════════════════════════════════════════════════════════════════════
