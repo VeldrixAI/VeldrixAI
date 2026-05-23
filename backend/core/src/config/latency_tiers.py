@@ -1,21 +1,27 @@
 """SLA tier definitions for the VeldrixAI Request Budget Governor.
 
+ARCHITECTURE (v3.0 — Accuracy + Speed):
+  Per-pillar slots are GENEROUS (up to 4s) to let NIM inference produce
+  real scores.  The total budget is TIGHT (500ms STANDARD, 200ms REALTIME)
+  to enforce the p95 SLA.  When NIM is healthy (~300ms per call), all 5
+  pillars return real results within the total budget and the user sees
+  accurate trust scores.
+
+  ┌─────────────────────────────────────────┐
+  │  total_budget=500ms ← HARD deadline    │  ← Always fires first
+  │  ┌─────────────────────────────────┐    │
+  │  │  safety slot = 4000ms (safety) │    │  ← Generous, never fires
+  │  │  hallu   slot = 4000ms         │    │     because total budget
+  │  │  bias    slot = 4000ms         │    │     cancels all pillars
+  │  │  prompt  slot = 4000ms         │    │     at 500ms
+  │  │  compl   slot = 4000ms         │    │
+  │  └─────────────────────────────────┘    │
+  └─────────────────────────────────────────┘
+
 Three tiers:
-  REALTIME   — p95 ≤ 200 ms  (enterprise, hard real-time SDK calls)
-  STANDARD   — p95 ≤ 500 ms  (default; starter and growth plans)
-  BACKGROUND — uncapped       (fire-and-forget; returns immediately)
-
-Pillar slot names match the SDK pillar IDs used in sdk/client.py:
-  safety, hallucination, bias, prompt_security, compliance
-
-All five pillars run in parallel via asyncio.gather(), so the wall-clock
-total ≈ max(pillar_slot_values), not the sum.  Overhead from request
-parsing, score aggregation, and response assembly adds ~15-30ms.
-
-VERSION 2.0 — Aggressive slots for sub-500ms p95 SLA:
-  REALTIME:   40ms × 5 pillars in parallel → max 40ms
-  STANDARD:  250ms × 5 pillars in parallel → max 250ms + overhead ≈ 280ms p50, < 500ms p95
-  BACKGROUND: still generous for async queue processing (30s per pillar)
+  REALTIME   — p95 ≤ 200 ms (enterprise)
+  STANDARD   — p95 ≤ 500 ms (default)
+  BACKGROUND — uncapped (fire-and-forget)
 """
 from __future__ import annotations
 
@@ -41,17 +47,15 @@ class LatencyBudget:
     request_id: str = field(default="")
 
 
-# Immutable tier blueprints — copied per-request so mutations stay isolated
+# Immutable tier blueprints
 _TIER_BLUEPRINTS: dict[str, LatencyBudget] = {
     "REALTIME": LatencyBudget(
         tier="REALTIME",
         total_budget_ms=200,
         pillar_slots=PillarSlots(
-            safety_ms=40,
-            hallucination_ms=40,
-            bias_ms=40,
-            prompt_security_ms=40,
-            compliance_ms=40,
+            safety_ms=4000, hallucination_ms=4000,
+            bias_ms=4000, prompt_security_ms=4000,
+            compliance_ms=4000,
         ),
         background_mode=False,
     ),
@@ -59,15 +63,9 @@ _TIER_BLUEPRINTS: dict[str, LatencyBudget] = {
         tier="STANDARD",
         total_budget_ms=500,
         pillar_slots=PillarSlots(
-            # Aggressive 250ms per pillar — 5 run in parallel, so wall-clock
-            # ≈ 250ms (plus ~15-30ms overhead for parsing/aggregation).
-            # The adaptive tuner narrows these toward p95×1.2 as telemetry
-            # accumulates, starting from this reasonable baseline.
-            safety_ms=250,
-            hallucination_ms=250,
-            bias_ms=250,
-            prompt_security_ms=250,
-            compliance_ms=250,
+            safety_ms=4000, hallucination_ms=4000,
+            bias_ms=4000, prompt_security_ms=4000,
+            compliance_ms=4000,
         ),
         background_mode=False,
     ),
@@ -75,17 +73,15 @@ _TIER_BLUEPRINTS: dict[str, LatencyBudget] = {
         tier="BACKGROUND",
         total_budget_ms=120000,
         pillar_slots=PillarSlots(
-            safety_ms=30000,
-            hallucination_ms=30000,
-            bias_ms=30000,
-            prompt_security_ms=30000,
+            safety_ms=30000, hallucination_ms=30000,
+            bias_ms=30000, prompt_security_ms=30000,
             compliance_ms=30000,
         ),
         background_mode=True,
     ),
 }
 
-# Module-level dict — adaptive tuner mutates STANDARD slots at runtime
+# Mutable copy — adaptive tuner mutates STANDARD slots at runtime
 LATENCY_TIERS: dict[str, LatencyBudget] = copy.deepcopy(_TIER_BLUEPRINTS)
 
 
@@ -94,15 +90,6 @@ def resolve_tier(
     org_plan: str,
     explicit_background: bool,
 ) -> str:
-    """
-    Determine SLA tier for an incoming request.
-
-    Priority:
-      1. explicit background=True in request body → BACKGROUND
-      2. X-Veldrix-SLA-Tier header (enterprise overrides)
-      3. org plan: 'enterprise' → REALTIME, else → STANDARD
-      4. default → STANDARD
-    """
     if explicit_background:
         return "BACKGROUND"
     header_tier = request_headers.get("x-veldrix-sla-tier", "").upper()
@@ -122,7 +109,6 @@ def get_budget_for_request(
     explicit_background: bool,
     request_id: str,
 ) -> LatencyBudget:
-    """Return a fresh LatencyBudget copy with the request_id stamped in."""
     tier = resolve_tier(request_headers, org_plan, explicit_background)
     budget = copy.deepcopy(LATENCY_TIERS[tier])
     budget.request_id = request_id

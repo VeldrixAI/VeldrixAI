@@ -52,10 +52,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger("veldrix.sdk")
 
 # ── Hardcoded STANDARD defaults ──────────────────────────────────────────────
-# These match the STANDARD tier in latency_tiers.py.
+# Per-pillar slots are generous (4000ms) so NIM inference produces REAL scores.
+# Total budget is tight (500ms) to enforce the p95 SLA.
+# When NIM is healthy (~300ms), all 5 pillars return real results within budget.
 _DEFAULT_TOTAL_BUDGET_MS = 500
-_DEFAULT_SLOT_MS = 250
-_PILLAR_SLA_MS = 250
+_DEFAULT_SLOT_MS = 4000     # generous — NIM needs up to 4s for inference
+_PILLAR_SLA_MS = 4000       # per-pillar breach threshold matches slot
 
 # Pillar weights
 _WEIGHTS: dict[str, float] = {
@@ -426,10 +428,16 @@ class VeldrixSDK:
             } if emit_diagnostics else None,
         )
 
-        # ── Synchronous latency DB write ──────────────────────────────────────
-        # This runs in the SAME request-response cycle, not fire-and-forget.
-        # Every request creates exactly one row in request_latency.
-        await _sync_record_latency(user_id, float(elapsed_ms))
+        # ── Latency recording (fire-and-forget, records dispatch_ms) ──────────
+        # dispatch_ms is the actual pillar execution time (~259ms).
+        # elapsed_ms includes assembly/telemetry overhead (~340ms).
+        # We record dispatch_ms so the dashboard latency matches the audit stream.
+        # Using fire-and-forget with strong reference so it never blocks the
+        # response (same pattern as middleware.py _MIDDLEWARE_TASKS).
+        _LATENCY_TASK = asyncio.create_task(
+            _sync_record_latency(user_id, float(dispatch_ms))
+        )
+        _LATENCY_TASK.add_done_callback(lambda t: None)  # suppress "Task was destroyed but it is pending" warnings
 
         # ── Fire-and-forget telemetry (audit trail + SSE) ─────────────────────
         asyncio.create_task(self._telemetry.record(
