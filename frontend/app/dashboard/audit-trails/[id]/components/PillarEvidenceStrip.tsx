@@ -118,12 +118,16 @@ function MetricsFooter({ m, pillar }: { m: PillarMetric | undefined; pillar: str
   if (!m) return null;
 
   if (m.status === "insufficient_data") {
+    const n   = m.labeled_n  ?? 0;
+    const req = m.required_n ?? 30;
     return (
       <div style={{
         fontFamily: "JetBrains Mono, monospace", fontSize: 10,
-        color: "rgba(244,63,94,0.5)", marginTop: 6, letterSpacing: "0.3px",
+        color: "rgba(240,242,255,0.2)", marginTop: 6, letterSpacing: "0.3px",
+        display: "flex", alignItems: "center", gap: 6,
       }}>
-        n={m.labeled_n ?? 0} · insufficient labeled data (need ≥{m.required_n ?? 30})
+        <span style={{ color: "rgba(124,58,237,0.45)" }}>◎</span>
+        <span>Calibration pending — {n}/{req} evaluations</span>
       </div>
     );
   }

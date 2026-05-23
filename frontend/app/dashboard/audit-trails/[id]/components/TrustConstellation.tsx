@@ -275,13 +275,16 @@ export default function TrustConstellation({
                 </div>
               </>
             ) : (
-              <div style={{
-                fontFamily: "JetBrains Mono, monospace", fontSize: 9,
-                color: "#F43F5E", opacity: 0.6, marginTop: 4,
-              }}>
-                {hoveredNode.labeledN != null
-                  ? `n=${hoveredNode.labeledN} · insufficient data`
-                  : "no labeled data"}
+              <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ color: "rgba(124,58,237,0.45)", fontSize: 9 }}>◎</span>
+                <span style={{
+                  fontFamily: "JetBrains Mono, monospace", fontSize: 9,
+                  color: "rgba(240,242,255,0.2)",
+                }}>
+                  {hoveredNode.labeledN != null
+                    ? `Calibration: ${hoveredNode.labeledN}/30`
+                    : "Awaiting labeled data"}
+                </span>
               </div>
             )}
           </div>

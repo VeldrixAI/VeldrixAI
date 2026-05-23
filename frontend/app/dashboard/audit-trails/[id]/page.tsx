@@ -206,39 +206,302 @@ function Badge({ label, color }: { label: string; color: string }) {
 
 // ── Sections 5 & 6 — Risk Thesis + Policy Trace ───────────────────────────────
 
-function RiskThesisSection({ intel, loading, error, onRegenerate }: {
+// ── Section ML: Diagnostics Panel ────────────────────────────────────────────
+
+const _ML_PILLAR_KEYS   = ["safety", "hallucination", "bias", "prompt_security", "compliance"] as const;
+type _MLPillarKey = typeof _ML_PILLAR_KEYS[number];
+const _ML_LABELS: Record<_MLPillarKey, string> = {
+  safety: "Safety", hallucination: "Hallucination", bias: "Bias",
+  prompt_security: "Prompt Security", compliance: "Compliance",
+};
+const _ML_COLORS: Record<_MLPillarKey, string> = {
+  safety: "#F43F5E", hallucination: "#7C3AED", bias: "#4F46E5",
+  prompt_security: "#06B6D4", compliance: "#10B981",
+};
+
+function _safeDiv(n: number, d: number): number { return d === 0 ? 0 : n / d; }
+
+function MLMetricsPanel({
+  pillarScores,
+  pillarConf,
+  verdict,
+  pillarMetrics,
+}: {
+  pillarScores:  PillarScores;
+  pillarConf:    Record<string, number>;
+  verdict:       string | null;
+  pillarMetrics: Record<string, PillarMetric>;
+}) {
+  // Operational ground truth: BLOCK/WARN = positive (risky); ALLOW/REVIEW = negative
+  const isActuallyRisky = verdict === "BLOCK" || verdict === "WARN";
+
+  const rows = _ML_PILLAR_KEYS.map((p) => {
+    const raw = pillarScores[p] ?? null;
+    const score = raw !== null ? (raw > 1 ? raw / 100 : raw) : null;
+    const conf  = pillarConf[p]  ?? null;
+    const predictedRisky = score !== null ? score < 0.5 : null;
+    const outcome =
+      predictedRisky === null ? null
+      : predictedRisky && isActuallyRisky ? "TP"
+      : predictedRisky && !isActuallyRisky ? "FP"
+      : !predictedRisky && isActuallyRisky ? "FN"
+      : "TN";
+    const histM = pillarMetrics[p];
+    return { p, score, conf, predictedRisky, outcome, histM };
+  });
+
+  const counted = rows.filter(r => r.outcome !== null);
+  const tp = counted.filter(r => r.outcome === "TP").length;
+  const fp = counted.filter(r => r.outcome === "FP").length;
+  const fn = counted.filter(r => r.outcome === "FN").length;
+  const tn = counted.filter(r => r.outcome === "TN").length;
+
+  const precision    = _safeDiv(tp, tp + fp);
+  const recall       = _safeDiv(tp, tp + fn);
+  const f1           = _safeDiv(2 * precision * recall, precision + recall);
+  const fpr          = _safeDiv(fp, fp + tn);
+  const specificity  = _safeDiv(tn, tn + fp);
+  const mccNum       = tp * tn - fp * fn;
+  const mccDen       = Math.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
+  const mcc          = mccDen > 0 ? mccNum / mccDen : 0;
+  const accuracy     = counted.length > 0 ? (tp + tn) / counted.length : 0;
+
+  const hasHistory   = Object.values(pillarMetrics).some(m => m?.status === "ok" && m.f1 != null);
+
+  const verdictColor = verdict === "BLOCK" ? "#f43f5e"
+    : verdict === "WARN"   ? "#f59e0b"
+    : verdict === "REVIEW" ? "#06b6d4" : "#10b981";
+
+  const outcomeColor: Record<string, string> = {
+    TP: "#10b981", FP: "#f43f5e", FN: "#f59e0b", TN: "#10b981",
+  };
+  const outcomeLabel: Record<string, string> = {
+    TP: "True Positive",  FP: "False Positive",
+    FN: "False Negative", TN: "True Negative",
+  };
+  const outcomeBg: Record<string, string> = {
+    TP: "rgba(16,185,129,0.08)", FP: "rgba(244,63,94,0.08)",
+    FN: "rgba(245,158,11,0.08)", TN: "rgba(16,185,129,0.05)",
+  };
+
+  const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
+
+  return (
+    <Card style={{ marginBottom: 20, padding: 28 }} highlight="#06B6D4">
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div>
+          <SectionLabel>ML Diagnostics</SectionLabel>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.35)", marginTop: -8 }}>
+            Evaluation-scope confusion matrix · {verdict ? <span style={{ color: verdictColor, fontWeight: 600 }}>{verdict}</span> : "No verdict"} as ground truth
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{
+            fontFamily: "JetBrains Mono, monospace", fontSize: 9, letterSpacing: "1.5px",
+            padding: "3px 8px", borderRadius: 6,
+            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4",
+          }}>
+            {hasHistory ? "HISTORICAL + LIVE" : "EVALUATION-SCOPE"}
+          </span>
+        </div>
+      </div>
+
+      {/* Two-column: Confusion Matrix + Key Metrics */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+
+        {/* Confusion Matrix */}
+        <div>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
+            Confusion Matrix <span style={{ color: "rgba(240,242,255,0.15)" }}>· pillar × verdict</span>
+          </div>
+
+          {/* Labels header */}
+          <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4, marginBottom: 4 }}>
+            <div />
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", textAlign: "center" }}>Actual +</div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", textAlign: "center" }}>Actual −</div>
+          </div>
+          {/* Row: Predicted + */}
+          <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4, marginBottom: 4 }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", display: "flex", alignItems: "center" }}>Predicted +</div>
+            {/* TP */}
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TP, border: "1px solid rgba(16,185,129,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#10b981", lineHeight: 1 }}>{tp}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(16,185,129,0.6)", marginTop: 4, letterSpacing: "1px" }}>TP</div>
+            </div>
+            {/* FP */}
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FP, border: "1px solid rgba(244,63,94,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#f43f5e", lineHeight: 1 }}>{fp}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(244,63,94,0.6)", marginTop: 4, letterSpacing: "1px" }}>FP</div>
+            </div>
+          </div>
+          {/* Row: Predicted − */}
+          <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4 }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", display: "flex", alignItems: "center" }}>Predicted −</div>
+            {/* FN */}
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FN, border: "1px solid rgba(245,158,11,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#f59e0b", lineHeight: 1 }}>{fn}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(245,158,11,0.6)", marginTop: 4, letterSpacing: "1px" }}>FN</div>
+            </div>
+            {/* TN */}
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TN, border: "1px solid rgba(16,185,129,0.15)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#10b981", lineHeight: 1 }}>{tn}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(16,185,129,0.6)", marginTop: 4, letterSpacing: "1px" }}>TN</div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {(["TP", "FP", "FN", "TN"] as const).map(k => (
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 2, background: outcomeColor[k] }} />
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(240,242,255,0.3)" }}>{outcomeLabel[k]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
+            Classification Metrics
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { label: "F1 Score",     value: f1,          fmt: fmtPct, color: f1 >= 0.8 ? "#10b981" : f1 >= 0.6 ? "#f59e0b" : "#f43f5e", desc: "Harmonic mean of precision & recall" },
+              { label: "Precision",    value: precision,   fmt: fmtPct, color: precision >= 0.8 ? "#10b981" : "#f59e0b",  desc: "Flagged correctly / all flagged" },
+              { label: "Recall",       value: recall,      fmt: fmtPct, color: recall >= 0.8 ? "#10b981" : "#f59e0b",     desc: "Caught / all actual violations" },
+              { label: "Specificity",  value: specificity, fmt: fmtPct, color: specificity >= 0.8 ? "#10b981" : "#f59e0b",desc: "Correctly cleared / all safe" },
+              { label: "FPR",          value: fpr,         fmt: fmtPct, color: fpr <= 0.1 ? "#10b981" : fpr <= 0.3 ? "#f59e0b" : "#f43f5e", desc: "False alarm rate" },
+              { label: "MCC",          value: mcc,         fmt: (v: number) => v.toFixed(3), color: mcc >= 0.6 ? "#10b981" : mcc >= 0.3 ? "#f59e0b" : "rgba(240,242,255,0.5)", desc: "Matthews correlation coefficient" },
+              { label: "Accuracy",     value: accuracy,    fmt: fmtPct, color: accuracy >= 0.8 ? "#10b981" : "#f59e0b",  desc: "Overall correct decisions" },
+            ].map(({ label, value, fmt, color, desc }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div>
+                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.7)", fontWeight: 500 }}>{label}</div>
+                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(240,242,255,0.2)", marginTop: 1 }}>{desc}</div>
+                </div>
+                <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 15, fontWeight: 700, color }}>{fmt(value)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Per-Pillar Signal Table */}
+      <div>
+        <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
+          Per-Pillar Signal
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "DM Sans, sans-serif" }}>
+            <thead>
+              <tr>
+                {["Pillar", "Score", "Confidence", "Prediction", "Outcome", "Historical F1"].map(col => (
+                  <th key={col} style={{ padding: "8px 12px", fontFamily: "DM Sans, sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ p, score, conf, predictedRisky, outcome, histM }) => {
+                const color = _ML_COLORS[p as _MLPillarKey];
+                const outC  = outcome ? outcomeColor[outcome] : "rgba(240,242,255,0.25)";
+                return (
+                  <tr key={p} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                    <td style={{ padding: "10px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.7)" }}>{_ML_LABELS[p as _MLPillarKey]}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 40, height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                          <div style={{ width: score !== null ? `${score * 100}%` : "0%", height: "100%", background: score !== null && score >= 0.5 ? "#10b981" : "#f43f5e", borderRadius: 2 }} />
+                        </div>
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: score !== null && score >= 0.5 ? "#10b981" : "#f43f5e" }}>
+                          {score !== null ? `${(score * 100).toFixed(1)}%` : "—"}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "10px 12px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.5)" }}>
+                      {conf !== null ? `${(conf * 100).toFixed(0)}%` : "—"}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span style={{
+                        fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
+                        padding: "2px 7px", borderRadius: 5,
+                        background: predictedRisky === null ? "rgba(255,255,255,0.04)" : predictedRisky ? "rgba(244,63,94,0.1)" : "rgba(16,185,129,0.1)",
+                        border: `1px solid ${predictedRisky === null ? "rgba(255,255,255,0.08)" : predictedRisky ? "rgba(244,63,94,0.3)" : "rgba(16,185,129,0.3)"}`,
+                        color: predictedRisky === null ? "rgba(240,242,255,0.3)" : predictedRisky ? "#f43f5e" : "#10b981",
+                      }}>
+                        {predictedRisky === null ? "—" : predictedRisky ? "RISKY" : "SAFE"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      {outcome ? (
+                        <span style={{
+                          fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: 11,
+                          color: outC, background: `${outC}15`,
+                          border: `1px solid ${outC}35`, borderRadius: 5, padding: "2px 7px",
+                        }}>
+                          {outcome}
+                        </span>
+                      ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.2)" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      {histM?.status === "ok" && histM.f1 != null ? (
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: histM.f1 >= 0.8 ? "#10b981" : "#f59e0b", fontWeight: 600 }}>
+                          {histM.f1.toFixed(3)}
+                        </span>
+                      ) : (
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(240,242,255,0.2)" }}>
+                          {histM?.labeled_n != null ? `n=${histM.labeled_n} / ${histM.required_n ?? 30}` : "pending"}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Calibration Status */}
+        {!hasHistory && (
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.12)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.6)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.5)", fontWeight: 500 }}>
+                Historical F1 calibration unlocks at 30+ labeled evaluations per pillar
+              </div>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "rgba(240,242,255,0.25)", marginTop: 2 }}>
+                Evaluation-scope metrics above are computed from pillar predictions vs {verdict ?? "verdict"} as operational ground truth
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function RiskThesisSection({ intel, loading, error }: {
   intel:        IntelligenceResult | null;
   loading:      boolean;
   error:        string;
-  onRegenerate: (force?: boolean) => void;
 }) {
   const systemPattern = intel?.risk_thesis?.risk_pattern;
   return (
     <Card style={{ marginBottom: 20, padding: 28 }} highlight="#7C3AED">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <SectionLabel>AI Risk Thesis</SectionLabel>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(124,58,237,0.6)", letterSpacing: "1px" }}>
-            {intel?.cached ? "CACHED" : "GROQ-POWERED"}
-          </span>
-          <button
-            onClick={() => onRegenerate(true)}
-            disabled={loading}
-            style={{
-              padding:    "6px 12px",
-              background: "rgba(124,58,237,0.08)",
-              border:     "1px solid rgba(124,58,237,0.25)",
-              borderRadius: 8,
-              color:      "rgba(124,58,237,0.8)",
-              fontFamily: "DM Sans, sans-serif",
-              fontSize:   11,
-              cursor:     loading ? "wait" : "pointer",
-              fontWeight: 600,
-            }}
-          >
-            ↻ Regenerate
-          </button>
-        </div>
+        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(124,58,237,0.6)", letterSpacing: "1px" }}>
+          {intel?.cached ? "CACHED" : "GROQ-POWERED"}
+        </span>
       </div>
 
       {loading && (
@@ -651,6 +914,16 @@ export default function AuditDetailPage() {
           )}
         </Card>
 
+        {/* ── Section 3.5: ML Diagnostics ── */}
+        {!detailLoading && (
+          <MLMetricsPanel
+            pillarScores={pillarScores}
+            pillarConf={pillarConf}
+            verdict={verdict}
+            pillarMetrics={metrics}
+          />
+        )}
+
         {/* ── Section 4: Latency Waterfall ── */}
         <Card style={{ marginBottom: 20, padding: 28 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -676,7 +949,6 @@ export default function AuditDetailPage() {
           intel={intel}
           loading={intelLoading}
           error={intelError}
-          onRegenerate={loadIntelligence}
         />
 
         {/* ── Section 5b: Recommendations ── */}

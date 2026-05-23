@@ -121,12 +121,15 @@ export default function DashboardPage() {
 
   // SSE live updates
   useEffect(() => {
-    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "";
+    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_API_URL ?? process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ?? "";
     if (!coreUrl) return;
     let es: EventSource;
     try {
       es = new EventSource(`${coreUrl}/api/v1/stream`);
-      es.addEventListener("analysis_complete", () => { load(range); });
+      es.addEventListener("analysis_complete", () => {
+        setAuditTotal(t => t + 1);
+        load(range);
+      });
     } catch { /* SSE not available */ }
     return () => { if (es) es.close(); };
   }, [range]);
@@ -151,10 +154,9 @@ export default function DashboardPage() {
 
   // Metric counter: Total Audited
   useEffect(() => {
-    if (!summary || loading) return;
+    if (loading) return;
     let alive = true;
-    const target = summary.total_evaluations ?? 0;
-    const step = Math.max(target / 60, 1);
+    const target = totalEvals;
     let v = 0;
     const id = setInterval(() => {
       if (!alive) return;
@@ -165,7 +167,7 @@ export default function DashboardPage() {
       if (v >= target) clearInterval(id);
     }, 16);
     return () => { alive = false; clearInterval(id); };
-  }, [summary?.total_evaluations, loading]);
+  }, [totalEvals, loading]);
 
   // Metric counter: Violations
   useEffect(() => {
@@ -203,9 +205,10 @@ export default function DashboardPage() {
     return () => { alive = false; clearInterval(id); };
   }, [summary?.approval_rate, loading]);
 
-  // Derived display values
-  const totalEvals = summary?.total_evaluations ?? 0;
-  const totalDisplay = summary
+  // Derived display values — prefer the live audit-trail total (updated by SSE),
+  // fall back to analytics summary if audit API hasn't loaded yet.
+  const totalEvals = Math.max(auditTotal, summary?.total_evaluations ?? 0);
+  const totalDisplay = (auditTotal > 0 || summary)
     ? (totalEvals >= 1000 ? (totalEvals / 1000).toFixed(1) + "k" : String(totalEvals))
     : "—";
   const violationsDisplay = summary ? String(summary.failed ?? 0) : "—";
