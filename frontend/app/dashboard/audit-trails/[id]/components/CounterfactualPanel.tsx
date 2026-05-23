@@ -49,15 +49,9 @@ export default function CounterfactualPanel({
   const [result,      setResult]      = useState<EvalResult | null>(null);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
-  const [reEvalCount, setReEvalCount] = useState(0);
-  const [quotaReset,  setQuotaReset]  = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const LIMIT = 5;
-  const quotaOk = reEvalCount < LIMIT;
-
   async function handleEvaluate() {
-    if (!quotaOk) return;
     setLoading(true);
     setError("");
     try {
@@ -78,7 +72,6 @@ export default function CounterfactualPanel({
       const ps: Record<string, number> = d?.trust_score?.pillar_scores ?? {};
 
       setResult({ verdict: v, overallScore: score ?? 0, pillarScores: ps });
-      setReEvalCount(c => c + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Re-evaluation failed");
     } finally {
@@ -135,35 +128,6 @@ export default function CounterfactualPanel({
           boxSizing:    "border-box",
         }}
       />
-
-      {/* Re-evaluate button + quota */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button
-          onClick={handleEvaluate}
-          disabled={loading || !quotaOk}
-          style={{
-            padding:    "10px 20px",
-            background: quotaOk ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
-            border:     `1px solid ${quotaOk ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.08)"}`,
-            borderRadius: 10,
-            color:      quotaOk ? "#7C3AED" : "rgba(240,242,255,0.2)",
-            fontFamily: "DM Sans, sans-serif",
-            fontWeight: 600,
-            fontSize:   13,
-            cursor:     quotaOk && !loading ? "pointer" : "not-allowed",
-          }}
-        >
-          {loading ? "Evaluating…" : "Re-evaluate"}
-        </button>
-        <span style={{
-          fontFamily: "JetBrains Mono, monospace", fontSize: 10,
-          color:      quotaOk ? "rgba(240,242,255,0.25)" : "rgba(244,63,94,0.6)",
-        }}>
-          {quotaOk
-            ? `${LIMIT - reEvalCount} re-evaluations remaining this hour`
-            : "Counterfactual re-evaluation limit reached. Resets in 60 minutes."}
-        </span>
-      </div>
 
       {error && (
         <div style={{

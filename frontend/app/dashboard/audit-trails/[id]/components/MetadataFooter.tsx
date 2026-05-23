@@ -111,17 +111,17 @@ export default function MetadataFooter({
       {open && (
         <div style={{ padding: "0 20px 20px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16, marginBottom: 20 }}>
-            <MetaRow label="Request ID"    value={requestId ?? id} mono />
-            <MetaRow label="Record ID"     value={id}              mono />
-            <MetaRow label="Log Type"      value={logType}               />
-            <MetaRow label="Entity Type"   value={entityType ?? "—"}     />
-            <MetaRow label="Timestamp"     value={fmtTs(createdAt)} mono />
-            <MetaRow label="Actor"         value={actor ?? "—"}          />
-            <MetaRow label="IP Address"    value={ipAddress ?? "—"} mono />
-            <MetaRow label="SDK Version"   value={sdkVersion ?? "—"} mono />
-            <MetaRow label="Budget Tier"   value={budgetTier ?? "—"} mono />
-            <MetaRow label="Policy Hash"   value={policyVersionHash} mono />
-            <MetaRow label="Key Fingerprint" value={keyFingerprint}  mono />
+            <MetaRow label="Request ID"  value={requestId ?? id} mono />
+            <MetaRow label="Record ID"   value={id}              mono />
+            <MetaRow label="Log Type"    value={logType}               />
+            {entityType   && <MetaRow label="Entity Type"     value={entityType}       />}
+            {createdAt    && <MetaRow label="Timestamp"        value={fmtTs(createdAt)} mono />}
+            {actor        && <MetaRow label="Actor"            value={actor}            />}
+            {ipAddress    && <MetaRow label="IP Address"       value={ipAddress}        mono />}
+            {sdkVersion   && <MetaRow label="SDK Version"      value={sdkVersion}       mono />}
+            {budgetTier   && <MetaRow label="Budget Tier"      value={budgetTier}       mono />}
+            {policyVersionHash !== "—" && <MetaRow label="Policy Hash"      value={policyVersionHash} mono />}
+            {keyFingerprint    !== "—" && <MetaRow label="Key Fingerprint"  value={keyFingerprint}    mono />}
           </div>
 
           <button

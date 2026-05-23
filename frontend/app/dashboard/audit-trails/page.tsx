@@ -61,6 +61,7 @@ export default function AuditTrailsPage() {
   const [toasts, setToasts] = useState<{ id: number; message: string; type: string }[]>([]);
   const [systemLogs, setSystemLogs] = useState<AuditRecord[]>([]);
   const [systemLogsOpen, setSystemLogsOpen] = useState(false);
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const fetchingRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
 
@@ -327,19 +328,76 @@ export default function AuditTrailsPage() {
                 onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
               />
             </div>
-            {/* Action filter */}
+            {/* Action filter — custom dropdown */}
             <div style={{ position: "relative" }}>
-              <select
-                value={actionType}
-                onChange={(e) => { setActionType(e.target.value); setPage(1); }}
-                style={{ padding: "10px 32px 10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", color: "rgba(240,242,255,0.7)", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", appearance: "none", cursor: "pointer", transition: "border-color 0.2s" }}
-                onFocus={e => (e.target.style.borderColor = "rgba(124,58,237,0.4)")}
-                onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
+              {filterDropdownOpen && (
+                <div
+                  onClick={() => setFilterDropdownOpen(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                />
+              )}
+              <button
+                onClick={() => setFilterDropdownOpen(o => !o)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  padding: "10px 14px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid ${filterDropdownOpen ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.07)"}`,
+                  borderRadius: "12px",
+                  color: actionType ? "rgba(167,139,250,0.9)" : "rgba(240,242,255,0.55)",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  minWidth: "160px",
+                  justifyContent: "space-between",
+                  outline: "none",
+                  transition: "border-color 0.2s, color 0.2s",
+                }}
               >
-                <option value="">All Actions</option>
-                {ACTION_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-              <svg style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "rgba(240,242,255,0.35)" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <span>{actionType || "All Actions"}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  style={{ transform: filterDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "rgba(240,242,255,0.35)", flexShrink: 0 }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              {filterDropdownOpen && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 50,
+                  background: "#0d0f1a",
+                  border: "1px solid rgba(124,58,237,0.25)",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  minWidth: "200px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
+                }}>
+                  {[{ label: "All Actions", value: "" }, ...ACTION_TYPES.map(a => ({ label: a, value: a }))].map(({ label, value }) => (
+                    <button
+                      key={value}
+                      onClick={() => { setActionType(value); setPage(1); setFilterDropdownOpen(false); }}
+                      style={{
+                        display: "block", width: "100%", textAlign: "left",
+                        padding: "10px 16px",
+                        background: actionType === value ? "rgba(124,58,237,0.12)" : "transparent",
+                        border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        color: actionType === value ? "#a78bfa" : "rgba(240,242,255,0.55)",
+                        fontFamily: "DM Sans, sans-serif",
+                        fontSize: "13px",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(124,58,237,0.1)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(240,242,255,0.85)";
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = actionType === value ? "rgba(124,58,237,0.12)" : "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.color = actionType === value ? "#a78bfa" : "rgba(240,242,255,0.55)";
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               onClick={exportCSV}

@@ -47,10 +47,11 @@ class ReportService:
             vx_report_id = generate_vx_report_id()
 
             # Determine status from evaluation result — HIGH_RISK → failed
-            eval_result = (request.input_payload or {}).get("result", {})
-            risk_level = (eval_result.get("final_score") or {}).get("risk_level", "")
-            enforcement = (eval_result.get("final_score") or {}).get("enforcement_action", "")
-            overall_score = (eval_result.get("final_score") or {}).get("value", None)
+            payload = request.input_payload or {}
+            eval_result = payload.get("result", {})
+            risk_level = (eval_result.get("final_score") or {}).get("risk_level", "") or payload.get("risk_level", "")
+            enforcement = (eval_result.get("final_score") or {}).get("enforcement_action", "") or payload.get("verdict", "")
+            overall_score = (eval_result.get("final_score") or {}).get("value") or payload.get("overall_score")
             is_high_risk = (
                 str(risk_level).upper() in ("HIGH_RISK", "HIGH", "CRITICAL")
                 or str(enforcement).upper() in ("BLOCK", "BLOCKED")
