@@ -12,7 +12,6 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
 
 def verify_token(token: str) -> Optional[dict]:
-    """Verify JWT token and return payload"""
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         return payload
@@ -23,18 +22,18 @@ def verify_token(token: str) -> Optional[dict]:
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(security)
 ) -> dict:
-    """Extract and verify current user from JWT token"""
     token = credentials.credentials
     payload = verify_token(token)
-    
+
     if payload is None:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
+
     user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-    
+
     return {
         "id": user_id,
-        "role": payload.get("role", "user")
+        "email": payload.get("email"),
+        "role": payload.get("role", "user"),
     }

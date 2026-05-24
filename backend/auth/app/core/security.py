@@ -37,12 +37,13 @@ def verify_api_key(plain_key: str, hashed_key: str) -> bool:
     return bcrypt.checkpw(key_bytes, hashed_bytes)
 
 
-def create_access_token(user_id: str, role: str) -> str:
+def create_access_token(user_id: str, role: str, email: str = "") -> str:
     expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "role": role,
-        "exp": expire
+        "email": email,
+        "exp": expire,
     }
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

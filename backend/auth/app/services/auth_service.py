@@ -36,7 +36,7 @@ class AuthService:
 
     @staticmethod
     def generate_token(user: User) -> str:
-        return create_access_token(str(user.id), user.role.value)
+        return create_access_token(str(user.id), user.role.value, email=user.email)
 
     @staticmethod
     def deactivate_user(db: Session, user_id: str) -> Optional[User]:
