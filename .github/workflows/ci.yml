@@ -201,6 +201,20 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            echo "=== Injecting secrets into .env ==="
+            update_env() {
+              local key="$1" val="$2"
+              if grep -q "^${key}=" .env 2>/dev/null; then
+                sed -i "s|^${key}=.*|${key}=${val}|" .env
+              else
+                echo "${key}=${val}" >> .env
+              fi
+            }
+            update_env "GOOGLE_CLIENT_ID"     "${{ secrets.GOOGLE_CLIENT_ID }}"
+            update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            update_env "GITHUB_CLIENT_ID"     "${{ secrets.GITHUB_CLIENT_ID }}"
+            update_env "GITHUB_CLIENT_SECRET" "${{ secrets.GITHUB_CLIENT_SECRET }}"
+
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"
 
