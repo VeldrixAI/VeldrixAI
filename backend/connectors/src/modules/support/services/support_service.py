@@ -8,7 +8,6 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.orm import Session
 
 from src.modules.support.models import SupportTicket
@@ -16,14 +15,19 @@ from src.modules.support.schemas.support_schema import SubmitTicketRequest
 
 logger = logging.getLogger(__name__)
 
-_TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "emails"
-
-_jinja_env = Environment(
-    loader=FileSystemLoader(str(_TEMPLATE_DIR)),
-    autoescape=select_autoescape(["html"]),
-    trim_blocks=True,
-    lstrip_blocks=True,
-)
+# Jinja2 is optional — if not installed the service still sends a plain fallback.
+try:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape as _j2_se
+    _TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "emails"
+    _jinja_env = Environment(
+        loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+        autoescape=_j2_se(["html"]),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+except ImportError:
+    _jinja_env = None
+    logger.warning("[Support] Jinja2 not installed — ticket confirmation will use plain-text fallback")
 
 SUPPORT_INBOX = "rudramani031@veldrixai.ca"
 
@@ -48,7 +52,7 @@ def _generate_ticket_id() -> str:
     return f"VX-SUP-{date_part}-{suffix}"
 
 
-def _send_email(*, to: str, subject: str, html: str) -> None:
+def _send_email(*, to: str, subject: str, html: str, from_addr: Optional[str] = None) -> None:
     resend_key = os.getenv("RESEND_API_KEY", "")
     if not resend_key:
         logger.warning("[Support] RESEND_API_KEY not configured — skipping email to %s", to)
@@ -57,9 +61,9 @@ def _send_email(*, to: str, subject: str, html: str) -> None:
         import resend  # type: ignore
         resend.api_key = resend_key
         from_name = os.getenv("EMAIL_FROM_NAME", "VeldrixAI")
-        from_addr = os.getenv("EMAIL_FROM", "support@veldrixai.ca")
+        _from = from_addr or os.getenv("EMAIL_FROM", "noreply@veldrixai.ca")
         resend.Emails.send({
-            "from":    f"{from_name} <{from_addr}>",
+            "from":    f"{from_name} <{_from}>",
             "to":      [to],
             "subject": subject,
             "html":    html,
@@ -216,6 +220,7 @@ class SupportService:
                 to=ticket.user_email,
                 subject=f"Support Ticket {ticket.ticket_id} — We've received your request",
                 html=_html_confirmation(ticket),
+                from_addr=os.getenv("EMAIL_SUPPORT_ADDRESS", "rudramani031@veldrixai.ca"),
             )
         except Exception as exc:
             logger.error("[Support] Confirmation email failed: %s", exc)
