@@ -459,6 +459,11 @@ def _parse_trust_result(data: dict, latency_ms: int) -> TrustResult:
             error=detail.get("error"),
         ))
 
+    # Prefer server-reported processing time (matches audit trail) over client RTT.
+    # Client RTT includes network, which inflates the number vs. what the table shows.
+    server_latency = data.get("total_latency_ms")
+    resolved_latency = int(server_latency) if isinstance(server_latency, (int, float)) and server_latency > 0 else latency_ms
+
     return TrustResult(
         overall=ts.get("overall", 0.0),
         verdict=ts.get("verdict", "UNKNOWN"),
@@ -467,7 +472,7 @@ def _parse_trust_result(data: dict, latency_ms: int) -> TrustResult:
         critical_flags=ts.get("critical_flags", []),
         all_flags=ts.get("all_flags", []),
         request_id=data.get("request_id", ""),
-        latency_ms=latency_ms,
+        latency_ms=resolved_latency,
     )
 
 
