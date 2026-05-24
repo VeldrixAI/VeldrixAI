@@ -309,6 +309,10 @@ services:
       - VELDRIX_AUTH_API_URL=http://veldrix-auth:8000
       - VELDRIX_CORE_API_URL=http://veldrix-core:8001
       - VELDRIX_CONNECTORS_API_URL=http://veldrix-connectors:8002
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
     networks:
       - veldrix-network
     healthcheck:
