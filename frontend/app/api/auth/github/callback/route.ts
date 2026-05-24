@@ -1,17 +1,17 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import pool, { initDB } from "@/lib/db";
-import { createToken } from "@/lib/auth";
-import { AUTH_COOKIE } from "@/lib/config";
+import { AUTH_API_URL, AUTH_COOKIE } from "@/lib/config";
 import { getBaseUrl } from "@/lib/oauth";
 
 export async function GET(request: NextRequest) {
+  const base = getBaseUrl();
+
   try {
     const code = request.nextUrl.searchParams.get("code");
     const state = request.nextUrl.searchParams.get("state");
 
     if (!code) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=no_code`);
+      return NextResponse.redirect(`${base}/login?error=no_code`);
     }
 
     const jar = await cookies();
@@ -19,43 +19,39 @@ export async function GET(request: NextRequest) {
     jar.delete("oauth_state");
 
     if (!state || !storedState || state !== storedState) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=invalid_state`);
+      return NextResponse.redirect(`${base}/login?error=invalid_state`);
     }
 
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=oauth_not_configured`);
+      return NextResponse.redirect(`${base}/login?error=oauth_not_configured`);
     }
 
+    // Exchange code for access token
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-      }),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
-
     const tokenData = await tokenRes.json();
+
     if (!tokenData.access_token) {
-      console.error("GitHub token error:", tokenData);
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=token_failed`);
+      console.error("GitHub token exchange failed:", tokenData);
+      return NextResponse.redirect(`${base}/login?error=token_failed`);
     }
 
-    const userRes = await fetch("https://api.github.com/user", {
+    // Fetch user profile from GitHub
+    const profileRes = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
         Accept: "application/vnd.github+json",
       },
     });
-    const profile = await userRes.json();
+    const profile = await profileRes.json();
 
-    let email = profile.email;
+    // GitHub may not expose email publicly — fetch from the emails endpoint
+    let email: string | null = profile.email ?? null;
     if (!email) {
       const emailsRes = await fetch("https://api.github.com/user/emails", {
         headers: {
@@ -63,38 +59,39 @@ export async function GET(request: NextRequest) {
           Accept: "application/vnd.github+json",
         },
       });
-      const emails = await emailsRes.json();
-      const primary = emails.find((e: { primary: boolean; verified: boolean }) => e.primary && e.verified);
-      email = primary?.email || emails.find((e: { verified: boolean }) => e.verified)?.email;
+      const emails: Array<{ email: string; primary: boolean; verified: boolean }> = await emailsRes.json();
+      email =
+        emails.find((e) => e.primary && e.verified)?.email ??
+        emails.find((e) => e.verified)?.email ??
+        null;
     }
 
     if (!email) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=no_email`);
+      return NextResponse.redirect(`${base}/login?error=no_email`);
     }
 
-    await initDB();
+    // Hand off to backend auth service — it owns user creation and JWT signing
+    const authRes = await fetch(`${AUTH_API_URL}/auth/oauth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: "github",
+        oauth_id: String(profile.id),
+        email,
+        display_name: profile.name ?? profile.login ?? null,
+        avatar_url: profile.avatar_url ?? null,
+      }),
+    });
 
-    let user = (await pool.query("SELECT id, email, role, is_active FROM users WHERE email = $1", [email])).rows[0];
-
-    if (user) {
-      if (!user.is_active) {
-        return NextResponse.redirect(`${getBaseUrl()}/login?error=account_deactivated`);
-      }
-      await pool.query(
-        "UPDATE users SET oauth_provider = 'github', oauth_id = $1, display_name = $2, avatar_url = $3 WHERE id = $4",
-        [String(profile.id), profile.name || profile.login, profile.avatar_url, user.id]
-      );
-    } else {
-      const result = await pool.query(
-        "INSERT INTO users (email, oauth_provider, oauth_id, display_name, avatar_url) VALUES ($1, 'github', $2, $3, $4) RETURNING id, email, role, is_active",
-        [email, String(profile.id), profile.name || profile.login, profile.avatar_url]
-      );
-      user = result.rows[0];
+    if (!authRes.ok) {
+      const err = await authRes.json().catch(() => ({}));
+      console.error("Backend OAuth failed:", err);
+      return NextResponse.redirect(`${base}/login?error=oauth_failed`);
     }
 
-    const token = await createToken(user.id, user.email, user.role);
+    const { access_token } = await authRes.json();
 
-    jar.set(AUTH_COOKIE, token, {
+    jar.set(AUTH_COOKIE, access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -102,7 +99,7 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    return NextResponse.redirect(`${getBaseUrl()}/dashboard`);
+    return NextResponse.redirect(`${base}/dashboard`);
   } catch (error) {
     console.error("GitHub OAuth error:", error);
     return NextResponse.redirect(`${getBaseUrl()}/login?error=oauth_failed`);

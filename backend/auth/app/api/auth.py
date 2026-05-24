@@ -2,12 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 from app.db.session import get_db
 from app.db.models import User
 from app.schemas.user import UserRegister, UserLogin, Token, UserResponse
 from app.services.auth_service import AuthService
 from app.services.email_service import email_service
 from app.core.dependencies import get_current_user
+from app.core.security import create_access_token
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -61,6 +64,55 @@ def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+class OAuthLoginRequest(BaseModel):
+    provider: str           # "google" | "github"
+    oauth_id: str
+    email: EmailStr
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+@router.post("/oauth", response_model=Token)
+def oauth_login(body: OAuthLoginRequest, db: Session = Depends(get_db)):
+    """Create or update a user from an OAuth provider and return a JWT."""
+    user = db.query(User).filter(User.email == body.email).first()
+
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is deactivated")
+        # Update OAuth metadata on every login so tokens stay fresh
+        user.oauth_provider = body.provider
+        user.oauth_id = body.oauth_id
+        if body.display_name:
+            user.display_name = body.display_name
+        if body.avatar_url:
+            user.avatar_url = body.avatar_url
+        db.commit()
+        db.refresh(user)
+    else:
+        user = User(
+            email=body.email,
+            hashed_password=None,
+            oauth_provider=body.provider,
+            oauth_id=body.oauth_id,
+            display_name=body.display_name,
+            avatar_url=body.avatar_url,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        try:
+            email_service.send_auth_welcome(
+                to_email=user.email,
+                user_name=body.display_name or user.email.split("@")[0],
+            )
+        except Exception:
+            pass
+
+    token = create_access_token(str(user.id), user.role.value, email=user.email)
+    return Token(access_token=token)
 
 
 @router.post("/onboarding/complete", status_code=200)

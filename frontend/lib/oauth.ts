@@ -1,13 +1,16 @@
 import crypto from "crypto";
 
 export function getBaseUrl() {
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  // Explicit override (set in production or .env.local)
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   }
-  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-    return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+  // Server-side: derive from NEXTAUTH_URL or fall back to localhost:3000
+  if (typeof window === "undefined") {
+    return process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
   }
-  return `http://localhost:${process.env.PORT || 5000}`;
+  // Client-side: use the current origin
+  return window.location.origin;
 }
 
 export function generateOAuthState(): string {

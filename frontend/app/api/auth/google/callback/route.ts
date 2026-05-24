@@ -1,17 +1,17 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import pool, { initDB } from "@/lib/db";
-import { createToken } from "@/lib/auth";
-import { AUTH_COOKIE } from "@/lib/config";
+import { AUTH_API_URL, AUTH_COOKIE } from "@/lib/config";
 import { getBaseUrl } from "@/lib/oauth";
 
 export async function GET(request: NextRequest) {
+  const base = getBaseUrl();
+
   try {
     const code = request.nextUrl.searchParams.get("code");
     const state = request.nextUrl.searchParams.get("state");
 
     if (!code) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=no_code`);
+      return NextResponse.redirect(`${base}/login?error=no_code`);
     }
 
     const jar = await cookies();
@@ -19,17 +19,16 @@ export async function GET(request: NextRequest) {
     jar.delete("oauth_state");
 
     if (!state || !storedState || state !== storedState) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=invalid_state`);
+      return NextResponse.redirect(`${base}/login?error=invalid_state`);
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=oauth_not_configured`);
+      return NextResponse.redirect(`${base}/login?error=oauth_not_configured`);
     }
 
-    const redirectUri = `${getBaseUrl()}/api/auth/google/callback`;
-
+    // Exchange code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -37,53 +36,52 @@ export async function GET(request: NextRequest) {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: redirectUri,
+        redirect_uri: `${base}/api/auth/google/callback`,
         grant_type: "authorization_code",
       }),
     });
 
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error("Google token error:", tokenData);
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=token_failed`);
+      console.error("Google token exchange failed:", tokenData);
+      return NextResponse.redirect(`${base}/login?error=token_failed`);
     }
 
-    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+    // Fetch user profile from Google
+    const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
+    const profile = await profileRes.json();
 
-    const profile = await userRes.json();
     if (!profile.email) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=no_email`);
+      return NextResponse.redirect(`${base}/login?error=no_email`);
     }
-
     if (profile.verified_email === false) {
-      return NextResponse.redirect(`${getBaseUrl()}/login?error=email_not_verified`);
+      return NextResponse.redirect(`${base}/login?error=email_not_verified`);
     }
 
-    await initDB();
+    // Hand off to backend auth service — it owns user creation and JWT signing
+    const authRes = await fetch(`${AUTH_API_URL}/auth/oauth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: "google",
+        oauth_id: profile.id,
+        email: profile.email,
+        display_name: profile.name ?? null,
+        avatar_url: profile.picture ?? null,
+      }),
+    });
 
-    let user = (await pool.query("SELECT id, email, role, is_active FROM users WHERE email = $1", [profile.email])).rows[0];
-
-    if (user) {
-      if (!user.is_active) {
-        return NextResponse.redirect(`${getBaseUrl()}/login?error=account_deactivated`);
-      }
-      await pool.query(
-        "UPDATE users SET oauth_provider = 'google', oauth_id = $1, display_name = $2, avatar_url = $3 WHERE id = $4",
-        [profile.id, profile.name, profile.picture, user.id]
-      );
-    } else {
-      const result = await pool.query(
-        "INSERT INTO users (email, oauth_provider, oauth_id, display_name, avatar_url) VALUES ($1, 'google', $2, $3, $4) RETURNING id, email, role, is_active",
-        [profile.email, profile.id, profile.name, profile.picture]
-      );
-      user = result.rows[0];
+    if (!authRes.ok) {
+      const err = await authRes.json().catch(() => ({}));
+      console.error("Backend OAuth failed:", err);
+      return NextResponse.redirect(`${base}/login?error=oauth_failed`);
     }
 
-    const token = await createToken(user.id, user.email, user.role);
+    const { access_token } = await authRes.json();
 
-    jar.set(AUTH_COOKIE, token, {
+    jar.set(AUTH_COOKIE, access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -91,7 +89,7 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    return NextResponse.redirect(`${getBaseUrl()}/dashboard`);
+    return NextResponse.redirect(`${base}/dashboard`);
   } catch (error) {
     console.error("Google OAuth error:", error);
     return NextResponse.redirect(`${getBaseUrl()}/login?error=oauth_failed`);

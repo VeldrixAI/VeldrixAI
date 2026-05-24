@@ -22,6 +22,26 @@ logger = logging.getLogger(__name__)
 # Create database tables (includes Notification table added in models.py)
 Base.metadata.create_all(bind=engine)
 
+# Idempotent schema migrations — safe to run on every boot
+def _run_migrations():
+    with engine.connect() as conn:
+        # Allow OAuth users who have no password
+        conn.execute(text("ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL"))
+        # OAuth profile columns (IF NOT EXISTS prevents errors on re-runs)
+        for col, typ in [
+            ("oauth_provider", "TEXT"),
+            ("oauth_id",       "TEXT"),
+            ("display_name",   "TEXT"),
+            ("avatar_url",     "TEXT"),
+        ]:
+            conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {typ}"))
+        conn.commit()
+
+try:
+    _run_migrations()
+except Exception as _mig_exc:
+    logger.warning("Schema migration skipped (may already be applied): %s", _mig_exc)
+
 app = FastAPI(title="VeldrixAI Authentication Service", version="1.0.0")
 app.state.limiter = auth_limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
