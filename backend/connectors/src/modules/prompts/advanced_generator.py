@@ -60,8 +60,8 @@ GROQ_MODELS = {
         "speed": "ultra-fast",
     },
     ModelProvider.GROQ_MIXTRAL: {
-        "id": "mixtral-8x7b-32768",
-        "name": "Mixtral 8x7B",
+        "id": "moonshotai/kimi-k2-instruct",
+        "name": "Kimi K2 Instruct",
         "max_tokens": 32768,
         "speed": "fast",
     },

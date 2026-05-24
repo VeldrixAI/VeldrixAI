@@ -37,6 +37,13 @@ const PLAN_META: Record<string, { name: string; price: number; quota: number }> 
   enterprise: { name: "Enterprise", price: 0,   quota: 0 },
 };
 
+const PLAN_FEATURES: Record<string, string[]> = {
+  free:       ["1,000 audit requests / month", "All 5 evaluation pillars", "REST API access", "Community support"],
+  grow:       ["25,000 audit requests / month", "All 5 evaluation pillars", "Audit trail & logs", "Webhook integrations", "Email support"],
+  scale:      ["150,000 audit requests / month", "Everything in Grow", "Priority support (4h SLA)", "Custom pillar weights", "SSO / SAML"],
+  enterprise: ["Unlimited evaluations / month", "Everything in Scale", "On-prem / VPC deploy", "Dedicated success manager", "SLA 99.99%"],
+};
+
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -688,7 +695,7 @@ export default function BillingPage() {
               <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "rgba(240,242,255,0.40)", marginLeft: "4px" }}>/month</span>
             </div>
             <div style={{ margin: "0 0 20px", display: "flex", flexDirection: "column" }}>
-              {[`${planMeta.quota.toLocaleString()} audit requests / month`, "All 5 evaluation pillars", "Advanced enforcement rules", "90-day audit log retention", "SLA guarantee — 99.9%", "Dedicated support"].map((f) => (
+              {(PLAN_FEATURES[currentTier] ?? PLAN_FEATURES.free).map((f) => (
                 <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-cyan)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                   <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "12px", color: "rgba(240,242,255,0.65)" }}>{f}</span>

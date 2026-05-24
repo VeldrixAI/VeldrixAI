@@ -21,6 +21,7 @@ from src.utils.request import Timer, set_request_id
 from src.pillars.implementations.ai_safety_pillars import compute_composite_trust_score
 
 CONNECTORS_URL = os.getenv("VELDRIX_CONNECTORS_URL", os.getenv("CONNECTORS_URL", "http://localhost:8002"))
+AUTH_URL = os.getenv("VELDRIX_AUTH_URL", "http://localhost:8000")
 
 # Map internal pillar IDs (from PillarMetadata.id) to the frontend-expected keys
 _PILLAR_ID_MAP = {
@@ -41,6 +42,15 @@ def _worst_pillar(pillar_results: dict) -> str:
             worst_score = result.score.value
             worst_id = pillar_id
     return worst_id
+
+
+async def _increment_eval_count(user_id: str) -> None:
+    """Fire-and-forget: increment monthly eval counter for JWT-authenticated user."""
+    try:
+        client = get_internal_client()
+        await client.post(f"{AUTH_URL}/internal/increment-eval-count", json={"user_id": user_id})
+    except Exception:
+        pass
 
 
 async def _record_latency(user_id: str, latency_ms: float, status_code: int = 200) -> None:
@@ -182,6 +192,7 @@ async def evaluate_trust(
     # Use the actual measured latency from the orchestration engine
     report.execution_time_ms = round(execution_time, 2)
     asyncio.create_task(_record_latency(user_id, execution_time))
+    asyncio.create_task(_increment_eval_count(user_id))
 
     logger.info("AI safety evaluation completed", extra={
         "request_id": report.request_id,
