@@ -286,22 +286,24 @@ Begin the system prompt now:"""
 async def _call_groq(model_id: str, system: str, user: str, temperature: float, max_tokens: int) -> tuple:
     if not _GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not configured")
-    
+
     headers = {"Authorization": f"Bearer {_GROQ_API_KEY}", "Content-Type": "application/json"}
+    # Groq returns 400 when both temperature and top_p are set — use only temperature.
     payload = {
         "model": model_id,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "top_p": 0.95,
     }
-    
+
     start = time.time()
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         resp = await client.post(f"{_GROQ_BASE_URL}/chat/completions", json=payload, headers=headers)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            body = resp.text[:500]
+            raise ValueError(f"Groq API {resp.status_code}: {body}")
         data = resp.json()
-    
+
     latency_ms = int((time.time() - start) * 1000)
     return data["choices"][0]["message"]["content"].strip(), data.get("usage", {}).get("total_tokens", 0), latency_ms
 
@@ -309,22 +311,24 @@ async def _call_groq(model_id: str, system: str, user: str, temperature: float, 
 async def _call_nim(model_id: str, system: str, user: str, temperature: float, max_tokens: int) -> tuple:
     if not _NIM_API_KEY:
         raise ValueError("NVIDIA_API_KEY not configured")
-    
+
     headers = {"Authorization": f"Bearer {_NIM_API_KEY}", "Content-Type": "application/json"}
+    # Do not send top_p alongside temperature — causes 400 on both Groq and NIM.
     payload = {
         "model": model_id,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "top_p": 0.95,
     }
-    
+
     start = time.time()
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         resp = await client.post(f"{_NIM_BASE_URL}/chat/completions", json=payload, headers=headers)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            body = resp.text[:500]
+            raise ValueError(f"NIM API {resp.status_code}: {body}")
         data = resp.json()
-    
+
     latency_ms = int((time.time() - start) * 1000)
     return data["choices"][0]["message"]["content"].strip(), data.get("usage", {}).get("total_tokens", 0), latency_ms
 
