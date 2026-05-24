@@ -340,18 +340,15 @@ export default function PromptArchitectPage() {
 
         <div style={{ width: "1px", height: "48px", background: "rgba(255,255,255,0.06)", flexShrink: 0 }}/>
 
-        {/* Model selection */}
+        {/* Model */}
         <div style={{ flex: 1, minWidth: "200px" }}>
           <label style={{ display: "block", fontFamily: "DM Sans, sans-serif", fontSize: "9px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(240,242,255,0.35)", marginBottom: "8px" }}>
-            Model Selection
+            Model
           </label>
-          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 12px", color: "#f0f2ff", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", cursor: "pointer", width: "100%" }}>
-            {modelOptions.length === 0 ? (
-              <option value="">Loading models…</option>
-            ) : modelOptions.map((m) => (
-              <option key={m.id} value={m.id}>{m.name} ({m.speed})</option>
-            ))}
-          </select>
+          <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 12px", color: "#f0f2ff", fontFamily: "DM Sans, sans-serif", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span>Llama 3.3 70B Versatile</span>
+          </div>
         </div>
 
         {/* Policy toggles */}
@@ -433,7 +430,7 @@ export default function PromptArchitectPage() {
               {generating ? (
                 <>
                   <div style={{ width: "36px", height: "36px", borderRadius: "50%", border: "2px solid rgba(124,58,237,0.2)", borderTopColor: "#7c3aed", animation: "spin 0.9s linear infinite", marginBottom: "16px" }}/>
-                  <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.4)", marginBottom: "6px" }}>Generating with {modelOptions.find(m => m.id === selectedModel)?.name || selectedModel}…</p>
+                  <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.4)", marginBottom: "6px" }}>Generating with Llama 3.3 70B Versatile…</p>
                   <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", color: "rgba(240,242,255,0.25)" }}>Usually takes 2-5 seconds</p>
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </>

@@ -113,7 +113,8 @@ const BillingVelocityChart = dynamic(
 // ── SDK stats type (subset) ───────────────────────────────────────────────────
 
 interface SdkStats {
-  total_requests: number;
+  total_requests: number;   // all evals (SDK + manual)
+  sdk_requests: number;     // SDK-only evals
   avg_trust_score: number;
   avg_latency_ms: number;
   verdict_breakdown: Record<string, number>;
@@ -159,8 +160,11 @@ export default function BillingPage() {
 
   // Derive usage and plan from real billing status
   const planMeta = PLAN_META[billingStatus?.plan_tier ?? "free"] ?? PLAN_META.free;
+  // Prefer audit-trail total (captures both SDK + manual evals) over the auth counter.
+  // Fall back to eval_count_month if sdk-stats haven't loaded yet.
+  const totalEvals = sdkStats != null ? (sdkStats.total_requests ?? 0) : (billingStatus?.eval_count_month ?? 0);
   const usage: BillingUsage = {
-    used: billingStatus?.eval_count_month ?? 0,
+    used: totalEvals,
     quota: planMeta.quota,
     resetDate: billingStatus?.billing_period_end
       ? new Date(billingStatus.billing_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -540,9 +544,9 @@ export default function BillingPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             {[
               {
-                label: "SDK Requests",
+                label: "Evaluations",
                 value: sdkStats != null ? (sdkStats.total_requests ?? 0).toLocaleString() : "—",
-                sub: "Last 30 days",
+                sub: "Last 30 days (all types)",
                 color: "var(--vx-violet)",
               },
               {

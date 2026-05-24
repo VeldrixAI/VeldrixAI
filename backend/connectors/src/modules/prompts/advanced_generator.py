@@ -15,10 +15,6 @@ from enum import Enum
 
 class ModelProvider(str, Enum):
     GROQ_LLAMA_70B = "groq-llama-70b"
-    GROQ_MIXTRAL = "groq-mixtral"
-    GROQ_LLAMA_8B = "groq-llama-8b"
-    NIM_LLAMA_70B = "nim-llama-70b"
-    NIM_LLAMA_8B = "nim-llama-8b"
 
 
 class AdvancedGenerateRequest(BaseModel):
@@ -59,34 +55,9 @@ GROQ_MODELS = {
         "max_tokens": 8192,
         "speed": "ultra-fast",
     },
-    ModelProvider.GROQ_MIXTRAL: {
-        "id": "moonshotai/kimi-k2-instruct",
-        "name": "Kimi K2 Instruct",
-        "max_tokens": 32768,
-        "speed": "fast",
-    },
-    ModelProvider.GROQ_LLAMA_8B: {
-        "id": "llama-3.1-8b-instant",
-        "name": "Llama 3.1 8B Instant",
-        "max_tokens": 8192,
-        "speed": "instant",
-    },
 }
 
-NIM_MODELS = {
-    ModelProvider.NIM_LLAMA_70B: {
-        "id": "meta/llama-3.1-70b-instruct",
-        "name": "Llama 3.1 70B Instruct",
-        "max_tokens": 4096,
-        "speed": "standard",
-    },
-    ModelProvider.NIM_LLAMA_8B: {
-        "id": "meta/llama-3.1-8b-instruct",
-        "name": "Llama 3.1 8B Instruct",
-        "max_tokens": 4096,
-        "speed": "fast",
-    },
-}
+NIM_MODELS: dict = {}
 
 # ── Environment Configuration ──────────────────────────────────────────────────
 
@@ -334,16 +305,10 @@ async def _call_nim(model_id: str, system: str, user: str, temperature: float, m
 
 
 async def generate_advanced_prompt(req: AdvancedGenerateRequest) -> AdvancedGenerateResponse:
-    if req.model in GROQ_MODELS:
-        model_config = GROQ_MODELS[req.model]
-        provider = "groq"
-        call_fn = _call_groq
-    elif req.model in NIM_MODELS:
-        model_config = NIM_MODELS[req.model]
-        provider = "nvidia_nim"
-        call_fn = _call_nim
-    else:
-        raise ValueError(f"Unknown model provider: {req.model}")
+    # Always use Llama 3.3 70B Versatile — single supported model.
+    model_config = GROQ_MODELS[ModelProvider.GROQ_LLAMA_70B]
+    provider = "groq"
+    call_fn = _call_groq
     
     model_id = model_config["id"]
     variants: Dict[str, PromptVariant] = {}
@@ -367,11 +332,5 @@ async def generate_advanced_prompt(req: AdvancedGenerateRequest) -> AdvancedGene
 
 
 def get_available_models() -> List[Dict[str, Any]]:
-    models = []
-    if _GROQ_API_KEY:
-        for provider_id, config in GROQ_MODELS.items():
-            models.append({"id": provider_id.value, "name": config["name"], "provider": "Groq", "speed": config["speed"], "max_tokens": config["max_tokens"], "available": True})
-    if _NIM_API_KEY:
-        for provider_id, config in NIM_MODELS.items():
-            models.append({"id": provider_id.value, "name": config["name"], "provider": "NVIDIA NIM", "speed": config["speed"], "max_tokens": config["max_tokens"], "available": True})
-    return models
+    config = GROQ_MODELS[ModelProvider.GROQ_LLAMA_70B]
+    return [{"id": ModelProvider.GROQ_LLAMA_70B.value, "name": config["name"], "provider": "Groq", "speed": config["speed"], "max_tokens": config["max_tokens"], "available": bool(_GROQ_API_KEY)}]

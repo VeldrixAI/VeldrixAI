@@ -249,20 +249,33 @@ async def get_sdk_stats(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Aggregated statistics derived from SDK trust_evaluation audit entries."""
+    """Aggregated statistics derived from all trust_evaluation audit entries (SDK + manual)."""
     since = _since(range)
     uid_val = uuid.UUID(current_user["id"])
 
+    # All trust evaluations (SDK + manual dashboard) — used for quota billing meter
     rows = db.execute(text("""
         SELECT action_metadata FROM audit_trails
         WHERE action_type = 'trust_evaluation'
-          AND entity_type = 'sdk_analysis'
           AND created_at >= :since
           AND (user_id = :uid OR user_id IS NULL)
         ORDER BY created_at DESC
     """), {"uid": uid_val, "since": since}).fetchall()
 
     total = len(rows)
+
+    # SDK-only count for the breakdown field
+    try:
+        sdk_only = db.execute(text("""
+            SELECT COUNT(*) FROM audit_trails
+            WHERE action_type = 'trust_evaluation'
+              AND entity_type = 'sdk_analysis'
+              AND created_at >= :since
+              AND (user_id = :uid OR user_id IS NULL)
+        """), {"uid": uid_val, "since": since}).scalar() or 0
+    except Exception:
+        db.rollback()
+        sdk_only = 0
     verdict_counts = {"ALLOW": 0, "WARN": 0, "REVIEW": 0, "BLOCK": 0}
     pillar_totals: dict[str, list[float]] = {
         "safety": [], "hallucination": [], "bias": [], "prompt_security": [], "compliance": []
@@ -300,7 +313,8 @@ async def get_sdk_stats(
         score_sum += meta.get("overall_score") or 0
 
     return {
-        "total_requests": total,
+        "total_requests": total,       # all evals (SDK + manual) — used for quota billing
+        "sdk_requests": sdk_only,      # SDK-only evals
         "avg_trust_score": round(score_sum / total, 4) if total else None,
         "avg_latency_ms": round(total_latency / latency_count, 1) if latency_count else None,
         "verdict_breakdown": verdict_counts,
