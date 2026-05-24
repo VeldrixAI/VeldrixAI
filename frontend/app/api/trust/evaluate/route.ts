@@ -23,8 +23,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(error, { status: response.status });
+      const text = await response.text();
+      let errorBody: unknown;
+      try { errorBody = JSON.parse(text); } catch { errorBody = { detail: text || "Upstream error" }; }
+      return NextResponse.json(errorBody, { status: response.status });
     }
 
     const data = await response.json();

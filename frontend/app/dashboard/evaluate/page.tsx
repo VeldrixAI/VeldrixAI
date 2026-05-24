@@ -232,8 +232,13 @@ export default function EvaluatePage() {
         body: JSON.stringify({ prompt: userPrompt, response: aiResponse, model, provider }),
       });
       const latencyMs = Math.round(performance.now() - t0);
+      if (!res.ok) {
+        const errText = await res.text();
+        let errMsg = "Evaluation failed";
+        try { const j = JSON.parse(errText); errMsg = j.error || j.detail || errMsg; } catch {}
+        throw new Error(errMsg);
+      }
       const payload = await res.json();
-      if (!res.ok) throw new Error(payload.error || payload.detail || "Evaluation failed");
 
       const mapped = mapToResult(payload.data);
       setResults(mapped);
