@@ -7,7 +7,7 @@ export function getBaseUrl() {
   }
   // Server-side: derive from NEXTAUTH_URL or fall back to localhost:3000
   if (typeof window === "undefined") {
-    return process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+    return process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "http://localhost:5000";
   }
   // Client-side: use the current origin
   return window.location.origin;
