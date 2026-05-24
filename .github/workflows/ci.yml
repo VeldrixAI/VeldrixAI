@@ -212,8 +212,8 @@ jobs:
             }
             update_env "GOOGLE_CLIENT_ID"     "${{ secrets.GOOGLE_CLIENT_ID }}"
             update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            update_env "GITHUB_CLIENT_ID"     "${{ secrets.GITHUB_CLIENT_ID }}"
-            update_env "GITHUB_CLIENT_SECRET" "${{ secrets.GITHUB_CLIENT_SECRET }}"
+            update_env "GITHUB_CLIENT_ID"     "${{ secrets.GH_CLIENT_ID }}"
+            update_env "GITHUB_CLIENT_SECRET" "${{ secrets.GH_CLIENT_SECRET }}"
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"
