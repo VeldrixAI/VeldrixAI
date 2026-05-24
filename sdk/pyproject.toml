@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "veldrixai"
-version         = "1.0.1"
+version         = "1.0.2"
 description     = "Runtime trust infrastructure for AI applications — five-pillar evaluation via a single decorator"
 readme          = "README.md"
 license         = "MIT"
