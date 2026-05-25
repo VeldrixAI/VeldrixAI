@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}[{{ priority | upper }}] {{ ticket_id }} — {{ subject }}{% endblock %}
+{% block preheader %}New {{ priority }} priority ticket from {{ user_email }} — {{ category }}{% endblock %}
+
+{% block content %}
+
+<!-- Badge row -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background:#f4f0ff;border:1px solid #ddd4fb;border-radius:100px;padding:5px 14px;">
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;
+                   color:#7c3aed;letter-spacing:1.5px;text-transform:uppercase;">
+        New Support Ticket
+      </span>
+    </td>
+    <td width="10"></td>
+    <td style="background:{{ priority_bg }};border:1px solid {{ priority_border }};
+               border-radius:100px;padding:5px 14px;">
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;
+                   color:{{ priority_color }};letter-spacing:1.5px;text-transform:uppercase;">
+        {{ priority }}
+      </span>
+    </td>
+  </tr>
+</table>
+
+<!-- Subject / headline -->
+<p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:22px;
+           font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;line-height:1.3;">
+  {{ subject }}
+</p>
+<p style="margin:0 0 28px;font-family:'Courier New',Courier,monospace;font-size:12px;
+           color:#9090a8;letter-spacing:0.5px;">
+  {{ ticket_id }} &middot; {{ submitted_at }}
+</p>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:24px;">
+  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- Ticket details -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:28px;">
+  <tr>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+               text-transform:uppercase;letter-spacing:1.5px;padding-bottom:10px;width:110px;">
+      From</td>
+    <td style="font-family:'Courier New',Courier,monospace;font-size:13px;color:#4f46e5;
+               padding-bottom:10px;">
+      <a href="mailto:{{ user_email }}" style="color:#4f46e5;text-decoration:none;">
+        {{ user_email }}</a>
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+               text-transform:uppercase;letter-spacing:1.5px;padding-bottom:10px;">
+      Category</td>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+               color:#1a1a2e;padding-bottom:10px;">{{ category }}</td>
+  </tr>
+  <tr>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+               text-transform:uppercase;letter-spacing:1.5px;padding-bottom:10px;">
+      Priority</td>
+    <td style="padding-bottom:10px;">
+      <span style="background:{{ priority_bg }};border:1px solid {{ priority_border }};
+                   border-radius:6px;padding:3px 10px;font-family:Arial,Helvetica,sans-serif;
+                   font-size:11px;font-weight:700;color:{{ priority_color }};
+                   text-transform:uppercase;letter-spacing:1px;">
+        {{ priority }}
+      </span>
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+               text-transform:uppercase;letter-spacing:1.5px;">
+      SLA Target</td>
+    <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+               color:#1a1a2e;">{{ sla }}</td>
+  </tr>
+</table>
+
+<!-- Description -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:28px;">
+  <tr>
+    <td style="background:#f8f8fb;border-left:3px solid #7c3aed;border-radius:0 8px 8px 0;
+               padding:16px 20px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">
+        Issue Description
+      </div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#3a3a5c;
+                  line-height:1.75;">
+        {{ description }}
+      </div>
+    </td>
+  </tr>
+</table>
+
+<!-- Reply instruction -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+  <tr>
+    <td style="padding:14px 18px;">
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;
+                 color:#15803d;line-height:1.6;">
+        <strong>Reply directly to this email</strong> to respond to
+        <a href="mailto:{{ user_email }}" style="color:#15803d;">{{ user_email }}</a>.
+        Include the ticket ID <strong>{{ ticket_id }}</strong> in your reply.
+      </p>
+    </td>
+  </tr>
+</table>
+
+{% endblock %}
+
+{% block cta_section %}{% endblock %}

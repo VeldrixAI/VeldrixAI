@@ -56,11 +56,11 @@ _PRIORITY_SLA = {
     "critical": "Within 1 hour",
 }
 
-_PRIORITY_COLOR = {
-    "low":      "#10b981",
-    "medium":   "#f59e0b",
-    "high":     "#f97316",
-    "critical": "#f43f5e",
+_PRIORITY_PILLS = {
+    "low":      {"color": "#16a34a", "bg": "#f0fdf4", "border": "#bbf7d0"},
+    "medium":   {"color": "#d97706", "bg": "#fffbeb", "border": "#fde68a"},
+    "high":     {"color": "#ea580c", "bg": "#fff7ed", "border": "#fed7aa"},
+    "critical": {"color": "#e11d48", "bg": "#fff1f2", "border": "#fecdd3"},
 }
 
 
@@ -93,68 +93,50 @@ def _send_email(*, to: str, subject: str, html: str, from_addr: Optional[str] = 
 
 
 def _html_notification(ticket: SupportTicket) -> str:
-    sla    = _PRIORITY_SLA.get(ticket.priority, "1–2 business days")
-    color  = _PRIORITY_COLOR.get(ticket.priority, "#f59e0b")
-    ts     = ticket.created_at.strftime("%Y-%m-%d at %H:%M UTC")
-    desc   = ticket.description.replace("\n", "<br>")
-    cat    = ticket.category.replace("_", " ").title()
-    return f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8">
-<style>
-*{{margin:0;padding:0;box-sizing:border-box}}
-body{{background:#050810;color:#f0f2ff;font-family:-apple-system,'DM Sans',sans-serif}}
-.wrap{{max-width:600px;margin:0 auto;padding:40px 24px}}
-.logo{{font-size:22px;font-weight:800;color:#a78bfa;text-align:center;margin-bottom:28px;letter-spacing:-0.5px}}
-.badge{{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;margin-bottom:20px}}
-.title{{font-size:24px;font-weight:800;margin-bottom:6px;letter-spacing:-0.5px}}
-.meta{{font-size:12px;color:rgba(240,242,255,0.35);margin-bottom:32px;font-family:monospace}}
-.card{{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;margin-bottom:16px}}
-.row{{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px}}
-.row:last-child{{border-bottom:none}}
-.lbl{{color:rgba(240,242,255,0.4)}}
-.val{{font-weight:500}}
-.pri{{padding:2px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;background:{color}20;border:1px solid {color}40;color:{color}}}
-.desc-card{{background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.15);border-radius:14px;padding:20px;margin-bottom:16px}}
-.desc-lbl{{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,242,255,0.25);margin-bottom:10px}}
-.desc-body{{font-size:14px;line-height:1.7;color:rgba(240,242,255,0.75)}}
-.footer{{text-align:center;font-size:11px;color:rgba(240,242,255,0.2);margin-top:28px;line-height:1.9;border-top:1px solid rgba(255,255,255,0.06);padding-top:24px}}
-</style></head>
-<body>
-<div class="wrap">
-  <div class="logo">Veldrix<span style="color:#06b6d4">AI</span> &middot; Support</div>
-  <div style="text-align:center;margin-bottom:20px"><div class="badge">&#9679; New Support Ticket</div></div>
-  <div class="title">{ticket.subject}</div>
-  <div class="meta">{ticket.ticket_id} &middot; {ts}</div>
-  <div class="card">
-    <div class="row"><span class="lbl">Ticket ID</span><span class="val" style="font-family:monospace">{ticket.ticket_id}</span></div>
-    <div class="row"><span class="lbl">From</span><span class="val">{ticket.user_email}</span></div>
-    <div class="row"><span class="lbl">Category</span><span class="val">{cat}</span></div>
-    <div class="row"><span class="lbl">Priority</span><span class="val"><span class="pri">{ticket.priority}</span></span></div>
-    <div class="row"><span class="lbl">SLA Target</span><span class="val">{sla}</span></div>
-  </div>
-  <div class="desc-card">
-    <div class="desc-lbl">Issue Description</div>
-    <div class="desc-body">{desc}</div>
-  </div>
-  <p class="footer">VeldrixAI Support System &middot; veldrixai.ca<br>
-  Reply directly to this email to respond to {ticket.user_email}<br>
-  &copy; 2026 VeldrixAI Inc. All rights reserved.</p>
-</div>
-</body>
-</html>"""
+    sla   = _PRIORITY_SLA.get(ticket.priority, "1–2 business days")
+    pill  = _PRIORITY_PILLS.get(ticket.priority, _PRIORITY_PILLS["medium"])
+    ts    = ticket.created_at.strftime("%b %d, %Y at %H:%M UTC")
+    cat   = ticket.category.replace("_", " ").title()
+    frontend_url  = _email_cfg.VELDRIX_UI_URL
+    support_addr  = _email_cfg.EMAIL_SUPPORT_ADDRESS
+
+    try:
+        template = _jinja_env.get_template("ticket-notification.html")
+        return template.render(
+            brand_name="VeldrixAI",
+            brand_url=frontend_url,
+            support_email=support_addr,
+            current_year=datetime.utcnow().year,
+            ticket_id=ticket.ticket_id,
+            subject=ticket.subject,
+            user_email=ticket.user_email,
+            category=cat,
+            priority=ticket.priority,
+            priority_color=pill["color"],
+            priority_bg=pill["bg"],
+            priority_border=pill["border"],
+            description=ticket.description,
+            sla=sla,
+            submitted_at=ts,
+        )
+    except Exception as exc:
+        logger.warning("[Support] Notification template render failed, using fallback: %s", exc)
+        return (
+            f"<p><strong>New ticket {ticket.ticket_id}</strong></p>"
+            f"<p>From: {ticket.user_email}</p>"
+            f"<p>Subject: {ticket.subject}</p>"
+            f"<p>Priority: {ticket.priority} — SLA: {sla}</p>"
+            f"<p>{ticket.description}</p>"
+        )
 
 
 def _html_confirmation(ticket: SupportTicket) -> str:
     sla          = _PRIORITY_SLA.get(ticket.priority, "1–2 business days")
-    color        = _PRIORITY_COLOR.get(ticket.priority, "#f59e0b")
+    pill         = _PRIORITY_PILLS.get(ticket.priority, _PRIORITY_PILLS["medium"])
     frontend_url = _email_cfg.VELDRIX_UI_URL
     support_addr = _email_cfg.EMAIL_SUPPORT_ADDRESS
     ts           = ticket.created_at.strftime("%b %d, %Y at %H:%M UTC")
     cat          = ticket.category.replace("_", " ").title()
-
-    _alpha = "20"  # 12% opacity hex suffix for background
-    _border = "40"  # 25% opacity hex suffix for border
 
     try:
         template = _jinja_env.get_template("ticket-confirmation.html")
@@ -168,9 +150,9 @@ def _html_confirmation(ticket: SupportTicket) -> str:
             subject=ticket.subject,
             category=cat,
             priority=ticket.priority,
-            priority_color=color,
-            priority_bg=f"{color}{_alpha}",
-            priority_border=f"{color}{_border}",
+            priority_color=pill["color"],
+            priority_bg=pill["bg"],
+            priority_border=pill["border"],
             description=ticket.description,
             sla=sla,
             submitted_at=ts,
