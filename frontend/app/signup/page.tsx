@@ -140,7 +140,12 @@ function SignupForm() {
     try {
       const res = await fetch('/api/auth/oauth-urls');
       const data = await res.json();
-      window.location.href = data[provider];
+      const url = data[provider];
+      if (!url) {
+        setError(`${provider === 'github' ? 'GitHub' : 'Google'} sign-in is not configured. Please try again later.`);
+        return;
+      }
+      window.location.href = url;
     } catch {
       setError('Failed to initiate OAuth. Please try again.');
     }
