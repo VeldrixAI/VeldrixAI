@@ -147,7 +147,7 @@ def test_render_injects_brand_context(email_svc):
         },
     )
     assert "VeldrixAI" in html
-    assert "7C3AED" in html        # brand primary colour
+    assert "7c3aed" in html        # brand primary colour
     assert "Rudra" in html
     assert "rudra@example.com" in html
 
