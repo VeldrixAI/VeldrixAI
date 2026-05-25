@@ -1,4 +1,3 @@
-import os
 import logging
 import random
 import string
@@ -8,12 +7,31 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.orm import Session
 
 from src.modules.support.models import SupportTicket
 from src.modules.support.schemas.support_schema import SubmitTicketRequest
 
 logger = logging.getLogger(__name__)
+
+# ── Email settings — reads from process env (Docker) then .env file (native) ──
+_ENV_FILE = Path(__file__).resolve().parents[5] / ".env"  # → backend/.env
+
+class _EmailSettings(BaseSettings):
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "support@send.veldrixai.ca"
+    EMAIL_FROM_NAME: str = "VeldrixAI"
+    EMAIL_SUPPORT_ADDRESS: str = "support@send.veldrixai.ca"
+    VELDRIX_UI_URL: str = "https://app.veldrixai.ca"
+
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE),
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+_email_cfg = _EmailSettings()
 
 # Jinja2 is optional — if not installed the service still sends a plain fallback.
 try:
@@ -53,17 +71,16 @@ def _generate_ticket_id() -> str:
 
 
 def _send_email(*, to: str, subject: str, html: str, from_addr: Optional[str] = None) -> None:
-    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_key = _email_cfg.RESEND_API_KEY.strip()
     if not resend_key:
         logger.warning("[Support] RESEND_API_KEY not configured — skipping email to %s", to)
         return
     try:
         import resend  # type: ignore
         resend.api_key = resend_key
-        from_name = os.getenv("EMAIL_FROM_NAME", "VeldrixAI")
-        _from = from_addr or os.getenv("EMAIL_FROM", "support@send.veldrixai.ca")
+        _from = from_addr or _email_cfg.EMAIL_FROM
         result = resend.Emails.send({
-            "from":    f"{from_name} <{_from}>",
+            "from":    f"{_email_cfg.EMAIL_FROM_NAME} <{_from}>",
             "to":      [to],
             "subject": subject,
             "html":    html,
@@ -131,8 +148,8 @@ body{{background:#050810;color:#f0f2ff;font-family:-apple-system,'DM Sans',sans-
 def _html_confirmation(ticket: SupportTicket) -> str:
     sla          = _PRIORITY_SLA.get(ticket.priority, "1–2 business days")
     color        = _PRIORITY_COLOR.get(ticket.priority, "#f59e0b")
-    frontend_url = os.getenv("VELDRIX_UI_URL", "https://veldrixai.ca")
-    support_addr = os.getenv("EMAIL_SUPPORT_ADDRESS", "rudramani031@veldrixai.ca")
+    frontend_url = _email_cfg.VELDRIX_UI_URL
+    support_addr = _email_cfg.EMAIL_SUPPORT_ADDRESS
     ts           = ticket.created_at.strftime("%b %d, %Y at %H:%M UTC")
     cat          = ticket.category.replace("_", " ").title()
 
@@ -220,7 +237,7 @@ class SupportService:
                 to=ticket.user_email,
                 subject=f"Support Ticket {ticket.ticket_id} — We've received your request",
                 html=_html_confirmation(ticket),
-                from_addr=os.getenv("EMAIL_SUPPORT_ADDRESS", "support@send.veldrixai.ca"),
+                from_addr=_email_cfg.EMAIL_SUPPORT_ADDRESS,
             )
         except Exception as exc:
             logger.error("[Support] Confirmation email failed: %s", exc)
