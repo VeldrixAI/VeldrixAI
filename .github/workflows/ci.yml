@@ -214,6 +214,10 @@ jobs:
             update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
             update_env "GITHUB_CLIENT_ID"     "${{ secrets.GH_CLIENT_ID }}"
             update_env "GITHUB_CLIENT_SECRET" "${{ secrets.GH_CLIENT_SECRET }}"
+            update_env "RESEND_API_KEY"        "${{ secrets.RESEND_API_KEY }}"
+            update_env "EMAIL_FROM"            "noreply@veldrixai.ca"
+            update_env "EMAIL_FROM_NAME"       "VeldrixAI"
+            update_env "EMAIL_SUPPORT_ADDRESS" "rudramani031@veldrixai.ca"
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"
