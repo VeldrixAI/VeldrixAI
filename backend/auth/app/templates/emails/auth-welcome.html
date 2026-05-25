@@ -5,111 +5,130 @@
 
 {% block content %}
 
-<h1 style="font-family:'Syne',Arial,sans-serif;font-weight:800;font-size:32px;letter-spacing:-1px;line-height:1.15;margin:0 0 20px;color:#ffffff;">
+<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:22px;
+           font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;">
   Hello, {{ user_name }}.
-</h1>
-
-<p style="font-family:'DM Sans',Arial,sans-serif;font-size:16px;font-weight:300;line-height:1.75;color:rgba(240,242,255,0.65);margin:0 0 32px;">
-  You've just signed in to <strong style="color:#a78bfa;font-weight:500;">VeldrixAI</strong>
+</p>
+<p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
+           color:#5a5a7a;line-height:1.7;">
+  You've just signed in to <strong style="color:#1a1a2e;">VeldrixAI</strong>
   &mdash; the runtime trust and governance layer for AI-powered applications.
   Your account is active and ready.
 </p>
 
 <!-- Status pills -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 36px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
   <tr>
-    <td style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:100px;padding:8px 18px;">
-      <span style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:#10B981;letter-spacing:1px;text-transform:uppercase;">
-        &#9679; Account Active
-      </span>
+    <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:100px;padding:6px 16px;">
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;
+                   color:#16a34a;letter-spacing:1px;text-transform:uppercase;">Account Active</span>
     </td>
-    <td width="12"></td>
-    <td style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:100px;padding:8px 18px;">
-      <span style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;">
-        &#9672; Trust Engine Ready
-      </span>
+    <td width="10"></td>
+    <td style="background:#f4f0ff;border:1px solid #ddd4fb;border-radius:100px;padding:6px 16px;">
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;
+                   color:#7c3aed;letter-spacing:1px;text-transform:uppercase;">Trust Engine Ready</span>
     </td>
   </tr>
+</table>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:28px;">
+  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
 </table>
 
 <!-- Account detail card -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:36px;">
+       style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;margin-bottom:28px;">
   <tr>
-    <td style="padding:24px 28px;">
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:12px;">
-        Your Account
-      </div>
+    <td style="padding:20px 24px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
+                  text-transform:uppercase;color:#9090a8;margin-bottom:12px;">Your Account</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);padding-bottom:8px;width:80px;">Name</td>
-          <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#F0F2FF;font-weight:500;padding-bottom:8px;">{{ user_name }}</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+                     padding-bottom:6px;width:80px;">Name</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+                     color:#1a1a2e;padding-bottom:6px;">{{ user_name }}</td>
         </tr>
         <tr>
-          <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);padding-bottom:8px;">Email</td>
-          <td style="font-family:'Courier New',monospace;font-size:13px;color:#06B6D4;padding-bottom:8px;">{{ user_email }}</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+                     padding-bottom:6px;">Email</td>
+          <td style="font-family:'Courier New',Courier,monospace;font-size:13px;
+                     color:#4f46e5;padding-bottom:6px;">{{ user_email }}</td>
         </tr>
         <tr>
-          <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);">Signed in</td>
-          <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);">Just now</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">Signed in</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#5a5a7a;">Just now</td>
         </tr>
       </table>
     </td>
   </tr>
 </table>
 
-<!-- Five pillars mini-grid -->
-<div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:14px;">
+<!-- Five pillars -->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#9090a8;margin-bottom:14px;">
   Five-Pillar Trust Evaluation
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
   <tr>
-    <td style="padding:0 6px 6px 0;" width="50%">
+    <td style="padding:0 5px 5px 0;" width="50%">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
         <tr><td style="padding:12px 14px;">
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:rgba(240,242,255,0.8);margin-bottom:2px;">Safety &amp; Toxicity</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:rgba(240,242,255,0.3);">Real-time harmful content interception</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:2px;">Safety &amp; Toxicity</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
+            Real-time harmful content interception</div>
         </td></tr>
       </table>
     </td>
-    <td style="padding:0 0 6px 6px;" width="50%">
+    <td style="padding:0 0 5px 5px;" width="50%">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
         <tr><td style="padding:12px 14px;">
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:rgba(240,242,255,0.8);margin-bottom:2px;">Hallucination Guard</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:rgba(240,242,255,0.3);">Factual accuracy scoring at inference</div>
-        </td></tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:0 6px 6px 0;" width="50%">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:rgba(240,242,255,0.8);margin-bottom:2px;">Bias &amp; Fairness</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:rgba(240,242,255,0.3);">Ethical alignment enforcement</div>
-        </td></tr>
-      </table>
-    </td>
-    <td style="padding:0 0 6px 6px;" width="50%">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:rgba(240,242,255,0.8);margin-bottom:2px;">Prompt Security</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:rgba(240,242,255,0.3);">Injection &amp; jailbreak prevention</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:2px;">Hallucination Guard</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
+            Factual accuracy scoring at inference</div>
         </td></tr>
       </table>
     </td>
   </tr>
   <tr>
-    <td colspan="2" style="padding:0;">
+    <td style="padding:0 5px 5px 0;" width="50%">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
         <tr><td style="padding:12px 14px;">
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:500;color:rgba(240,242,255,0.8);margin-bottom:2px;">Compliance &amp; PII</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:rgba(240,242,255,0.3);">GDPR/HIPAA data masking &amp; regulatory guardrails</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:2px;">Bias &amp; Fairness</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
+            Ethical alignment enforcement</div>
+        </td></tr>
+      </table>
+    </td>
+    <td style="padding:0 0 5px 5px;" width="50%">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
+        <tr><td style="padding:12px 14px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:2px;">Prompt Security</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
+            Injection &amp; jailbreak prevention</div>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
+        <tr><td style="padding:12px 14px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:2px;">Compliance &amp; PII</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
+            GDPR/HIPAA data masking &amp; regulatory guardrails</div>
         </td></tr>
       </table>
     </td>
@@ -120,19 +139,22 @@
 
 {% block cta_section %}
 <tr>
-  <td style="padding:0 48px 48px;">
+  <td style="padding:0 40px 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="border-radius:10px;background:linear-gradient(135deg,#7C3AED,#4F46E5);">
+        <td style="border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);">
           <a href="{{ dashboard_url }}"
-             style="display:inline-block;padding:15px 36px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:500;color:#ffffff;text-decoration:none;letter-spacing:0.3px;border-radius:10px;">
-            Open Dashboard &rarr;
+             style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;
+                    font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;
+                    letter-spacing:0.2px;border-radius:8px;">
+            Open Dashboard
           </a>
         </td>
         <td width="16"></td>
         <td valign="middle">
           <a href="{{ docs_url }}"
-             style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:400;color:rgba(124,58,237,0.8);text-decoration:none;">
+             style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#7c3aed;
+                    text-decoration:none;">
             View Docs
           </a>
         </td>

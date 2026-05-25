@@ -5,78 +5,86 @@
 
 {% block content %}
 
-<!-- Celebration mark -->
-<div style="text-align:center;margin-bottom:28px;">
-  <div style="display:inline-block;width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#7C3AED,#4F46E5);text-align:center;line-height:64px;font-family:'Syne',Arial,sans-serif;font-weight:800;font-size:28px;color:#ffffff;">
-    V
-  </div>
-</div>
-
-<!-- Headline -->
-<h1 style="font-family:'Syne',Arial,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.8px;line-height:1.2;margin:0 0 16px;text-align:center;color:#ffffff;">
+<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:22px;
+           font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;">
   Welcome aboard, {{ user_name }}.
-</h1>
-
-<p style="font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:300;line-height:1.8;color:rgba(240,242,255,0.6);margin:0 0 36px;text-align:center;">
-  Your <strong style="color:#a78bfa;">{{ plan_name }}</strong> plan is active.
+</p>
+<p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
+           color:#5a5a7a;line-height:1.7;">
+  Your <strong style="color:#1a1a2e;">{{ plan_name }}</strong> plan is active.
   Every AI response your application generates is now evaluated across
   five trust pillars in real time.
 </p>
 
-<!-- Five pillars grid (2-column table) -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:36px;">
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:28px;">
+  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- Five pillars grid -->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#9090a8;margin-bottom:14px;">
+  Five-Pillar Trust Evaluation
+</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
   <tr>
-    <td width="50%" valign="top" style="padding:0 6px 6px 0;">
+    <td width="50%" valign="top" style="padding:0 5px 5px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;">
-        <tr><td style="padding:18px 18px 16px;">
-          <div style="font-size:20px;margin-bottom:8px;">&#128737;</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;color:#F0F2FF;margin-bottom:4px;">Safety &amp; Toxicity</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:300;color:rgba(240,242,255,0.4);line-height:1.6;">Harmful content blocked before it reaches users.</div>
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:4px;">Safety &amp; Toxicity</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;line-height:1.5;">
+            Harmful content blocked before it reaches users.</div>
         </td></tr>
       </table>
     </td>
-    <td width="50%" valign="top" style="padding:0 0 6px 6px;">
+    <td width="50%" valign="top" style="padding:0 0 5px 5px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;">
-        <tr><td style="padding:18px 18px 16px;">
-          <div style="font-size:20px;margin-bottom:8px;">&#128269;</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;color:#F0F2FF;margin-bottom:4px;">Hallucination Guard</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:300;color:rgba(240,242,255,0.4);line-height:1.6;">Confidence scoring on every AI assertion.</div>
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:4px;">Hallucination Guard</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;line-height:1.5;">
+            Confidence scoring on every AI assertion.</div>
         </td></tr>
       </table>
     </td>
   </tr>
   <tr>
-    <td width="50%" valign="top" style="padding:0 6px 6px 0;">
+    <td width="50%" valign="top" style="padding:0 5px 5px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;">
-        <tr><td style="padding:18px 18px 16px;">
-          <div style="font-size:20px;margin-bottom:8px;">&#9878;</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;color:#F0F2FF;margin-bottom:4px;">Bias &amp; Fairness</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:300;color:rgba(240,242,255,0.4);line-height:1.6;">Discriminatory patterns detected and flagged.</div>
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:4px;">Bias &amp; Fairness</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;line-height:1.5;">
+            Discriminatory patterns detected and flagged.</div>
         </td></tr>
       </table>
     </td>
-    <td width="50%" valign="top" style="padding:0 0 6px 6px;">
+    <td width="50%" valign="top" style="padding:0 0 5px 5px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;">
-        <tr><td style="padding:18px 18px 16px;">
-          <div style="font-size:20px;margin-bottom:8px;">&#128272;</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;color:#F0F2FF;margin-bottom:4px;">Prompt Security</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:300;color:rgba(240,242,255,0.4);line-height:1.6;">Injection and jailbreak attempts intercepted.</div>
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:4px;">Prompt Security</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;line-height:1.5;">
+            Injection and jailbreak attempts intercepted.</div>
         </td></tr>
       </table>
     </td>
   </tr>
   <tr>
-    <td colspan="2" valign="top" style="padding:0;">
+    <td colspan="2" valign="top">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;">
-        <tr><td style="padding:18px 18px 16px;">
-          <div style="font-size:20px;margin-bottom:8px;">&#128203;</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;color:#F0F2FF;margin-bottom:4px;">Compliance &amp; PII</div>
-          <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:300;color:rgba(240,242,255,0.4);line-height:1.6;">Regulatory exposure and data leakage prevented.</div>
+             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
+                      color:#1a1a2e;margin-bottom:4px;">Compliance &amp; PII</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;line-height:1.5;">
+            Regulatory exposure and data leakage prevented.</div>
         </td></tr>
       </table>
     </td>
@@ -84,36 +92,49 @@
 </table>
 
 <!-- Get started steps -->
-<div style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:18px;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#9090a8;margin-bottom:16px;">
   Get Started in 3 Steps
 </div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td width="44" valign="top" style="padding-top:2px;">
-      <div style="width:34px;height:34px;border-radius:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.25);text-align:center;line-height:34px;font-family:'Courier New',monospace;font-size:11px;color:rgba(124,58,237,0.8);">01</div>
+    <td width="40" valign="top" style="padding-top:1px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:#f4f0ff;border:1px solid #ddd4fb;
+                  text-align:center;line-height:32px;font-family:'Courier New',Courier,monospace;
+                  font-size:11px;color:#7c3aed;font-weight:700;">01</div>
     </td>
-    <td valign="top">
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:500;color:#F0F2FF;margin-bottom:2px;">Install the SDK</div>
-      <div style="font-family:'Courier New',monospace;font-size:12px;color:#06B6D4;margin-bottom:14px;">pip install veldrixai</div>
+    <td valign="top" style="padding-bottom:16px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+                  color:#1a1a2e;margin-bottom:2px;">Install the SDK</div>
+      <div style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#4f46e5;">
+        pip install veldrixai</div>
     </td>
   </tr>
   <tr>
-    <td width="44" valign="top" style="padding-top:2px;">
-      <div style="width:34px;height:34px;border-radius:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.25);text-align:center;line-height:34px;font-family:'Courier New',monospace;font-size:11px;color:rgba(124,58,237,0.8);">02</div>
+    <td width="40" valign="top" style="padding-top:1px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:#f4f0ff;border:1px solid #ddd4fb;
+                  text-align:center;line-height:32px;font-family:'Courier New',Courier,monospace;
+                  font-size:11px;color:#7c3aed;font-weight:700;">02</div>
     </td>
-    <td valign="top">
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:500;color:#F0F2FF;margin-bottom:2px;">Set Your Policy</div>
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(240,242,255,0.4);margin-bottom:14px;">Upload your business rules to the Policy Engine.</div>
+    <td valign="top" style="padding-bottom:16px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+                  color:#1a1a2e;margin-bottom:2px;">Set Your Policy</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">
+        Upload your business rules to the Policy Engine.</div>
     </td>
   </tr>
   <tr>
-    <td width="44" valign="top" style="padding-top:2px;">
-      <div style="width:34px;height:34px;border-radius:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.25);text-align:center;line-height:34px;font-family:'Courier New',monospace;font-size:11px;color:rgba(124,58,237,0.8);">03</div>
+    <td width="40" valign="top" style="padding-top:1px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:#f4f0ff;border:1px solid #ddd4fb;
+                  text-align:center;line-height:32px;font-family:'Courier New',Courier,monospace;
+                  font-size:11px;color:#7c3aed;font-weight:700;">03</div>
     </td>
     <td valign="top">
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:500;color:#F0F2FF;margin-bottom:2px;">Enable Agent Guard</div>
-      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:rgba(240,242,255,0.4);margin-bottom:0;">Intercept LangChain, CrewAI, or AutoGen agents.</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
+                  color:#1a1a2e;margin-bottom:2px;">Enable Agent Guard</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">
+        Intercept LangChain, CrewAI, or AutoGen agents.</div>
     </td>
   </tr>
 </table>
@@ -122,12 +143,13 @@
 
 {% block cta_section %}
 <tr>
-  <td style="padding:4px 48px 48px;">
+  <td style="padding:0 40px 40px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="border-radius:10px;background:linear-gradient(135deg,#7C3AED,#06B6D4);">
+        <td style="border-radius:8px;background:linear-gradient(135deg,#7c3aed,#06b6d4);">
           <a href="{{ dashboard_url }}"
-             style="display:block;text-align:center;padding:16px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:500;color:#ffffff;text-decoration:none;border-radius:10px;">
+             style="display:block;text-align:center;padding:15px;font-family:Arial,Helvetica,sans-serif;
+                    font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;">
             Launch Your Dashboard
           </a>
         </td>
