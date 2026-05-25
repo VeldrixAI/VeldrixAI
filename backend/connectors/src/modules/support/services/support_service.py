@@ -53,7 +53,7 @@ def _generate_ticket_id() -> str:
 
 
 def _send_email(*, to: str, subject: str, html: str, from_addr: Optional[str] = None) -> None:
-    resend_key = os.getenv("RESEND_API_KEY", "")
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
     if not resend_key:
         logger.warning("[Support] RESEND_API_KEY not configured — skipping email to %s", to)
         return
@@ -61,18 +61,18 @@ def _send_email(*, to: str, subject: str, html: str, from_addr: Optional[str] = 
         import resend  # type: ignore
         resend.api_key = resend_key
         from_name = os.getenv("EMAIL_FROM_NAME", "VeldrixAI")
-        _from = from_addr or os.getenv("EMAIL_FROM", "noreply@veldrixai.ca")
-        resend.Emails.send({
+        _from = from_addr or os.getenv("EMAIL_FROM", "support@send.veldrixai.ca")
+        result = resend.Emails.send({
             "from":    f"{from_name} <{_from}>",
             "to":      [to],
             "subject": subject,
             "html":    html,
         })
-        logger.info("[Support] Email sent to %s — %s", to, subject)
+        logger.info("[Support] Email sent to %s — %s (id=%s)", to, subject, getattr(result, "id", result))
     except ImportError:
         logger.warning("[Support] resend package not installed — pip install resend")
     except Exception as exc:
-        logger.error("[Support] Email delivery failed to %s: %s", to, exc)
+        logger.error("[Support] Email delivery failed to %s: %s", to, exc, exc_info=True)
 
 
 def _html_notification(ticket: SupportTicket) -> str:
@@ -220,7 +220,7 @@ class SupportService:
                 to=ticket.user_email,
                 subject=f"Support Ticket {ticket.ticket_id} — We've received your request",
                 html=_html_confirmation(ticket),
-                from_addr=os.getenv("EMAIL_SUPPORT_ADDRESS", "rudramani031@veldrixai.ca"),
+                from_addr=os.getenv("EMAIL_SUPPORT_ADDRESS", "support@send.veldrixai.ca"),
             )
         except Exception as exc:
             logger.error("[Support] Confirmation email failed: %s", exc)
