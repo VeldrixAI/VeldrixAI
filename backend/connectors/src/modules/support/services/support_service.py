@@ -20,9 +20,9 @@ _ENV_FILE = Path(__file__).resolve().parents[5] / ".env"  # → backend/.env
 
 class _EmailSettings(BaseSettings):
     RESEND_API_KEY: str = ""
-    EMAIL_FROM: str = "support@send.veldrixai.ca"
+    EMAIL_FROM: str = "noreply@veldrixai.ca"
     EMAIL_FROM_NAME: str = "VeldrixAI"
-    EMAIL_SUPPORT_ADDRESS: str = "support@send.veldrixai.ca"
+    EMAIL_SUPPORT_ADDRESS: str = "support@veldrixai.ca"
     VELDRIX_UI_URL: str = "https://app.veldrixai.ca"
 
     model_config = SettingsConfigDict(

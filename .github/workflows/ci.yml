@@ -217,7 +217,7 @@ jobs:
             update_env "RESEND_API_KEY"        "${{ secrets.RESEND_API_KEY }}"
             update_env "EMAIL_FROM"            "noreply@veldrixai.ca"
             update_env "EMAIL_FROM_NAME"       "VeldrixAI"
-            update_env "EMAIL_SUPPORT_ADDRESS" "support@send.veldrixai.ca"
+            update_env "EMAIL_SUPPORT_ADDRESS" "support@veldrixai.ca"
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             export DOCKER_REGISTRY="${{ env.IMAGE_PREFIX }}"

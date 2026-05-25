@@ -262,7 +262,7 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@veldrixai.ca}
       - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-VeldrixAI}
-      - EMAIL_SUPPORT_ADDRESS=${EMAIL_SUPPORT_ADDRESS:-support@send.veldrixai.ca}
+      - EMAIL_SUPPORT_ADDRESS=${EMAIL_SUPPORT_ADDRESS:-support@veldrixai.ca}
       - VELDRIX_UI_URL=${VELDRIX_UI_URL:-https://app.veldrixai.ca}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - VELDRIX_CORS_ORIGINS=${CORS_ORIGINS:-https://veldrixai.ca,https://app.veldrixai.ca}
