@@ -1,35 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome to VeldrixAI{% endblock %}
-{% block preheader %}Your AI governance layer is live. Here's how to get started in 60 seconds.{% endblock %}
+{% block title %}Welcome to VeldrixAI — {{ user_name }}{% endblock %}
+{% block preheader %}Your AI trust infrastructure is live. Here's everything you need to know.{% endblock %}
 
 {% block content %}
 
-<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:22px;
-           font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;">
-  Hello, {{ user_name }}.
-</p>
-<p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
-           color:#5a5a7a;line-height:1.7;">
-  You've just signed in to <strong style="color:#1a1a2e;">VeldrixAI</strong>
-  &mdash; the runtime trust and governance layer for AI-powered applications.
-  Your account is active and ready.
-</p>
-
-<!-- Status pills -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+<!-- Status pill -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
   <tr>
     <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:100px;padding:6px 16px;">
-      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;
-                   color:#16a34a;letter-spacing:1px;text-transform:uppercase;">Account Active</span>
-    </td>
-    <td width="10"></td>
-    <td style="background:#f4f0ff;border:1px solid #ddd4fb;border-radius:100px;padding:6px 16px;">
-      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;
-                   color:#7c3aed;letter-spacing:1px;text-transform:uppercase;">Trust Engine Ready</span>
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;
+                   color:#16a34a;letter-spacing:1.5px;text-transform:uppercase;">
+        Account Activated
+      </span>
     </td>
   </tr>
 </table>
+
+<!-- Headline -->
+<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:26px;
+           font-weight:700;color:#1a1a2e;letter-spacing:-0.5px;line-height:1.2;">
+  Welcome to VeldrixAI,<br>{{ user_name }}.
+</p>
+<p style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
+           color:#5a5a7a;line-height:1.75;">
+  Your AI governance layer is now live. Every response your models generate
+  is being evaluated in real time across five trust dimensions.
+</p>
 
 <!-- Divider -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
@@ -37,29 +34,35 @@
   <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
 </table>
 
-<!-- Account detail card -->
+<!-- Account card -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
        style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;margin-bottom:28px;">
   <tr>
     <td style="padding:20px 24px;">
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
-                  text-transform:uppercase;color:#9090a8;margin-bottom:12px;">Your Account</div>
+                  text-transform:uppercase;color:#9090a8;margin-bottom:14px;">Your Account</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
-                     padding-bottom:6px;width:80px;">Name</td>
+                     padding-bottom:8px;width:90px;">Name</td>
           <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
-                     color:#1a1a2e;padding-bottom:6px;">{{ user_name }}</td>
+                     color:#1a1a2e;padding-bottom:8px;">{{ user_name }}</td>
         </tr>
         <tr>
           <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
-                     padding-bottom:6px;">Email</td>
+                     padding-bottom:8px;">Email</td>
           <td style="font-family:'Courier New',Courier,monospace;font-size:13px;
-                     color:#4f46e5;padding-bottom:6px;">{{ user_email }}</td>
+                     color:#4f46e5;padding-bottom:8px;">{{ user_email }}</td>
         </tr>
         <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">Signed in</td>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#5a5a7a;">Just now</td>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">Status</td>
+          <td>
+            <span style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;
+                         padding:2px 10px;font-family:Arial,Helvetica,sans-serif;
+                         font-size:11px;font-weight:700;color:#16a34a;letter-spacing:0.5px;">
+              Active
+            </span>
+          </td>
         </tr>
       </table>
     </td>
@@ -69,68 +72,158 @@
 <!-- Five pillars -->
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
             text-transform:uppercase;color:#9090a8;margin-bottom:14px;">
-  Five-Pillar Trust Evaluation
+  What's active on your account
 </div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin-bottom:4px;">
   <tr>
-    <td style="padding:0 5px 5px 0;" width="50%">
+    <td width="50%" valign="top" style="padding:0 4px 8px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
-                      color:#1a1a2e;margin-bottom:2px;">Safety &amp; Toxicity</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
-            Real-time harmful content interception</div>
-        </td></tr>
+             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="padding:0 0 0 0;height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5);
+                     font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+                        color:#1a1a2e;margin-bottom:4px;">Safety &amp; Toxicity</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                        line-height:1.5;">Harmful content blocked before it reaches users</div>
+          </td>
+        </tr>
       </table>
     </td>
-    <td style="padding:0 0 5px 5px;" width="50%">
+    <td width="50%" valign="top" style="padding:0 0 8px 4px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
-                      color:#1a1a2e;margin-bottom:2px;">Hallucination Guard</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
-            Factual accuracy scoring at inference</div>
-        </td></tr>
+             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="padding:0 0 0 0;height:3px;background:linear-gradient(90deg,#4f46e5,#06b6d4);
+                     font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+                        color:#1a1a2e;margin-bottom:4px;">Hallucination Guard</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                        line-height:1.5;">Confidence scoring on every AI assertion</div>
+          </td>
+        </tr>
       </table>
     </td>
   </tr>
   <tr>
-    <td style="padding:0 5px 5px 0;" width="50%">
+    <td width="50%" valign="top" style="padding:0 4px 8px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
-                      color:#1a1a2e;margin-bottom:2px;">Bias &amp; Fairness</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
-            Ethical alignment enforcement</div>
-        </td></tr>
+             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5);
+                     font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+                        color:#1a1a2e;margin-bottom:4px;">Bias &amp; Fairness</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                        line-height:1.5;">Discriminatory patterns detected and flagged</div>
+          </td>
+        </tr>
       </table>
     </td>
-    <td style="padding:0 0 5px 5px;" width="50%">
+    <td width="50%" valign="top" style="padding:0 0 8px 4px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
-                      color:#1a1a2e;margin-bottom:2px;">Prompt Security</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
-            Injection &amp; jailbreak prevention</div>
-        </td></tr>
+             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#4f46e5,#06b6d4);
+                     font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+                        color:#1a1a2e;margin-bottom:4px;">Prompt Security</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                        line-height:1.5;">Injection and jailbreak attempts intercepted</div>
+          </td>
+        </tr>
       </table>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
+    <td colspan="2" valign="top" style="padding:0 0 8px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background:#f8f8fb;border:1px solid #ebebef;border-radius:8px;">
-        <tr><td style="padding:12px 14px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;
-                      color:#1a1a2e;margin-bottom:2px;">Compliance &amp; PII</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;">
-            GDPR/HIPAA data masking &amp; regulatory guardrails</div>
-        </td></tr>
+             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5,#06b6d4);
+                     font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+                        color:#1a1a2e;margin-bottom:4px;">Compliance &amp; PII</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
+                        line-height:1.5;">GDPR &amp; HIPAA data masking with regulatory guardrails</div>
+          </td>
+        </tr>
       </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin:20px 0 24px;">
+  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- Get started steps -->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#9090a8;margin-bottom:18px;">
+  Get started in 3 steps
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td width="36" valign="top" style="padding-top:1px;padding-bottom:16px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
+                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
+                  font-size:11px;font-weight:700;color:#ffffff;">1</div>
+    </td>
+    <td valign="top" style="padding-bottom:16px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
+                  color:#1a1a2e;margin-bottom:3px;">Install the SDK</div>
+      <div style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#4f46e5;
+                  background:#f4f0ff;border-radius:6px;padding:5px 10px;display:inline-block;">
+        pip install veldrixai
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="36" valign="top" style="padding-top:1px;padding-bottom:16px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
+                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
+                  font-size:11px;font-weight:700;color:#ffffff;">2</div>
+    </td>
+    <td valign="top" style="padding-bottom:16px;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
+                  color:#1a1a2e;margin-bottom:3px;">Wrap your LLM calls</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;line-height:1.5;">
+        Pass your API key, wrap any model call in one line, and trust scores flow automatically.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="36" valign="top" style="padding-top:1px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
+                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
+                  font-size:11px;font-weight:700;color:#ffffff;">3</div>
+    </td>
+    <td valign="top">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
+                  color:#1a1a2e;margin-bottom:3px;">Review your dashboard</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;line-height:1.5;">
+        See trust scores, flag distributions, and governance health in real time.
+      </div>
     </td>
   </tr>
 </table>
@@ -140,26 +233,43 @@
 {% block cta_section %}
 <tr>
   <td style="padding:0 40px 40px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+
+    <!-- Primary CTA -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="margin-bottom:16px;">
       <tr>
-        <td style="border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);">
+        <td style="border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
+                   text-align:center;">
           <a href="{{ dashboard_url }}"
-             style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;
-                    font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;
-                    letter-spacing:0.2px;border-radius:8px;">
-            Open Dashboard
-          </a>
-        </td>
-        <td width="16"></td>
-        <td valign="middle">
-          <a href="{{ docs_url }}"
-             style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#7c3aed;
-                    text-decoration:none;">
-            View Docs
+             style="display:block;padding:16px;font-family:Arial,Helvetica,sans-serif;
+                    font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;
+                    border-radius:10px;letter-spacing:0.2px;">
+            Open Your Dashboard &rarr;
           </a>
         </td>
       </tr>
     </table>
+
+    <!-- Secondary link -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center">
+          <a href="{{ docs_url }}"
+             style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#7c3aed;
+                    text-decoration:none;">
+            Read the documentation
+          </a>
+          <span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;
+                       color:#b0b0c4;">&nbsp;&middot;&nbsp;</span>
+          <a href="{{ dashboard_url }}/billing"
+             style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#7c3aed;
+                    text-decoration:none;">
+            View plan details
+          </a>
+        </td>
+      </tr>
+    </table>
+
   </td>
 </tr>
 {% endblock %}

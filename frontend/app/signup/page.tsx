@@ -136,19 +136,8 @@ function SignupForm() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    try {
-      const res = await fetch('/api/auth/oauth-urls');
-      const data = await res.json();
-      const url = data[provider];
-      if (!url) {
-        setError(`${provider === 'github' ? 'GitHub' : 'Google'} sign-in is not configured. Please try again later.`);
-        return;
-      }
-      window.location.href = url;
-    } catch {
-      setError('Failed to initiate OAuth. Please try again.');
-    }
+  const handleOAuth = (provider: 'google' | 'github') => {
+    window.location.href = `/api/auth/${provider}/start`;
   };
 
   const handleSubmit = async (e: FormEvent) => {
