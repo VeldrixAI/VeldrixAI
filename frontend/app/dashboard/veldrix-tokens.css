@@ -1896,3 +1896,200 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.3; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD CONTENT — MOBILE RESPONSIVE
+   Covers KPI cards, tables, forms, modals, toasts, drawer
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* ── Page header ── */
+  .vx-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .vx-page-title {
+    font-size: 28px;
+    letter-spacing: -0.5px;
+  }
+
+  .vx-page-desc {
+    margin-bottom: 20px;
+  }
+
+  /* ── KPI cards: 2-column grid ── */
+  .vx-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .vx-kpi-card {
+    padding: 18px 16px 14px;
+    min-height: 120px;
+  }
+
+  .vx-kpi-value {
+    font-size: 28px;
+  }
+
+  /* ── Tables: horizontal scroll ── */
+  .vx-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vx-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .vx-table-footer,
+  .vx-pagination {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+  }
+
+  /* ── Chart containers ── */
+  .vx-chart-container {
+    padding: 16px;
+  }
+
+  .vx-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Cards ── */
+  .vx-card {
+    padding: 16px;
+  }
+
+  .vx-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Filter bar ── */
+  .vx-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .vx-filter-spacer {
+    display: none;
+  }
+
+  /* ── Form rows ── */
+  .vx-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ── Settings sidebar tabs → horizontal scrolling tabs ── */
+  .vx-settings-nav-item {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* ── Detail rows ── */
+  .vx-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 0;
+  }
+
+  /* ── Toasts: full width ── */
+  .vx-toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .vx-toast {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* ── Modal: bottom sheet on mobile ── */
+  .vx-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .vx-modal {
+    max-height: 92dvh;
+    border-radius: var(--vx-radius) var(--vx-radius) 0 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* ── Side drawer: full width on mobile ── */
+  .vx-drawer {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  /* ── Tabs: scrollable ── */
+  .vx-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0;
+  }
+
+  .vx-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .vx-tab {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* ── KPI cards: single column ── */
+  .vx-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .vx-kpi-card {
+    padding: 16px 14px 12px;
+    min-height: unset;
+  }
+
+  .vx-kpi-value {
+    font-size: 24px;
+  }
+
+  .vx-page-title {
+    font-size: 22px;
+  }
+
+  .vx-chart-container {
+    padding: 12px;
+  }
+
+  .vx-card {
+    padding: 14px 12px;
+  }
+
+  .vx-table-header {
+    padding: 12px;
+  }
+}

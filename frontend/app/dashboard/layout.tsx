@@ -164,6 +164,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -196,6 +197,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     loadUser();
   }, [router]);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileNavOpen]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -248,8 +264,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="vx-app-shell">
+      {/* ── Mobile overlay (rendered when sidebar is open on mobile) ── */}
+      {mobileNavOpen && (
+        <div
+          className="vx-mobile-overlay"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="vx-app-sidebar">
+      <aside className={`vx-app-sidebar${mobileNavOpen ? " mobile-open" : ""}`}>
         {/* Brand */}
         <div style={{ padding: "28px 20px 20px" }}>
           <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
@@ -385,8 +410,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="vx-app-content">
         {/* Topbar */}
         <header className="vx-app-topbar">
-          {/* Search */}
-          <div style={{ position: "relative", width: "100%", maxWidth: "400px" }}>
+          {/* Mobile hamburger — CSS hides this above 768px */}
+          <button
+            className="vx-mobile-menu-btn"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+
+          {/* Search — CSS hides this on mobile */}
+          <div className="vx-topbar-search-area" style={{ position: "relative", width: "100%", maxWidth: "400px" }}>
             <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(240,242,255,0.3)", pointerEvents: "none" }}>
               <IcoSearch />
             </div>
@@ -420,7 +458,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div style={{ width: "1px", height: "28px", background: "rgba(255,255,255,0.08)" }}/>
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ textAlign: "right" }}>
+              {/* User name/role text — CSS hides on mobile, keeping only avatar */}
+              <div className="vx-topbar-user-text" style={{ textAlign: "right" }}>
                 <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: "12px", color: "#f0f2ff", textTransform: "uppercase", letterSpacing: "1px" }}>
                   {displayName}
                 </div>

@@ -144,16 +144,17 @@ export default function Navbar() {
           padding: '10px 24px',
           position: 'relative',
           zIndex: 50,
+          overflow: 'hidden',
         }}>
           <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#67e8f9', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 13, color: 'rgba(240,242,255,0.8)', fontFamily: 'var(--font-body)' }}>
+            <div style={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', background: '#67e8f9', animation: 'pulse 2s infinite' }} />
+            <span className="announcement-text" style={{ fontSize: 13, color: 'rgba(240,242,255,0.8)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               🚀 VeldrixAI v1.0 is live — Runtime Trust Infrastructure for AI Systems
             </span>
-            <a href="/changelog" style={{ fontSize: 13, color: '#06b6d4', textDecoration: 'underline', fontWeight: 500 }}>See what&apos;s new →</a>
+            <a href="/changelog" className="announcement-link" style={{ fontSize: 13, color: '#06b6d4', textDecoration: 'underline', fontWeight: 500, flexShrink: 0 }}>See what&apos;s new →</a>
             <button
               onClick={() => setShowAnnouncement(false)}
-              style={{ position: 'absolute', right: 16, fontSize: 20, color: 'rgba(240,242,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
+              style={{ position: 'absolute', right: 16, fontSize: 20, color: 'rgba(240,242,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: '4px 6px', minWidth: 32, minHeight: 32 }}
             >×</button>
           </div>
         </div>
@@ -618,6 +619,8 @@ export default function Navbar() {
             .navbar-hamburger { display: flex !important; }
             .navbar-desktop-ctas .navbar-status-badge { display: none !important; }
             .navbar-desktop-ctas > a, .navbar-desktop-ctas > div:not(.navbar-hamburger) { display: none !important; }
+            .announcement-link { display: none !important; }
+            .announcement-text { max-width: calc(100vw - 120px); }
           }
           @media (min-width: 768px) {
             .navbar-desktop-links { display: flex !important; }
@@ -625,6 +628,9 @@ export default function Navbar() {
           }
           @media (max-width: 767px) {
             .navbar-status-badge { display: none !important; }
+          }
+          @media (max-width: 480px) {
+            .announcement-text { font-size: 11px !important; max-width: calc(100vw - 96px); }
           }
         `}</style>
       </nav>

@@ -722,7 +722,7 @@ export default function AuditTrailsPage() {
               style={{ position: "fixed", inset: 0, background: "rgba(5,8,16,0.6)", backdropFilter: "blur(4px)", zIndex: 200 }}
             />
             {/* Drawer panel */}
-            <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "420px", background: "#0b0d1c", borderLeft: "1px solid rgba(255,255,255,0.07)", zIndex: 201, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+            <div className="audit-detail-drawer" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "420px", background: "#0b0d1c", borderLeft: "1px solid rgba(255,255,255,0.07)", zIndex: 201, display: "flex", flexDirection: "column", overflowY: "auto" }}>
               {/* Drawer header */}
               <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
                 <div>
