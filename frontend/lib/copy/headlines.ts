@@ -1,6 +1,6 @@
 export const HEADLINES = {
   a: {
-    primary: "Guardrails for production AI.",
+    primary: "Runtime Trust Infrastructure for Production AI.",
     secondary:
       "VeldrixAI evaluates every LLM response in under 500ms and gives you the audit trail to prove it.",
   },
