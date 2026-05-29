@@ -20,6 +20,15 @@ export default defineConfig({
     ['html', { outputFolder: 'tests/reports/html', open: 'never' }],
     ['json', { outputFile: 'tests/reports/results.json' }],
     ['junit', { outputFile: 'tests/reports/junit.xml' }],
+    ['allure-playwright', {
+      outputFolder: 'tests/reports/allure-results',
+      suiteTitle: false,
+      environmentInfo: {
+        App_URL:  process.env.VELDRIX_BASE_URL || 'http://localhost:5000',
+        CI:       process.env.CI || 'false',
+        Platform: process.platform,
+      },
+    }],
   ],
 
   use: {

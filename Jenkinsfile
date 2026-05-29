@@ -32,6 +32,13 @@ pipeline {
     disableConcurrentBuilds()
   }
 
+  // Daily health check — runs full Playwright suite + unit tests at ~06:00 UTC
+  // Skips lint, security scan, and deploy so it is safe to run continuously.
+  // Requires "Allure Jenkins Plugin" installed on the controller for allure() step.
+  triggers {
+    cron('H 6 * * *')
+  }
+
   parameters {
     booleanParam(
       name:         'RUN_AGENT_TESTS',
@@ -57,8 +64,10 @@ pipeline {
 
     // ─────────────────────────────────────────────────────────────────────────
     // STAGE 1 — CODE QUALITY (parallel linters, runs on all branches)
+    // Skipped on scheduled cron builds — no new code to lint.
     // ─────────────────────────────────────────────────────────────────────────
     stage('Code Quality') {
+      when { not { triggeredBy 'TimerTrigger' } }
       parallel {
 
         stage('Python — ruff') {
@@ -169,42 +178,45 @@ except Exception as e:
     stage('Unit Tests') {
       agent { docker { image 'python:3.11-slim'; args '--user root' } }
       steps {
-        sh 'mkdir -p test-results'
+        sh 'mkdir -p test-results allure-results/auth allure-results/core allure-results/connectors allure-results/sdk'
 
         // Auth service
         sh '''
           cd backend/auth
-          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx
+          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx allure-pytest
           python -m pytest tests/ \
             --cov=app --cov-report=xml:coverage-auth.xml \
             --cov-fail-under=60 \
             -v --tb=short -m "not integration" \
-            --junit-xml=../../test-results/auth-unit.xml || true
+            --junit-xml=../../test-results/auth-unit.xml \
+            --alluredir=../../allure-results/auth || true
           cd ../..
         '''
 
         // Core service
         sh '''
           cd backend/core
-          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx respx
+          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx respx allure-pytest
           python -m pytest tests/ \
             --cov=src --cov-report=xml:coverage-core.xml \
             --cov-fail-under=60 \
             -v --tb=short -m "not integration" \
-            --junit-xml=../../test-results/core-unit.xml || true
+            --junit-xml=../../test-results/core-unit.xml \
+            --alluredir=../../allure-results/core || true
           cd ../..
         '''
 
         // Connectors service
         sh '''
           cd backend/connectors
-          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx 2>/dev/null || true
+          pip install --quiet -r requirements.txt pytest pytest-asyncio pytest-cov httpx allure-pytest 2>/dev/null || true
           if [ -d tests ]; then
             python -m pytest tests/ \
               --cov=src --cov-report=xml:coverage-connectors.xml \
               --cov-fail-under=40 \
               -v --tb=short -m "not integration" \
-              --junit-xml=../../test-results/connectors-unit.xml || true
+              --junit-xml=../../test-results/connectors-unit.xml \
+              --alluredir=../../allure-results/connectors || true
           else
             echo "No connectors tests directory — skipping"
           fi
@@ -214,12 +226,13 @@ except Exception as e:
         // SDK
         sh '''
           cd sdk
-          pip install --quiet -e ".[test]" pytest pytest-asyncio pytest-cov httpx 2>/dev/null || \
-            pip install --quiet pytest pytest-asyncio pytest-cov httpx pydantic
+          pip install --quiet -e ".[test]" pytest pytest-asyncio pytest-cov httpx allure-pytest 2>/dev/null || \
+            pip install --quiet pytest pytest-asyncio pytest-cov httpx pydantic allure-pytest
           python -m pytest tests/ \
             --cov=veldrixai --cov-report=xml:coverage-sdk.xml \
             -v --tb=short \
-            --junit-xml=../test-results/sdk-unit.xml || true
+            --junit-xml=../test-results/sdk-unit.xml \
+            --alluredir=../allure-results/sdk || true
           cd ..
         '''
       }
@@ -235,7 +248,7 @@ except Exception as e:
     // ─────────────────────────────────────────────────────────────────────────
     stage('Integration Tests') {
       when {
-        anyOf { branch 'develop'; branch 'main'; branch pattern: 'release/*', comparator: 'GLOB' }
+        anyOf { branch 'develop'; branch 'main'; branch pattern: 'release/*', comparator: 'GLOB'; triggeredBy 'TimerTrigger' }
       }
       agent { docker { image 'python:3.11-slim'; args '-v /var/run/docker.sock:/var/run/docker.sock --user root' } }
       steps {
@@ -279,7 +292,7 @@ except Exception as e:
     // STAGE 4 — SECURITY SCAN (main only)
     // ─────────────────────────────────────────────────────────────────────────
     stage('Security Scan') {
-      when { branch 'main' }
+      when { allOf { branch 'main'; not { triggeredBy 'TimerTrigger' } } }
       parallel {
 
         stage('SAST — semgrep') {
@@ -351,7 +364,7 @@ except Exception as ex:
     // ─────────────────────────────────────────────────────────────────────────
     stage('Performance Gate') {
       when {
-        anyOf { branch 'develop'; branch 'main' }
+        anyOf { branch 'develop'; branch 'main'; triggeredBy 'TimerTrigger' }
       }
       agent { docker { image 'python:3.11-slim'; args '--user root' } }
       steps {
@@ -376,7 +389,7 @@ except Exception as ex:
     // ─────────────────────────────────────────────────────────────────────────
     stage('E2E Tests') {
       when {
-        anyOf { branch 'main'; branch 'develop' }
+        anyOf { branch 'main'; branch 'develop'; triggeredBy 'TimerTrigger' }
       }
       agent {
         docker {
@@ -417,8 +430,10 @@ except Exception as ex:
           '''
 
           // Layer 2 — AI agent exploratory (advisory, not blocking unless hasBlockingFailures)
+          // Always runs on scheduled daily builds to catch edge-case regressions.
           script {
-            if (params.RUN_AGENT_TESTS.toBoolean()) {
+            def isCronBuild = currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause')?.size() > 0
+            if (params.RUN_AGENT_TESTS.toBoolean() || isCronBuild) {
               sh '''
                 npx @playwright/mcp --port 8931 &
                 MCP_PID=$!
@@ -444,6 +459,12 @@ except Exception as ex:
             reportFiles:           'index.html',
             reportName:            'Playwright E2E Report',
           ])
+          // Allure E2E report — requires "Allure Jenkins Plugin" on the controller
+          script {
+            if (fileExists('frontend/tests/reports/allure-results')) {
+              allure(results: [[path: 'frontend/tests/reports/allure-results']])
+            }
+          }
           archiveArtifacts artifacts: 'frontend/tests/reports/agent-*.json,frontend/tests/screenshots/**/*.png',
                            allowEmptyArchive: true
         }
@@ -467,7 +488,7 @@ except Exception as ex:
     // STAGE 7 — BUILD DOCKER IMAGES (main only)
     // ─────────────────────────────────────────────────────────────────────────
     stage('Build Images') {
-      when { branch 'main' }
+      when { allOf { branch 'main'; not { triggeredBy 'TimerTrigger' } } }
       agent { label 'docker-available' }
       steps {
         script {
@@ -503,7 +524,7 @@ except Exception as ex:
     // STAGE 8 — PUSH TO REGISTRY (main only)
     // ─────────────────────────────────────────────────────────────────────────
     stage('Push Images') {
-      when { branch 'main' }
+      when { allOf { branch 'main'; not { triggeredBy 'TimerTrigger' } } }
       agent { label 'docker-available' }
       steps {
         withCredentials([usernamePassword(
@@ -531,6 +552,7 @@ except Exception as ex:
         allOf {
           branch 'main'
           expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+          not { triggeredBy 'TimerTrigger' }
         }
       }
       agent { label 'docker-available' }
@@ -604,6 +626,24 @@ except Exception as ex:
         reportFiles:           'index.html',
         reportName:            'Playwright Full Report',
       ])
+      // Combined Allure report (E2E + all backend services)
+      // Requires "Allure Jenkins Plugin" on the Jenkins controller.
+      script {
+        def allureResultPaths = []
+        def candidatePaths = [
+          'frontend/tests/reports/allure-results',
+          'allure-results/auth',
+          'allure-results/core',
+          'allure-results/connectors',
+          'allure-results/sdk',
+        ]
+        candidatePaths.each { p ->
+          if (fileExists(p)) { allureResultPaths << [path: p] }
+        }
+        if (allureResultPaths.size() > 0) {
+          allure([reportBuildPolicy: 'ALWAYS', results: allureResultPaths])
+        }
+      }
       cleanWs()
     }
   }
