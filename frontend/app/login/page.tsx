@@ -3,44 +3,13 @@
 import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ShieldMark } from "@/components/shield-mark";
 
-// ── Canonical V Brand Mark ────────────────────────────────────────────────────
-function VBrandMark({ suffix, size = 26 }: { suffix: string; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={`vg1-${suffix}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#c4b5fd" />
-          <stop offset="50%" stopColor="#818cf8" />
-          <stop offset="100%" stopColor="#67e8f9" />
-        </linearGradient>
-        <linearGradient id={`vg2-${suffix}`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#a78bfa" />
-        </linearGradient>
-        <linearGradient id={`sq-${suffix}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.2" />
-        </linearGradient>
-        <filter id={`fg-${suffix}`}>
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id={`fg2-${suffix}`}>
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <rect x="8" y="8" width="84" height="84" rx="18" fill={`url(#sq-${suffix})`} stroke={`url(#vg1-${suffix})`} strokeWidth="1" />
-      <path d="M50 18 L82 50 L50 82 L18 50 Z" fill="none" stroke={`url(#vg1-${suffix})`} strokeWidth="0.8" strokeOpacity="0.3" />
-      <path d="M24 30 L50 70 L76 30" fill="none" stroke={`url(#vg2-${suffix})`} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" filter={`url(#fg-${suffix})`} />
-      <circle cx="50" cy="70" r="5" fill={`url(#vg1-${suffix})`} filter={`url(#fg2-${suffix})`} />
-      <circle cx="50" cy="70" r="2.5" fill="white" opacity="0.9" />
-      <rect x="30" y="47" width="14" height="2.5" rx="1.25" fill="#a78bfa" opacity="0.6" />
-      <rect x="56" y="47" width="14" height="2.5" rx="1.25" fill="#67e8f9" opacity="0.6" />
-      <line x1="50" y1="8" x2="50" y2="16" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    </svg>
-  );
+// ── Canonical Brand Mark ──────────────────────────────────────────────────────
+// `suffix` is retained for call-site compatibility; the shield artwork needs no
+// per-instance gradient ids.
+function VBrandMark({ size = 26 }: { suffix?: string; size?: number }) {
+  return <ShieldMark size={size} />;
 }
 
 // ── Google icon ───────────────────────────────────────────────────────────────
@@ -160,13 +129,13 @@ function LoginForm() {
   };
 
   return (
-    <div style={{ background: '#050810', color: '#f0f2ff', fontFamily: 'var(--font-body)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: '#0a1014', color: '#e7ecef', fontFamily: 'var(--font-body)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Fixed Header ── */}
-      <header style={{ background: 'rgba(5,8,16,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'fixed', width: '100%', top: 0, zIndex: 100, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <header style={{ background: 'rgba(10,16,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'fixed', width: '100%', top: 0, zIndex: 100, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2))', border: '1px solid rgba(124,58,237,0.3)', boxShadow: '0 4px 16px rgba(124,58,237,0.3)', flexShrink: 0 }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))', border: '1px solid rgba(45,74,94,0.3)', boxShadow: '0 4px 16px rgba(45,74,94,0.3)', flexShrink: 0 }}>
               <VBrandMark suffix="signin-header" size={26} />
             </div>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.5px', color: 'white' }}>
@@ -174,8 +143,8 @@ function LoginForm() {
             </span>
           </Link>
           <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            <Link href="/" style={{ color: 'rgba(240,242,255,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Back to Site</Link>
-            <Link href="/support" style={{ color: 'rgba(240,242,255,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Support</Link>
+            <Link href="/" style={{ color: 'rgba(231,236,239,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Back to Site</Link>
+            <Link href="/support" style={{ color: 'rgba(231,236,239,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Support</Link>
           </nav>
         </div>
       </header>
@@ -187,45 +156,45 @@ function LoginForm() {
           {/* ─── LEFT PANEL: Sovereign Statement ─── */}
           <section
             className="auth-split-left"
-            style={{ width: '50%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 56px', overflow: 'hidden', background: 'linear-gradient(145deg, #0d0f1a 0%, #050810 100%)' }}
+            style={{ width: '50%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 56px', overflow: 'hidden', background: 'linear-gradient(145deg, #0e161a 0%, #0a1014 100%)' }}
           >
             <div className="dot-mesh" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
             <div className="noise-overlay" />
             <div className="scan-line" />
-            <div className="orb" style={{ width: '500px', height: '500px', top: '-150px', left: '-100px', background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)' }} />
-            <div className="orb" style={{ width: '300px', height: '300px', bottom: '-80px', right: '-50px', background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)' }} />
+            <div className="orb" style={{ width: '500px', height: '500px', top: '-150px', left: '-100px', background: 'radial-gradient(circle, rgba(45,74,94,0.15) 0%, transparent 70%)' }} />
+            <div className="orb" style={{ width: '300px', height: '300px', bottom: '-80px', right: '-50px', background: 'radial-gradient(circle, rgba(170,184,192,0.1) 0%, transparent 70%)' }} />
 
             <div style={{ position: 'relative', zIndex: 10, maxWidth: '480px' }} className="reveal-up">
 
               {/* Governance badge */}
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#10b981', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 14px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="live-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#6fa98f', background: 'rgba(111,169,143,0.08)', border: '1px solid rgba(111,169,143,0.2)', padding: '6px 14px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="live-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6fa98f', display: 'inline-block' }} />
                   Governance Layer · Active
                 </span>
               </div>
 
               {/* Headline */}
-              <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(36px,3.8vw,56px)', letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '24px', color: '#f0f2ff' }}>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(36px,3.8vw,56px)', letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '24px', color: '#e7ecef' }}>
                 Secure <br />
-                <span style={{ background: 'linear-gradient(135deg,#ffffff 0%,#a78bfa 45%,#67e8f9 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Institutional</span><br />
+                <span style={{ background: 'linear-gradient(135deg,#ffffff 0%,#c5cfd5 45%,#abc8bd 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Institutional</span><br />
                 Intelligence.
               </h1>
 
               {/* Body */}
-              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '18px', lineHeight: 1.7, color: 'rgba(240,242,255,0.5)', maxWidth: '400px', marginBottom: '56px' }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '18px', lineHeight: 1.7, color: 'rgba(231,236,239,0.5)', maxWidth: '400px', marginBottom: '56px' }}>
                 Access the world&apos;s most advanced auditing and governance framework for autonomous AI systems.
               </p>
 
               {/* Stats row */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 <div className="metric-card mc-1">
-                  <div id="uptime-stat" style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: '#10b981', marginBottom: '4px' }}>0.0%</div>
-                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.3)' }}>Uptime Protocol</div>
+                  <div id="uptime-stat" style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: '#6fa98f', marginBottom: '4px' }}>0.0%</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.3)' }}>Uptime Protocol</div>
                 </div>
                 <div className="metric-card mc-2">
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: '#7c3aed', marginBottom: '4px' }}>AES-256</div>
-                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.3)' }}>Vault Encryption</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: '#2d4a5e', marginBottom: '4px' }}>AES-256</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.3)' }}>Vault Encryption</div>
                 </div>
               </div>
             </div>
@@ -234,14 +203,14 @@ function LoginForm() {
           {/* ─── RIGHT PANEL: Login Form ─── */}
           <section
             className="auth-split-right"
-            style={{ width: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', background: '#070910' }}
+            style={{ width: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', background: '#0a1014' }}
           >
             <div className="glass-panel reveal-up" style={{ width: '100%', maxWidth: '480px', padding: '48px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', animationDelay: '0.15s' }}>
 
               {/* Portal header */}
               <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '28px', color: '#f0f2ff', marginBottom: '8px' }}>Access Portal</h2>
-                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '15px', color: 'rgba(240,242,255,0.5)' }}>Verify identity to initialize governance session.</p>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '28px', color: '#e7ecef', marginBottom: '8px' }}>Access Portal</h2>
+                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '15px', color: 'rgba(231,236,239,0.5)' }}>Verify identity to initialize governance session.</p>
               </div>
 
               {/* SSO buttons */}
@@ -252,7 +221,7 @@ function LoginForm() {
                   onClick={() => handleOAuth('google')}
                   onMouseEnter={() => setGoogleHovered(true)}
                   onMouseLeave={() => setGoogleHovered(false)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: googleHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#f0f2ff', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: googleHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   <GoogleIcon />
                   Google
@@ -263,7 +232,7 @@ function LoginForm() {
                   onClick={() => handleOAuth('github')}
                   onMouseEnter={() => setGithubHovered(true)}
                   onMouseLeave={() => setGithubHovered(false)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: githubHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#f0f2ff', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: githubHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   <GitHubIcon />
                   GitHub
@@ -273,7 +242,7 @@ function LoginForm() {
               {/* Divider */}
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', gap: '16px' }}>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.3)' }}>System Auth</span>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.3)' }}>System Auth</span>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
               </div>
 
@@ -282,9 +251,9 @@ function LoginForm() {
 
                 {/* Work Email */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>Work Email</label>
+                  <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.35)' }}>Work Email</label>
                   <div style={{ position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(240,242,255,0.3)', pointerEvents: 'none' }}>
+                    <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(231,236,239,0.3)', pointerEvents: 'none' }}>
                       <EmailIcon />
                     </div>
                     <input
@@ -297,7 +266,7 @@ function LoginForm() {
                       placeholder="name@corporation.ai"
                       required
                       className="field-glow"
-                      style={{ width: '100%', background: '#070910', border: `1px solid ${emailFocused ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#f0f2ff', borderRadius: '14px', padding: '14px 14px 14px 44px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                      style={{ width: '100%', background: '#0a1014', border: `1px solid ${emailFocused ? 'rgba(45,74,94,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#e7ecef', borderRadius: '14px', padding: '14px 14px 14px 44px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
@@ -305,11 +274,11 @@ function LoginForm() {
                 {/* Access Key */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.35)' }}>Access Key</label>
-                    <Link href="/forgot-password" style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#7c3aed', textDecoration: 'none' }}>Revoke Access?</Link>
+                    <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.35)' }}>Access Key</label>
+                    <Link href="/forgot-password" style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#2d4a5e', textDecoration: 'none' }}>Revoke Access?</Link>
                   </div>
                   <div style={{ position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(240,242,255,0.3)', pointerEvents: 'none' }}>
+                    <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(231,236,239,0.3)', pointerEvents: 'none' }}>
                       <LockIcon />
                     </div>
                     <input
@@ -322,13 +291,13 @@ function LoginForm() {
                       placeholder="••••••••••••"
                       required
                       className="field-glow"
-                      style={{ width: '100%', background: '#070910', border: `1px solid ${passwordFocused ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#f0f2ff', borderRadius: '14px', padding: '14px 44px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                      style={{ width: '100%', background: '#0a1014', border: `1px solid ${passwordFocused ? 'rgba(45,74,94,0.5)' : 'rgba(255,255,255,0.07)'}`, color: '#e7ecef', borderRadius: '14px', padding: '14px 44px', fontFamily: 'var(--font-body)', fontSize: '15px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
                     />
                     <button
                       suppressHydrationWarning
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(240,242,255,0.3)', padding: 0, display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                      style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(231,236,239,0.3)', padding: 0, display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
                     >
                       <EyeIcon open={showPassword} />
                     </button>
@@ -337,7 +306,7 @@ function LoginForm() {
 
                 {/* Error */}
                 {error && (
-                  <div style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#f87171', fontFamily: 'var(--font-body)' }}>
+                  <div style={{ background: 'rgba(190,116,104,0.08)', border: '1px solid rgba(190,116,104,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#d29a91', fontFamily: 'var(--font-body)' }}>
                     {error}
                   </div>
                 )}
@@ -363,9 +332,9 @@ function LoginForm() {
 
               {/* Sign up link */}
               <div style={{ marginTop: '32px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'rgba(240,242,255,0.35)' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'rgba(231,236,239,0.35)' }}>
                   New entity?{' '}
-                  <Link href="/signup" style={{ color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>Apply for Provisioning</Link>
+                  <Link href="/signup" style={{ color: '#2d4a5e', fontWeight: 600, textDecoration: 'none' }}>Apply for Provisioning</Link>
                 </p>
               </div>
             </div>
@@ -375,22 +344,22 @@ function LoginForm() {
       </main>
 
       {/* ── Footer ── */}
-      <footer style={{ background: 'rgba(5,8,16,0.9)', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <footer style={{ background: 'rgba(10,16,20,0.9)', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2))', border: '1px solid rgba(124,58,237,0.3)', boxShadow: '0 2px 10px rgba(124,58,237,0.2)', flexShrink: 0 }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))', border: '1px solid rgba(45,74,94,0.3)', boxShadow: '0 2px 10px rgba(45,74,94,0.2)', flexShrink: 0 }}>
             <VBrandMark suffix="signin-footer" size={20} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px', color: 'white' }}>
             Veldrix<span className="shimmer-text">AI</span>
           </span>
         </div>
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.2)' }}>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.2)' }}>
           © 2026 VeldrixAI Technologies Inc. All Rights Reserved.
         </span>
         <div style={{ display: 'flex', gap: '24px' }}>
-          <Link href="/privacy" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Terms of Service</Link>
-          <Link href="/security" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,242,255,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Security Architecture</Link>
+          <Link href="/privacy" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Privacy Policy</Link>
+          <Link href="/terms" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Terms of Service</Link>
+          <Link href="/security" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Security Architecture</Link>
         </div>
       </footer>
     </div>

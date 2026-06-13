@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import "./landing.css";
+import { ShieldMark } from "@/components/shield-mark";
 import { HEADLINES } from "@/lib/copy/headlines";
 import { NAV_LINKS, FOOTER_PLATFORM_LINKS, FOOTER_DEVELOPER_LINKS, FOOTER_COMPANY_LINKS } from "@/lib/constants/nav-links";
 import { PLANS } from "@/lib/constants/pricing";
@@ -50,31 +51,11 @@ function useSystemStatus(): StatusState {
 }
 
 function NavLogo() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="vg1-n" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#c4b5fd" />
-          <stop offset="50%" stopColor="#818cf8" />
-          <stop offset="100%" stopColor="#67e8f9" />
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="84" height="84" rx="18" fill="rgba(124,58,237,0.15)" stroke="url(#vg1-n)" strokeWidth="1" />
-      <path d="M24 30 L50 70 L76 30" fill="none" stroke="#f0f2ff" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="50" cy="70" r="5" fill="url(#vg1-n)" />
-      <circle cx="50" cy="70" r="2.5" fill="white" opacity="0.9" />
-    </svg>
-  );
+  return <ShieldMark size={34} />;
 }
 
 function FooterLogo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="8" y="8" width="84" height="84" rx="18" fill="rgba(124,58,237,0.15)" stroke="rgba(124,58,237,0.3)" strokeWidth="1" />
-      <path d="M24 30 L50 70 L76 30" fill="none" stroke="#f0f2ff" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="50" cy="70" r="5" fill="rgba(124,58,237,0.5)" />
-    </svg>
-  );
+  return <ShieldMark size={28} />;
 }
 
 function NavBar() {
@@ -149,7 +130,7 @@ function HeroSection({ reduced }: { reduced: boolean }) {
             style={{
               maxWidth: '480px',
               margin: '0 auto',
-              background: 'rgba(13,15,26,0.8)',
+              background: 'rgba(14,22,26,0.8)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '8px',
               padding: '16px 20px',
@@ -157,11 +138,11 @@ function HeroSection({ reduced }: { reduced: boolean }) {
               textAlign: 'left',
             }}
           >
-            <pre style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'rgba(240,242,255,0.7)', lineHeight: 1.7 }}>
-              <span style={{ color: '#f0f2ff' }}>from</span> veldrixai <span style={{ color: '#f0f2ff' }}>import</span> Veldrix{"\n\n"}
-              <span style={{ color: '#7c3aed' }}>@veldrix.guard</span>(policy=<span style={{ color: '#06b6d4' }}>"default"</span>){"\n"}
-              <span style={{ color: '#f0f2ff' }}>def</span> <span style={{ color: '#a78bfa' }}>generate_reply</span>(prompt: <span style={{ color: '#f0f2ff' }}>str</span>){' -> '}<span style={{ color: '#f0f2ff' }}>str</span>:{"\n"}
-              {"    "}<span style={{ color: '#f0f2ff' }}>return</span> llm.complete(prompt)
+            <pre style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'rgba(231,236,239,0.7)', lineHeight: 1.7 }}>
+              <span style={{ color: '#e7ecef' }}>from</span> veldrixai <span style={{ color: '#e7ecef' }}>import</span> Veldrix{"\n\n"}
+              <span style={{ color: '#2d4a5e' }}>@veldrix.guard</span>(policy=<span style={{ color: '#aab8c0' }}>"default"</span>){"\n"}
+              <span style={{ color: '#e7ecef' }}>def</span> <span style={{ color: '#c5cfd5' }}>generate_reply</span>(prompt: <span style={{ color: '#e7ecef' }}>str</span>){' -> '}<span style={{ color: '#e7ecef' }}>str</span>:{"\n"}
+              {"    "}<span style={{ color: '#e7ecef' }}>return</span> llm.complete(prompt)
             </pre>
             <button
               onClick={copyCode}
@@ -174,7 +155,7 @@ function HeroSection({ reduced }: { reduced: boolean }) {
                 borderRadius: '4px',
                 padding: '4px 10px',
                 fontSize: '0.6875rem',
-                color: copied ? '#10b981' : 'rgba(240,242,255,0.4)',
+                color: copied ? '#6fa98f' : 'rgba(231,236,239,0.4)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-body)',
               }}
@@ -224,7 +205,7 @@ function FivePillarsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1, stiffness: 300, damping: 30 }}
-          style={{ fontFamily: "var(--font-body)", fontSize: "1rem", color: "rgba(240,242,255,0.5)", maxWidth: "52ch", marginBottom: "64px", lineHeight: 1.7 }}
+          style={{ fontFamily: "var(--font-body)", fontSize: "1rem", color: "rgba(231,236,239,0.5)", maxWidth: "52ch", marginBottom: "64px", lineHeight: 1.7 }}
         >
           VeldrixAI runs five parallel evaluations on every LLM response. Any pillar can trigger enforcement. All verdicts write to the audit log.
         </motion.p>
@@ -247,7 +228,7 @@ function FivePillarsSection() {
                   {pillar.Viz ? <pillar.Viz /> : (
                     <svg width="100%" height="160" viewBox="0 0 240 160" aria-hidden="true">
                       <rect x="20" y="20" width="200" height="120" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" />
-                      <text x="120" y="85" fontSize="10" fill="rgba(240,242,255,0.2)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">VISUALIZATION</text>
+                      <text x="120" y="85" fontSize="10" fill="rgba(231,236,239,0.2)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">VISUALIZATION</text>
                     </svg>
                   )}
                 </div>
@@ -278,7 +259,7 @@ function AuditLogSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1, stiffness: 300, damping: 30 }}
-          style={{ fontFamily: "var(--font-body)", fontSize: "1rem", color: "rgba(240,242,255,0.5)", maxWidth: "52ch", marginBottom: "48px", lineHeight: 1.7 }}
+          style={{ fontFamily: "var(--font-body)", fontSize: "1rem", color: "rgba(231,236,239,0.5)", maxWidth: "52ch", marginBottom: "48px", lineHeight: 1.7 }}
         >
           Every evaluation writes an immutable audit entry. SOC 2 ready out of the box — hand the log to your auditor without modification.
         </motion.p>
@@ -374,7 +355,7 @@ function SimplePricingSection() {
                     <div className="lp-plan-price-val">Free</div>
                   ) : (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                      <span style={{ fontSize: "1.125rem", color: "rgba(240,242,255,0.4)", fontWeight: 400 }}>$</span>
+                      <span style={{ fontSize: "1.125rem", color: "rgba(231,236,239,0.4)", fontWeight: 400 }}>$</span>
                       <span className="lp-plan-price-val">{plan.monthlyPrice}</span>
                       <span className="lp-plan-price-mo">/mo</span>
                     </div>

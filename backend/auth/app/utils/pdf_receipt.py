@@ -1,7 +1,10 @@
 """
 VeldrixAI PDF Receipt Generator — ReportLab
-Branded with Void background, Violet primary, Syne-style headings.
+Branded with the "Royal Governance" metallic palette (deep-audit void
+background, slate/platinum accents, icy silver-green for success) and the
+VeldrixAI shield mark. Matches the product UI; no legacy violet/cyan.
 """
+import os
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -13,14 +16,22 @@ try:
 except ImportError:
     _REPORTLAB_AVAILABLE = False
 
-_VOID    = "#050810"
-_VIOLET  = "#7C3AED"
-_CYAN    = "#06B6D4"
-_EMERALD = "#10B981"
-_SNOW    = "#F0F2FF"
-_MUTED   = "#8B8FA8"
-_SURFACE = "#0D1220"
-_BORDER  = "#1A2035"
+# ── Royal Governance palette (see veldrix-royal-tokens.json) ──
+_VOID    = "#0A1014"   # deep-audit void background
+_SLATE   = "#2D4A5E"   # primary cold blue-grey (replaces violet)
+_SILVER  = "#8FA6B5"   # burnished silver-blue accent (replaces cyan)
+_PLATINUM= "#AAB8C0"   # cool polished platinum
+_SUCCESS = "#6FA98F"   # icy silver-green (verified / amount)
+_SNOW    = "#E7ECEF"   # cool light text on dark
+_MUTED   = "#7C8993"   # muted slate-grey
+_SURFACE = "#121D23"   # deep-audit raised surface
+_BORDER  = "#2A3A44"   # dark silver-grey divider
+
+# Shield asset (alpha PNG) shipped with the auth service.
+_SHIELD_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "assets", "veldrix-shield.png",
+)
 
 W, H = (595.27, 841.89)  # A4 in points
 
@@ -48,32 +59,36 @@ def generate_receipt_pdf(
     c.setFillColor(HexColor(_VOID))
     c.rect(0, 0, W, H, fill=1, stroke=0)
 
-    # Subtle violet/cyan ambient circles
-    c.setFillColorRGB(0.49, 0.23, 0.93, alpha=0.05)
+    # Subtle metallic ambient glows (slate + icy silver-green)
+    c.setFillColorRGB(0.176, 0.290, 0.369, alpha=0.10)
     c.circle(W * 0.1, H * 0.88, 160, fill=1, stroke=0)
-    c.setFillColorRGB(0.02, 0.71, 0.83, alpha=0.04)
+    c.setFillColorRGB(0.435, 0.663, 0.561, alpha=0.06)
     c.circle(W * 0.9, H * 0.12, 120, fill=1, stroke=0)
 
     # ── Header bar ──────────────────────────────────────────────────────────
     c.setFillColor(HexColor(_SURFACE))
     c.rect(0, H - 90, W, 90, fill=1, stroke=0)
 
-    # Top gradient line (violet → cyan)
-    c.setFillColor(HexColor(_VIOLET))
+    # Top metallic accent line (slate → silver)
+    c.setFillColor(HexColor(_SLATE))
     c.rect(0, H - 3, W * 0.5, 3, fill=1, stroke=0)
-    c.setFillColor(HexColor(_CYAN))
+    c.setFillColor(HexColor(_SILVER))
     c.rect(W * 0.5, H - 3, W * 0.5, 3, fill=1, stroke=0)
 
-    # Logo mark (V chevron)
-    c.setStrokeColor(HexColor(_SNOW))
-    c.setLineWidth(2.5)
-    c.setLineCap(1)
-    c.line(48, H - 48, 62, H - 66)
-    c.line(62, H - 66, 76, H - 48)
-    c.setFillColor(HexColor(_CYAN))
-    c.circle(62, H - 66, 3.5, fill=1, stroke=0)
-    c.setFillColor(HexColor(_SNOW))
-    c.circle(62, H - 66, 1.8, fill=1, stroke=0)
+    # Shield mark — transparent navy body blends into the dark header,
+    # exactly as it reads across the product UI.
+    _ls = 34
+    if os.path.exists(_SHIELD_PATH):
+        c.drawImage(_SHIELD_PATH, 42, H - 64, width=_ls, height=_ls,
+                    mask="auto", preserveAspectRatio=True)
+    else:
+        c.setStrokeColor(HexColor(_SNOW))
+        c.setLineWidth(2.5)
+        c.setLineCap(1)
+        c.line(48, H - 48, 62, H - 66)
+        c.line(62, H - 66, 76, H - 48)
+        c.setFillColor(HexColor(_SILVER))
+        c.circle(62, H - 66, 3.5, fill=1, stroke=0)
 
     # Brand name
     c.setFont("Helvetica-Bold", 18)
@@ -88,24 +103,24 @@ def generate_receipt_pdf(
     c.setFillColor(HexColor(_MUTED))
     c.drawRightString(W - 36, H - 42, "PAYMENT RECEIPT")
     c.setFont("Helvetica", 9)
-    c.setFillColor(HexColor(_VIOLET))
+    c.setFillColor(HexColor(_SILVER))
     c.drawRightString(W - 36, H - 56, transaction_id)
 
     # ── Status badge ─────────────────────────────────────────────────────────
     badge_y = H - 148
     c.setFillColor(HexColor("#0A1F12"))
     c.roundRect(W / 2 - 72, badge_y - 14, 144, 32, 16, fill=1, stroke=0)
-    c.setStrokeColor(HexColor(_EMERALD))
+    c.setStrokeColor(HexColor(_SUCCESS))
     c.setLineWidth(1)
     c.roundRect(W / 2 - 72, badge_y - 14, 144, 32, 16, fill=0, stroke=1)
-    c.setFillColor(HexColor(_EMERALD))
+    c.setFillColor(HexColor(_SUCCESS))
     c.circle(W / 2 - 44, badge_y + 2, 4, fill=1, stroke=0)
     c.setFont("Helvetica-Bold", 9)
     c.drawCentredString(W / 2 + 6, badge_y - 2, "PAYMENT VERIFIED")
 
     # ── Amount ───────────────────────────────────────────────────────────────
     c.setFont("Helvetica-Bold", 44)
-    c.setFillColor(HexColor(_EMERALD))
+    c.setFillColor(HexColor(_SUCCESS))
     c.drawCentredString(W / 2, H - 220, amount_fmt)
 
     c.setFont("Helvetica", 10)
@@ -145,7 +160,7 @@ def generate_receipt_pdf(
         c.setFont("Helvetica", 9)
         c.setFillColor(HexColor(_MUTED))
         c.drawString(table_x + 20, row_y - 14, label.upper())
-        val_color = _EMERALD if label == "Status" else _SNOW
+        val_color = _SUCCESS if label == "Status" else _SNOW
         c.setFont("Helvetica-Bold" if label == "Transaction ID" else "Helvetica", 11)
         c.setFillColor(HexColor(val_color))
         c.drawRightString(table_x + table_w - 20, row_y - 14, value)
@@ -167,7 +182,7 @@ def generate_receipt_pdf(
     badge_total_w = len(badges) * 100
     bx = (W - badge_total_w) / 2
     for badge in badges:
-        c.setFillColor(HexColor(_EMERALD))
+        c.setFillColor(HexColor(_SUCCESS))
         c.circle(bx, footer_y - 32, 3, fill=1, stroke=0)
         c.setFont("Helvetica", 7)
         c.setFillColor(HexColor(_MUTED))

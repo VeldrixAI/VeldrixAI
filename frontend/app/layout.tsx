@@ -24,7 +24,10 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VeldrixAI — Runtime Trust Infrastructure for AI Systems",
+  title: {
+    default: "Veldrix",
+    template: "%s · Veldrix",
+  },
   description:
     "Govern every AI response. Intercept every agent action. Prove every decision.",
   keywords: [

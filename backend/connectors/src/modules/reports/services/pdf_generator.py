@@ -4,6 +4,7 @@ Produces branded, chart-rich governance intelligence reports using ReportLab + m
 """
 
 import io
+import os
 import math
 from datetime import datetime
 from typing import Any
@@ -34,42 +35,77 @@ import numpy as np
 # ── BRAND CONSTANTS ───────────────────────────────────────────────────────────
 
 class VX:
-    VIOLET_HEX  = "#7c3aed"
-    INDIGO_HEX  = "#4f46e5"
-    CYAN_HEX    = "#06b6d4"
-    EMERALD_HEX = "#10b981"
-    ROSE_HEX    = "#f43f5e"
-    AMBER_HEX   = "#f59e0b"
-    DARK_HEX    = "#0f172a"
-    MID_HEX     = "#475569"
-    LIGHT_HEX   = "#f8fafc"
-    VOID_HEX    = "#050810"
-    BORDER_HEX  = "#e2e8f0"
+    """
+    VeldrixAI "Royal Governance" palette — cold, desaturated metallic, sampled
+    from the shield mark. Replaces the legacy violet/indigo/cyan scheme.
+    See frontend/app/dashboard/veldrix-royal-tokens.json.
+    """
+    # ── Primary metallic palette ──
+    SLATE_HEX     = "#2D4A5E"   # primary — authoritative cold blue-grey (replaces violet)
+    STEEL_HEX     = "#38596E"   # secondary slate
+    SILVER_HEX    = "#8FA6B5"   # burnished silver-blue (info / accent)
+    PLATINUM_HEX  = "#AAB8C0"   # cool polished platinum
+    SUCCESS_HEX   = "#6FA98F"   # icy silver-green
+    WARNING_HEX   = "#C2A06A"   # desaturated cold amber
+    ERROR_HEX     = "#BE7468"   # desaturated brick red
+    INK_HEX       = "#16252F"   # near-black cool (body text)
+    MID_HEX       = "#5A656C"   # cool mid grey
+    MUTE_HEX      = "#8593A0"   # muted slate-grey (captions)
+    MIST_HEX      = "#F4F6F7"   # cool near-white panel
+    VOID_HEX      = "#0A1014"   # deep-audit void (header/footer bars)
+    BORDER_HEX    = "#DCE2E5"   # cool hairline
 
-    RL_VIOLET  = colors.HexColor("#7c3aed")
-    RL_INDIGO  = colors.HexColor("#4f46e5")
-    RL_CYAN    = colors.HexColor("#06b6d4")
-    RL_EMERALD = colors.HexColor("#10b981")
-    RL_ROSE    = colors.HexColor("#f43f5e")
-    RL_AMBER   = colors.HexColor("#f59e0b")
-    RL_DARK    = colors.HexColor("#0f172a")
-    RL_MID     = colors.HexColor("#475569")
-    RL_LIGHT   = colors.HexColor("#f8fafc")
-    RL_VOID    = colors.HexColor("#050810")
-    RL_BORDER  = colors.HexColor("#e2e8f0")
+    # ── Legacy aliases (kept so existing references resolve to the new palette) ──
+    VIOLET_HEX  = SLATE_HEX
+    INDIGO_HEX  = STEEL_HEX
+    CYAN_HEX    = SILVER_HEX
+    EMERALD_HEX = SUCCESS_HEX
+    ROSE_HEX    = ERROR_HEX
+    AMBER_HEX   = WARNING_HEX
+    DARK_HEX    = INK_HEX
+    LIGHT_HEX   = MIST_HEX
 
+    RL_SLATE    = colors.HexColor(SLATE_HEX)
+    RL_STEEL    = colors.HexColor(STEEL_HEX)
+    RL_SILVER   = colors.HexColor(SILVER_HEX)
+    RL_PLATINUM = colors.HexColor(PLATINUM_HEX)
+    RL_SUCCESS  = colors.HexColor(SUCCESS_HEX)
+    RL_WARNING  = colors.HexColor(WARNING_HEX)
+    RL_ERROR    = colors.HexColor(ERROR_HEX)
+    RL_INK      = colors.HexColor(INK_HEX)
+    RL_MID      = colors.HexColor(MID_HEX)
+    RL_MIST     = colors.HexColor(MIST_HEX)
+    RL_VOID     = colors.HexColor(VOID_HEX)
+    RL_BORDER   = colors.HexColor(BORDER_HEX)
+
+    RL_VIOLET  = RL_SLATE
+    RL_INDIGO  = RL_STEEL
+    RL_CYAN    = RL_SILVER
+    RL_EMERALD = RL_SUCCESS
+    RL_ROSE    = RL_ERROR
+    RL_AMBER   = RL_WARNING
+    RL_DARK    = RL_INK
+    RL_LIGHT   = RL_MIST
+
+    # Distinct cold-metallic hues for per-pillar series (no purple/cyan)
     PILLAR_COLORS = {
-        "Safety":          "#f43f5e",
-        "Hallucination":   "#f59e0b",
-        "Bias":            "#7c3aed",
-        "Prompt Security": "#06b6d4",
-        "Compliance":      "#10b981",
+        "Safety":          "#2D4A5E",
+        "Hallucination":   "#5E8294",
+        "Bias":            "#6FA98F",
+        "Prompt Security": "#38596E",
+        "Compliance":      "#9BBFB0",
     }
 
     CHART_PALETTE = [
-        "#7c3aed", "#06b6d4", "#10b981", "#f59e0b", "#f43f5e",
-        "#4f46e5", "#a78bfa", "#67e8f9", "#6ee7b7", "#fcd34d",
+        "#2D4A5E", "#8FA6B5", "#6FA98F", "#38596E", "#AAB8C0",
+        "#243B4C", "#9FC4B5", "#5E8294", "#C5CFD5", "#748895",
     ]
+
+    # Resolved shield-logo asset path (alpha PNG, lives in the reports module).
+    SHIELD_PATH = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "assets", "veldrix-shield.png",
+    )
 
 
 # ── MATPLOTLIB STYLE ──────────────────────────────────────────────────────────
@@ -78,28 +114,28 @@ def _apply_style() -> None:
     sns.set_theme(style="whitegrid", palette="muted", font="DejaVu Sans")
     plt.rcParams.update({
         "figure.facecolor": "#ffffff",
-        "axes.facecolor": "#f8fafc",
-        "axes.edgecolor": "#e2e8f0",
-        "axes.labelcolor": "#0f172a",
-        "axes.titlecolor": "#0f172a",
+        "axes.facecolor": "#F4F6F7",
+        "axes.edgecolor": "#DCE2E5",
+        "axes.labelcolor": "#16252F",
+        "axes.titlecolor": "#16252F",
         "axes.titleweight": "bold",
         "axes.titlesize": 11,
         "axes.labelsize": 9,
         "axes.spines.top": False,
         "axes.spines.right": False,
         "axes.grid": True,
-        "grid.color": "#e2e8f0",
+        "grid.color": "#DCE2E5",
         "grid.linewidth": 0.6,
         "grid.alpha": 0.8,
-        "xtick.color": "#64748b",
-        "ytick.color": "#64748b",
+        "xtick.color": "#5A656C",
+        "ytick.color": "#5A656C",
         "xtick.labelsize": 8,
         "ytick.labelsize": 8,
         "font.family": "DejaVu Sans",
-        "text.color": "#0f172a",
+        "text.color": "#16252F",
         "legend.frameon": True,
         "legend.framealpha": 0.9,
-        "legend.edgecolor": "#e2e8f0",
+        "legend.edgecolor": "#DCE2E5",
         "legend.fontsize": 8,
     })
 
@@ -147,10 +183,10 @@ def chart_pillar_radar(scores: dict, title: str = "Trust Pillar Radar") -> bytes
     outer = [100] * (N + 1)
     ax.plot(angles, outer, "-", linewidth=0.5, color="#e2e8f0", zorder=0)
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, size=8.5, fontweight="bold", color="#0f172a")
+    ax.set_xticklabels(labels, size=8.5, fontweight="bold", color="#16252F")
     ax.grid(color="#e2e8f0", linewidth=0.6)
     ax.spines["polar"].set_color("#e2e8f0")
-    ax.set_title(title, pad=18, fontsize=11, fontweight="bold", color="#0f172a")
+    ax.set_title(title, pad=18, fontsize=11, fontweight="bold", color="#16252F")
     return _png(fig)
 
 
@@ -177,13 +213,13 @@ def chart_pillar_bars(scores: dict, title: str = "Trust Pillar Scores") -> bytes
     for bar, val in zip(bars, values):
         ax.text(val + 1.5, bar.get_y() + bar.get_height() / 2,
                 f"{val:.1f}", va="center", ha="left",
-                fontsize=8.5, fontweight="bold", color="#0f172a")
+                fontsize=8.5, fontweight="bold", color="#16252F")
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels, fontsize=9, color="#0f172a")
+    ax.set_yticklabels(labels, fontsize=9, color="#16252F")
     ax.set_xlim(0, 110)
     ax.set_xlabel("Score (0–100)", fontsize=8, color="#64748b")
-    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=10)
+    ax.set_title(title, fontsize=11, fontweight="bold", color="#16252F", pad=10)
     ax.axvline(x=70, color=VX.AMBER_HEX, linewidth=1, linestyle="--", alpha=0.6, label="Min (70)")
     ax.axvline(x=90, color=VX.EMERALD_HEX, linewidth=1, linestyle="--", alpha=0.6, label="Target (90)")
     ax.legend(fontsize=7.5, loc="lower right")
@@ -230,14 +266,14 @@ def chart_pillar_scatter(scores: dict, weights: dict, title: str = "Pillar Risk 
 
     for xi, yi, lbl in zip(x_vals, y_vals, labels_list):
         ax.annotate(lbl, (xi, yi), textcoords="offset points", xytext=(0, 10),
-                    ha="center", fontsize=7.5, fontweight="bold", color="#0f172a",
+                    ha="center", fontsize=7.5, fontweight="bold", color="#16252F",
                     bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="#e2e8f0", alpha=0.8))
 
     ax.set_xlabel("Pillar Weight (%)", fontsize=9, color="#475569")
     ax.set_ylabel("Trust Score (0–100)", fontsize=9, color="#475569")
     ax.set_xlim(10, 32)
     ax.set_ylim(0, 108)
-    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=12)
+    ax.set_title(title, fontsize=11, fontweight="bold", color="#16252F", pad=12)
 
     legend_elements = [
         mpatches.Patch(color=VX.EMERALD_HEX, alpha=0.7, label="Pass  (≥ 85)"),
@@ -290,7 +326,7 @@ def chart_verdict_pie(scores: dict, verdict: str = "", title: str = "Pillar Verd
     for at in autotexts:
         at.set_fontsize(8.5)
         at.set_fontweight("bold")
-        at.set_color("#0f172a")
+        at.set_color("#16252F")
 
     # Centre label — overall verdict
     vcolor = (VX.EMERALD_HEX if verdict in ("ALLOW", "PASS")
@@ -306,7 +342,7 @@ def chart_verdict_pie(scores: dict, verdict: str = "", title: str = "Pillar Verd
                for k, v in non_zero.items()]
     ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.10),
               ncol=len(patches), fontsize=7.5, frameon=True, edgecolor="#e2e8f0")
-    ax.set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=8)
+    ax.set_title(title, fontsize=11, fontweight="bold", color="#16252F", pad=8)
     plt.tight_layout()
     return _png(fig)
 
@@ -345,15 +381,15 @@ def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Ma
     # For Risk Index column: invert so high risk = hot
     norm_data[:, 3] = 1 - norm_data[:, 3]
 
-    # Custom diverging cmap: red → amber → green
+    # Custom diverging cmap: brick → cold amber → icy green (brand semantics)
     cmap = LinearSegmentedColormap.from_list(
         "vx_risk",
-        [(0.0, "#f43f5e"), (0.40, "#f59e0b"), (0.75, "#10b981"), (1.0, "#065f46")],
+        [(0.0, "#BE7468"), (0.40, "#C2A06A"), (0.75, "#6FA98F"), (1.0, "#3E6B59")],
     )
     # Risk Index column uses inverted mapping (high = bad)
     cmap_risk = LinearSegmentedColormap.from_list(
         "vx_risk_inv",
-        [(0.0, "#10b981"), (0.40, "#f59e0b"), (0.75, "#f43f5e"), (1.0, "#7c0a02")],
+        [(0.0, "#6FA98F"), (0.40, "#C2A06A"), (0.75, "#BE7468"), (1.0, "#7E3B33")],
     )
 
     fig, axes = plt.subplots(1, 2, figsize=(7.5, 3.4),
@@ -367,7 +403,7 @@ def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Ma
         linewidths=0.5, linecolor="#f1f5f9",
         xticklabels=col_labels[:3], yticklabels=pillar_names,
         cbar=False, vmin=0, vmax=1,
-        annot_kws={"size": 8.5, "weight": "bold", "color": "#0f172a"},
+        annot_kws={"size": 8.5, "weight": "bold", "color": "#16252F"},
     )
 
     # Right: Risk Index (own colourmap)
@@ -377,11 +413,11 @@ def chart_risk_heatmap(scores: dict, weights: dict, title: str = "Pillar Risk Ma
         linewidths=0.5, linecolor="#f1f5f9",
         xticklabels=[col_labels[3]], yticklabels=False,
         cbar=False, vmin=0, vmax=1,
-        annot_kws={"size": 8.5, "weight": "bold", "color": "#0f172a"},
+        annot_kws={"size": 8.5, "weight": "bold", "color": "#16252F"},
     )
 
-    axes[0].set_title(title, fontsize=11, fontweight="bold", color="#0f172a", pad=10)
-    axes[0].tick_params(axis="y", labelsize=8.5, labelcolor="#0f172a")
+    axes[0].set_title(title, fontsize=11, fontweight="bold", color="#16252F", pad=10)
+    axes[0].tick_params(axis="y", labelsize=8.5, labelcolor="#16252F")
     axes[0].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
     axes[1].tick_params(axis="x", labelsize=8.5, labelcolor="#475569")
     axes[1].set_title("", pad=10)
@@ -404,34 +440,28 @@ class VeldrixPageTemplate:
         c.setFillColor(VX.RL_VOID)
         c.rect(0, page_h - hh, page_w, hh, fill=1, stroke=0)
 
-        # Violet accent stripe
-        c.setFillColor(VX.RL_VIOLET)
+        # Metallic accent stripe
+        c.setFillColor(VX.RL_SILVER)
         c.rect(0, page_h - hh - 1.5 * mm, page_w, 1.5 * mm, fill=1, stroke=0)
 
-        # Logo square
+        # Shield mark — the transparent navy body blends into the dark bar,
+        # exactly as it reads across the product UI.
         lx, ly = 8 * mm, page_h - hh + 4 * mm
         ls = 14 * mm
-        c.setFillColor(VX.RL_VIOLET)
-        c.roundRect(lx, ly, ls, ls, 2.5 * mm, fill=1, stroke=0)
-
-        # V mark
-        c.setStrokeColor(colors.white)
-        c.setLineWidth(2)
-        c.setLineCap(1)
-        mx = lx + ls / 2
-        c.line(lx + 3.5 * mm, ly + ls - 3.5 * mm, mx, ly + 3.5 * mm)
-        c.line(mx, ly + 3.5 * mm, lx + ls - 3.5 * mm, ly + ls - 3.5 * mm)
-
-        # Cyan dot
-        c.setFillColor(VX.RL_CYAN)
-        c.circle(mx, ly + 3.5 * mm, 1.4 * mm, fill=1, stroke=0)
+        if os.path.exists(VX.SHIELD_PATH):
+            c.drawImage(VX.SHIELD_PATH, lx, ly, width=ls, height=ls,
+                        mask="auto", preserveAspectRatio=True)
+        else:
+            # Fallback: simple slate roundel if the asset is unavailable
+            c.setFillColor(VX.RL_SLATE)
+            c.roundRect(lx, ly, ls, ls, 2.5 * mm, fill=1, stroke=0)
 
         # Wordmark
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 13)
         c.drawString(lx + ls + 4 * mm, page_h - hh + 9 * mm, "VeldrixAI")
         c.setFont("Helvetica", 7)
-        c.setFillColor(colors.HexColor("#a78bfa"))
+        c.setFillColor(VX.RL_PLATINUM)
         c.drawString(lx + ls + 4 * mm, page_h - hh + 4.5 * mm, "Runtime Trust Infrastructure")
 
         # Report ID + date (right)
@@ -445,11 +475,11 @@ class VeldrixPageTemplate:
         chip_w = name_w + 5 * mm
         chip_x = page_w - 8 * mm - chip_w
         chip_y = page_h - hh + 0.5 * mm
-        c.setFillColor(VX.RL_VIOLET)
-        c.setFillAlpha(0.3)
+        c.setFillColor(VX.RL_SLATE)
+        c.setFillAlpha(0.35)
         c.roundRect(chip_x - 1 * mm, chip_y, chip_w, 5 * mm, 1 * mm, fill=1, stroke=0)
         c.setFillAlpha(1)
-        c.setFillColor(colors.HexColor("#c4b5fd"))
+        c.setFillColor(colors.HexColor("#C5CFD5"))
         c.setFont("Helvetica-Bold", 7.5)
         c.drawString(chip_x + 1.5 * mm, chip_y + 1.5 * mm, self.report_name)
 
@@ -549,7 +579,7 @@ def _th_c(text: str) -> Paragraph:
         textColor=colors.white, alignment=TA_CENTER))
 
 
-def _td(text: str, color: str = "#0f172a", bold: bool = False, center: bool = False) -> Paragraph:
+def _td(text: str, color: str = "#16252F", bold: bool = False, center: bool = False) -> Paragraph:
     return Paragraph(str(text), ParagraphStyle(
         "td", fontName="Helvetica-Bold" if bold else "Helvetica",
         fontSize=8.5, textColor=colors.HexColor(color),
@@ -588,11 +618,11 @@ def _metric_cards(metrics: list[dict]) -> Table:
 
 def _findings_table(findings: list[dict]) -> Table:
     sev_colors = {
-        "CRITICAL": ("#7c0a02", "#fee2e2"),
-        "HIGH":     ("#dc2626", "#fef2f2"),
-        "MEDIUM":   ("#d97706", "#fffbeb"),
-        "LOW":      ("#15803d", "#f0fdf4"),
-        "PASS":     ("#0891b2", "#ecfeff"),
+        "CRITICAL": ("#7E3B33", "#F3E2DF"),
+        "HIGH":     ("#BE7468", "#F6EAE7"),
+        "MEDIUM":   ("#8C6E3C", "#F3EDE1"),
+        "LOW":      ("#3E6B59", "#E7F0EB"),
+        "PASS":     ("#2D4A5E", "#E6ECEF"),
     }
     header = [_th("Pillar"), _th_c("Severity"), _th("Finding"), _th("Recommendation")]
     rows = [header]

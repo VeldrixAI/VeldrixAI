@@ -3,29 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ShieldMark } from "@/components/shield-mark";
 
 // ── Logo ─────────────────────────────────────────────────────────────────────
 function VeldrixLogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="nav-vg" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95"/>
-          <stop offset="100%" stopColor="#a78bfa"/>
-        </linearGradient>
-        <linearGradient id="nav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.35"/>
-          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.18"/>
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="84" height="84" rx="18" fill="url(#nav-bg)" stroke="#7c3aed" strokeWidth="1" strokeOpacity="0.5"/>
-      <path d="M24 30 L50 70 L76 30" fill="none" stroke="url(#nav-vg)" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="50" cy="70" r="5" fill="#06b6d4"/>
-      <circle cx="50" cy="70" r="2.5" fill="white"/>
-      <rect x="30" y="47" width="12" height="2.5" rx="1.25" fill="#a78bfa" opacity="0.65"/>
-      <rect x="58" y="47" width="12" height="2.5" rx="1.25" fill="#67e8f9" opacity="0.65"/>
-    </svg>
-  );
+  return <ShieldMark size={size} />;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -120,12 +102,12 @@ export default function Navbar() {
   const navLinkStyle = (href: string): React.CSSProperties => ({
     fontFamily: 'var(--font-body)',
     fontSize: '14.5px',
-    color: pathname === href ? 'rgba(240,242,255,0.95)' : 'rgba(240,242,255,0.65)',
+    color: pathname === href ? 'rgba(231,236,239,0.95)' : 'rgba(231,236,239,0.65)',
     padding: '6px 14px',
     borderRadius: '8px',
     textDecoration: 'none',
     transition: 'color 200ms, background 200ms',
-    borderBottom: pathname === href ? '2px solid #7c3aed' : '2px solid transparent',
+    borderBottom: pathname === href ? '2px solid #2d4a5e' : '2px solid transparent',
     display: 'inline-flex',
     alignItems: 'center',
     gap: 4,
@@ -139,22 +121,22 @@ export default function Navbar() {
       {/* Announcement Bar */}
       {showAnnouncement && (
         <div style={{
-          background: 'linear-gradient(90deg, rgba(76,29,149,0.5), rgba(49,46,129,0.5), rgba(8,51,68,0.4))',
-          borderBottom: '1px solid rgba(124,58,237,0.2)',
+          background: 'linear-gradient(90deg, rgba(36,59,76,0.5), rgba(30,52,66,0.5), rgba(21,34,42,0.4))',
+          borderBottom: '1px solid rgba(45,74,94,0.2)',
           padding: '10px 24px',
           position: 'relative',
           zIndex: 50,
           overflow: 'hidden',
         }}>
           <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <div style={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', background: '#67e8f9', animation: 'pulse 2s infinite' }} />
-            <span className="announcement-text" style={{ fontSize: 13, color: 'rgba(240,242,255,0.8)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', background: '#abc8bd', animation: 'pulse 2s infinite' }} />
+            <span className="announcement-text" style={{ fontSize: 13, color: 'rgba(231,236,239,0.8)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               🚀 VeldrixAI v1.0 is live — Runtime Trust Infrastructure for AI Systems
             </span>
-            <a href="/changelog" className="announcement-link" style={{ fontSize: 13, color: '#06b6d4', textDecoration: 'underline', fontWeight: 500, flexShrink: 0 }}>See what&apos;s new →</a>
+            <a href="/changelog" className="announcement-link" style={{ fontSize: 13, color: '#aab8c0', textDecoration: 'underline', fontWeight: 500, flexShrink: 0 }}>See what&apos;s new →</a>
             <button
               onClick={() => setShowAnnouncement(false)}
-              style={{ position: 'absolute', right: 16, fontSize: 20, color: 'rgba(240,242,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: '4px 6px', minWidth: 32, minHeight: 32 }}
+              style={{ position: 'absolute', right: 16, fontSize: 20, color: 'rgba(231,236,239,0.4)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: '4px 6px', minWidth: 32, minHeight: 32 }}
             >×</button>
           </div>
         </div>
@@ -168,7 +150,7 @@ export default function Navbar() {
         right: 0,
         zIndex: 50,
         height: 68,
-        background: scrolled ? 'rgba(5,8,16,0.85)' : 'transparent',
+        background: scrolled ? 'rgba(10,16,20,0.85)' : 'transparent',
         borderBottom: scrolled ? '1px solid rgba(255,255,255,0.07)' : '1px solid transparent',
         backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
         transition: 'background 300ms, border-color 300ms, backdrop-filter 300ms',
@@ -189,7 +171,7 @@ export default function Navbar() {
               onMouseEnter={() => setLogoHovered(true)}
               onMouseLeave={() => setLogoHovered(false)}
               style={{
-                filter: logoHovered ? 'drop-shadow(0 0 8px rgba(124,58,237,0.6))' : 'none',
+                filter: logoHovered ? 'drop-shadow(0 0 8px rgba(45,74,94,0.6))' : 'none',
                 transition: 'filter 200ms',
                 display: 'flex',
               }}
@@ -200,7 +182,7 @@ export default function Navbar() {
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
               fontSize: '17px',
-              background: 'linear-gradient(135deg, #fff 0%, #a78bfa 60%, #67e8f9 100%)',
+              background: 'linear-gradient(135deg, #fff 0%, #c5cfd5 60%, #abc8bd 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -223,7 +205,7 @@ export default function Navbar() {
               <button style={{
                 ...navLinkStyle('/product') as React.CSSProperties,
                 background: activeMenu === 'product' ? 'rgba(255,255,255,0.05)' : 'none',
-                color: activeMenu === 'product' ? 'rgba(240,242,255,0.95)' : 'rgba(240,242,255,0.65)',
+                color: activeMenu === 'product' ? 'rgba(231,236,239,0.95)' : 'rgba(231,236,239,0.65)',
               }}>
                 Product <span style={{ fontSize: 10, opacity: 0.7 }}>▾</span>
               </button>
@@ -236,7 +218,7 @@ export default function Navbar() {
                   left: '50%',
                   transform: 'translateX(-50%)',
                   width: 580,
-                  background: 'rgba(8,13,26,0.97)',
+                  background: 'rgba(14,22,26,0.97)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 20,
                   backdropFilter: 'blur(40px)',
@@ -248,7 +230,7 @@ export default function Navbar() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
                     {/* Column 1 */}
                     <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>Core Product</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>Core Product</div>
                       {[
                         { emoji: '🛡️', title: 'Trust Evaluation', desc: 'Multi-layer risk scoring engine' },
                         { emoji: '📋', title: 'Policy Engine', desc: 'Upload & enforce policies at runtime' },
@@ -259,7 +241,7 @@ export default function Navbar() {
                     </div>
                     {/* Column 2 */}
                     <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>Capabilities</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>Capabilities</div>
                       {[
                         { emoji: '⚡', title: 'Agent Runtime Guard', desc: 'Intercept tool calls before execution' },
                         { emoji: '🔍', title: 'Prompt Architect', desc: 'Auto-generate compliance prompts' },
@@ -294,18 +276,18 @@ export default function Navbar() {
                         background: 'rgba(255,255,255,0.03)',
                         border: '1px solid rgba(255,255,255,0.06)',
                         fontSize: 12,
-                        color: 'rgba(240,242,255,0.6)',
+                        color: 'rgba(231,236,239,0.6)',
                         textDecoration: 'none',
                         transition: 'background 150ms, color 150ms',
                         fontFamily: 'var(--font-body)',
                       }}
                         onMouseEnter={e => {
                           (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)';
-                          (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.9)';
+                          (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.9)';
                         }}
                         onMouseLeave={e => {
                           (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)';
-                          (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.6)';
+                          (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.6)';
                         }}
                       >
                         <span>{link.icon}</span>
@@ -326,7 +308,7 @@ export default function Navbar() {
               <button style={{
                 ...navLinkStyle('/solutions') as React.CSSProperties,
                 background: activeMenu === 'solutions' ? 'rgba(255,255,255,0.05)' : 'none',
-                color: activeMenu === 'solutions' ? 'rgba(240,242,255,0.95)' : 'rgba(240,242,255,0.65)',
+                color: activeMenu === 'solutions' ? 'rgba(231,236,239,0.95)' : 'rgba(231,236,239,0.65)',
               }}>
                 Solutions <span style={{ fontSize: 10, opacity: 0.7 }}>▾</span>
               </button>
@@ -339,7 +321,7 @@ export default function Navbar() {
                   left: '50%',
                   transform: 'translateX(-50%)',
                   width: 380,
-                  background: 'rgba(8,13,26,0.97)',
+                  background: 'rgba(14,22,26,0.97)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 20,
                   backdropFilter: 'blur(40px)',
@@ -349,7 +331,7 @@ export default function Navbar() {
                   zIndex: 60,
                 }}>
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>For AI Builders</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>For AI Builders</div>
                     {[
                       { emoji: '🤖', title: 'AI SaaS Applications', desc: 'Production-grade AI safety layer' },
                       { emoji: '🔗', title: 'Agent Frameworks', desc: 'Intercept & govern autonomous agents' },
@@ -359,7 +341,7 @@ export default function Navbar() {
                     ))}
                   </div>
                   <div style={{ marginTop: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>For Industries</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)', marginBottom: 12, textTransform: 'uppercase' }}>For Industries</div>
                     {[
                       { emoji: '🏥', title: 'Healthcare AI', desc: 'HIPAA-aware LLM governance' },
                       { emoji: '💰', title: 'Financial Services AI', desc: 'Compliance-grade AI controls' },
@@ -375,31 +357,31 @@ export default function Navbar() {
             {/* Static links */}
             <a href="/#pricing" style={navLinkStyle('/#pricing') as React.CSSProperties}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.95)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.95)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.65)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.65)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'none';
               }}
             >Pricing</a>
             <a href="/docs" style={navLinkStyle('/docs') as React.CSSProperties}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.95)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.95)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.65)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.65)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'none';
               }}
             >Docs</a>
             <a href="/blog" style={navLinkStyle('/blog') as React.CSSProperties}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.95)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.95)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.65)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.65)';
                 (e.currentTarget as HTMLAnchorElement).style.background = 'none';
               }}
             >Blog</a>
@@ -414,11 +396,11 @@ export default function Navbar() {
               gap: 6,
               padding: '5px 10px',
               borderRadius: 20,
-              background: 'rgba(16,185,129,0.1)',
-              border: '1px solid rgba(16,185,129,0.2)',
+              background: 'rgba(111,169,143,0.1)',
+              border: '1px solid rgba(111,169,143,0.2)',
             }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', animation: 'pulse 2s infinite' }} />
-              <span style={{ fontSize: 11, color: '#34d399', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>All systems operational</span>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#6fa98f', animation: 'pulse 2s infinite' }} />
+              <span style={{ fontSize: 11, color: '#9bc4b2', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>All systems operational</span>
             </div>
 
             {user ? (
@@ -426,7 +408,7 @@ export default function Navbar() {
                 <Link href="/dashboard" style={{
                   fontFamily: 'var(--font-body)',
                   fontSize: 14,
-                  color: 'rgba(240,242,255,0.8)',
+                  color: 'rgba(231,236,239,0.8)',
                   textDecoration: 'none',
                   padding: '6px 14px',
                   borderRadius: 8,
@@ -443,7 +425,7 @@ export default function Navbar() {
                     width: 36,
                     height: 36,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                    background: 'linear-gradient(135deg, #2d4a5e, #243b4c)',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -463,7 +445,7 @@ export default function Navbar() {
                       top: 'calc(100% + 8px)',
                       right: 0,
                       width: 220,
-                      background: 'rgba(8,13,26,0.97)',
+                      background: 'rgba(14,22,26,0.97)',
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 16,
                       backdropFilter: 'blur(40px)',
@@ -473,8 +455,8 @@ export default function Navbar() {
                       zIndex: 70,
                     }}>
                       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div style={{ fontSize: 13, color: 'rgba(240,242,255,0.9)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
-                        <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 6, background: 'rgba(124,58,237,0.2)', color: '#a78bfa', fontFamily: 'var(--font-body)', display: 'inline-block', marginTop: 4 }}>free</span>
+                        <div style={{ fontSize: 13, color: 'rgba(231,236,239,0.9)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                        <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 6, background: 'rgba(45,74,94,0.2)', color: '#c5cfd5', fontFamily: 'var(--font-body)', display: 'inline-block', marginTop: 4 }}>free</span>
                       </div>
                       {[
                         { icon: '⚡', label: 'Dashboard', href: '/dashboard' },
@@ -487,7 +469,7 @@ export default function Navbar() {
                           alignItems: 'center',
                           gap: 10,
                           padding: '10px 16px',
-                          color: 'rgba(240,242,255,0.7)',
+                          color: 'rgba(231,236,239,0.7)',
                           textDecoration: 'none',
                           fontSize: 13,
                           fontFamily: 'var(--font-body)',
@@ -495,11 +477,11 @@ export default function Navbar() {
                         }}
                           onMouseEnter={e => {
                             (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)';
-                            (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.95)';
+                            (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.95)';
                           }}
                           onMouseLeave={e => {
                             (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
-                            (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(240,242,255,0.7)';
+                            (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(231,236,239,0.7)';
                           }}
                         >
                           <span>{item.icon}</span>
@@ -513,7 +495,7 @@ export default function Navbar() {
                           alignItems: 'center',
                           gap: 10,
                           padding: '10px 16px',
-                          color: 'rgba(244,63,94,0.7)',
+                          color: 'rgba(190,116,104,0.7)',
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
@@ -523,12 +505,12 @@ export default function Navbar() {
                           transition: 'background 150ms, color 150ms',
                         }}
                           onMouseEnter={e => {
-                            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(244,63,94,0.06)';
-                            (e.currentTarget as HTMLButtonElement).style.color = '#f43f5e';
+                            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(190,116,104,0.06)';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#be7468';
                           }}
                           onMouseLeave={e => {
                             (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                            (e.currentTarget as HTMLButtonElement).style.color = 'rgba(244,63,94,0.7)';
+                            (e.currentTarget as HTMLButtonElement).style.color = 'rgba(190,116,104,0.7)';
                           }}
                         >
                           <span>🚪</span>
@@ -544,7 +526,7 @@ export default function Navbar() {
                 <Link href="/login" style={{
                   fontFamily: 'var(--font-body)',
                   fontSize: 14,
-                  color: 'rgba(240,242,255,0.7)',
+                  color: 'rgba(231,236,239,0.7)',
                   textDecoration: 'none',
                   padding: '7px 16px',
                   borderRadius: 10,
@@ -553,13 +535,13 @@ export default function Navbar() {
                 }}
                   onMouseEnter={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = 'rgba(240,242,255,0.95)';
+                    el.style.color = 'rgba(231,236,239,0.95)';
                     el.style.borderColor = 'rgba(255,255,255,0.2)';
                     el.style.background = 'rgba(255,255,255,0.04)';
                   }}
                   onMouseLeave={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = 'rgba(240,242,255,0.7)';
+                    el.style.color = 'rgba(231,236,239,0.7)';
                     el.style.borderColor = 'rgba(255,255,255,0.1)';
                     el.style.background = 'transparent';
                   }}
@@ -573,14 +555,14 @@ export default function Navbar() {
                   textDecoration: 'none',
                   padding: '8px 18px',
                   borderRadius: 12,
-                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  background: 'linear-gradient(135deg, #2d4a5e, #243b4c)',
                   transition: 'transform 200ms, box-shadow 200ms',
                   display: 'inline-block',
                 }}
                   onMouseEnter={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
                     el.style.transform = 'scale(1.02)';
-                    el.style.boxShadow = '0 4px 20px rgba(124,58,237,0.4)';
+                    el.style.boxShadow = '0 4px 20px rgba(45,74,94,0.4)';
                   }}
                   onMouseLeave={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
@@ -606,7 +588,7 @@ export default function Navbar() {
               }}
             >
               {[0, 1, 2].map(i => (
-                <div key={i} style={{ width: 22, height: 2, background: 'rgba(240,242,255,0.8)', borderRadius: 2 }} />
+                <div key={i} style={{ width: 22, height: 2, background: 'rgba(231,236,239,0.8)', borderRadius: 2 }} />
               ))}
             </button>
           </div>
@@ -641,7 +623,7 @@ export default function Navbar() {
           position: 'fixed',
           inset: 0,
           zIndex: 60,
-          background: 'rgba(5,8,16,0.98)',
+          background: 'rgba(10,16,20,0.98)',
           backdropFilter: 'blur(40px)',
           transform: 'translateX(0)',
           animation: 'drawerSlideIn 300ms cubic-bezier(0.16,1,0.3,1) both',
@@ -661,7 +643,7 @@ export default function Navbar() {
                 fontFamily: 'var(--font-display)',
                 fontWeight: 800,
                 fontSize: '16px',
-                background: 'linear-gradient(135deg, #fff 0%, #a78bfa 60%, #67e8f9 100%)',
+                background: 'linear-gradient(135deg, #fff 0%, #c5cfd5 60%, #abc8bd 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -672,7 +654,7 @@ export default function Navbar() {
               border: 'none',
               cursor: 'pointer',
               fontSize: 24,
-              color: 'rgba(240,242,255,0.6)',
+              color: 'rgba(231,236,239,0.6)',
               lineHeight: 1,
               padding: 4,
             }}>✕</button>
@@ -700,7 +682,7 @@ export default function Navbar() {
                   gap: 10,
                   padding: '10px 12px',
                   borderRadius: 8,
-                  color: 'rgba(240,242,255,0.65)',
+                  color: 'rgba(231,236,239,0.65)',
                   textDecoration: 'none',
                   fontSize: 14,
                   fontFamily: 'var(--font-body)',
@@ -731,7 +713,7 @@ export default function Navbar() {
                   gap: 10,
                   padding: '10px 12px',
                   borderRadius: 8,
-                  color: 'rgba(240,242,255,0.65)',
+                  color: 'rgba(231,236,239,0.65)',
                   textDecoration: 'none',
                   fontSize: 14,
                   fontFamily: 'var(--font-body)',
@@ -752,7 +734,7 @@ export default function Navbar() {
                 display: 'block',
                 padding: '14px 4px',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
-                color: 'rgba(240,242,255,0.7)',
+                color: 'rgba(231,236,239,0.7)',
                 textDecoration: 'none',
                 fontSize: 15,
                 fontFamily: 'var(--font-body)',
@@ -769,7 +751,7 @@ export default function Navbar() {
                     padding: '14px',
                     textAlign: 'center',
                     borderRadius: 12,
-                    background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                    background: 'linear-gradient(135deg, #2d4a5e, #243b4c)',
                     color: 'white',
                     textDecoration: 'none',
                     fontFamily: 'var(--font-body)',
@@ -781,9 +763,9 @@ export default function Navbar() {
                     width: '100%',
                     padding: '14px',
                     borderRadius: 12,
-                    background: 'rgba(244,63,94,0.1)',
-                    border: '1px solid rgba(244,63,94,0.2)',
-                    color: '#f43f5e',
+                    background: 'rgba(190,116,104,0.1)',
+                    border: '1px solid rgba(190,116,104,0.2)',
+                    color: '#be7468',
                     cursor: 'pointer',
                     fontFamily: 'var(--font-body)',
                     fontWeight: 500,
@@ -799,7 +781,7 @@ export default function Navbar() {
                     textAlign: 'center',
                     borderRadius: 12,
                     border: '1px solid rgba(255,255,255,0.12)',
-                    color: 'rgba(240,242,255,0.8)',
+                    color: 'rgba(231,236,239,0.8)',
                     textDecoration: 'none',
                     fontFamily: 'var(--font-body)',
                     fontWeight: 500,
@@ -812,7 +794,7 @@ export default function Navbar() {
                     padding: '14px',
                     textAlign: 'center',
                     borderRadius: 12,
-                    background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                    background: 'linear-gradient(135deg, #2d4a5e, #243b4c)',
                     color: 'white',
                     textDecoration: 'none',
                     fontFamily: 'var(--font-body)',
@@ -833,8 +815,8 @@ export default function Navbar() {
               paddingTop: 24,
               borderTop: '1px solid rgba(255,255,255,0.06)',
             }}>
-              <span style={{ fontSize: 12, color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)' }}>🔒 SOC 2 Ready</span>
-              <span style={{ fontSize: 12, color: 'rgba(240,242,255,0.35)', fontFamily: 'var(--font-body)' }}>✓ GDPR Compliant</span>
+              <span style={{ fontSize: 12, color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)' }}>🔒 SOC 2 Ready</span>
+              <span style={{ fontSize: 12, color: 'rgba(231,236,239,0.35)', fontFamily: 'var(--font-body)' }}>✓ GDPR Compliant</span>
             </div>
           </div>
         </div>
@@ -854,7 +836,7 @@ function MegaMenuItem({ emoji, title, desc }: { emoji: string; title: string; de
       gap: 12,
       padding: '10px 12px',
       borderRadius: 10,
-      borderLeft: hovered ? '2px solid #7c3aed' : '2px solid transparent',
+      borderLeft: hovered ? '2px solid #2d4a5e' : '2px solid transparent',
       background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent',
       textDecoration: 'none',
       transition: 'background 150ms, border-color 150ms',
@@ -865,8 +847,8 @@ function MegaMenuItem({ emoji, title, desc }: { emoji: string; title: string; de
     >
       <span style={{ fontSize: 18, lineHeight: 1, marginTop: 1 }}>{emoji}</span>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(240,242,255,0.9)', fontFamily: 'var(--font-body)', lineHeight: 1.3 }}>{title}</div>
-        <div style={{ fontSize: 12, color: 'rgba(240,242,255,0.45)', fontFamily: 'var(--font-body)', marginTop: 2 }}>{desc}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(231,236,239,0.9)', fontFamily: 'var(--font-body)', lineHeight: 1.3 }}>{title}</div>
+        <div style={{ fontSize: 12, color: 'rgba(231,236,239,0.45)', fontFamily: 'var(--font-body)', marginTop: 2 }}>{desc}</div>
       </div>
     </a>
   );
@@ -894,7 +876,7 @@ function MobileAccordionItem({
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        color: 'rgba(240,242,255,0.7)',
+        color: 'rgba(231,236,239,0.7)',
         fontFamily: 'var(--font-body)',
         fontSize: 15,
         textAlign: 'left',

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DocsSidebar } from "@/components/docs/DocsSidebar";
+import { ShieldMark } from "@/components/shield-mark";
 import "./docs.css";
 
 export const metadata: Metadata = {
@@ -13,25 +14,7 @@ export const metadata: Metadata = {
 
 // ── Logo mark (reused from landing page) ─────────────────────────────────────
 function DocsLogo() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="dg1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#c4b5fd"/><stop offset="50%" stopColor="#818cf8"/><stop offset="100%" stopColor="#67e8f9"/>
-        </linearGradient>
-        <linearGradient id="dg2" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95"/><stop offset="100%" stopColor="#a78bfa"/>
-        </linearGradient>
-        <linearGradient id="dsq" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4"/><stop offset="100%" stopColor="#06b6d4" stopOpacity="0.2"/>
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="84" height="84" rx="18" fill="url(#dsq)" stroke="url(#dg1)" strokeWidth="1"/>
-      <path d="M24 30 L50 70 L76 30" fill="none" stroke="url(#dg2)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="50" cy="70" r="5" fill="url(#dg1)"/>
-      <circle cx="50" cy="70" r="2.5" fill="white" opacity="0.9"/>
-    </svg>
-  );
+  return <ShieldMark size={24} />;
 }
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {

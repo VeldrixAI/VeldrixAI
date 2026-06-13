@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PricingCard, { PLANS, type PricingPlan } from "@/components/billing/PricingCard";
 import { AUTH_COOKIE } from "@/lib/config";
+import { ShieldMark } from "@/components/shield-mark";
 
 function BillingPageInner() {
   const searchParams = useSearchParams();
@@ -64,8 +65,8 @@ function BillingPageInner() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#050810",
-        color: "#f0f2ff",
+        background: "#0a1014",
+        color: "#e7ecef",
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
@@ -82,7 +83,7 @@ function BillingPageInner() {
             position: "fixed",
             top: "20px",
             right: "20px",
-            background: "rgba(124,58,237,0.95)",
+            background: "rgba(45,74,94,0.95)",
             color: "#fff",
             padding: "12px 20px",
             borderRadius: "10px",
@@ -90,7 +91,7 @@ function BillingPageInner() {
             cursor: "pointer",
             zIndex: 999,
             backdropFilter: "blur(8px)",
-            boxShadow: "0 8px 32px rgba(124,58,237,0.3)",
+            boxShadow: "0 8px 32px rgba(45,74,94,0.3)",
           }}
         >
           {toast} ×
@@ -109,31 +110,14 @@ function BillingPageInner() {
           position: "sticky",
           top: 0,
           zIndex: 100,
-          background: "rgba(5,8,16,0.8)",
+          background: "rgba(10,16,20,0.8)",
         }}
       >
         <a
           href="/"
           style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
         >
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-            <defs>
-              <linearGradient id="vg2" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#a78bfa" />
-              </linearGradient>
-              <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.15" />
-              </linearGradient>
-            </defs>
-            <rect x="8" y="8" width="84" height="84" rx="18" fill="url(#bg2)" stroke="#7c3aed" strokeWidth="1" strokeOpacity="0.4" />
-            <path d="M24 30 L50 70 L76 30" fill="none" stroke="url(#vg2)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="50" cy="70" r="5" fill="#06b6d4" />
-            <circle cx="50" cy="70" r="2.5" fill="white" />
-            <rect x="30" y="47" width="12" height="2.5" rx="1.25" fill="#a78bfa" opacity="0.6" />
-            <rect x="58" y="47" width="12" height="2.5" rx="1.25" fill="#67e8f9" opacity="0.6" />
-          </svg>
+          <ShieldMark size={32} />
           <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "18px", color: "#fff" }}>
             VeldrixAI
           </span>
@@ -158,7 +142,7 @@ function BillingPageInner() {
             style={{
               padding: "8px 16px",
               borderRadius: "8px",
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+              background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
               color: "#fff",
               fontSize: "14px",
               textDecoration: "none",
@@ -184,7 +168,7 @@ function BillingPageInner() {
         >
           Simple, transparent pricing
         </h1>
-        <p style={{ fontSize: "18px", color: "rgba(240,242,255,0.55)", margin: 0 }}>
+        <p style={{ fontSize: "18px", color: "rgba(231,236,239,0.55)", margin: 0 }}>
           Start free. Scale as you grow. Cancel anytime.
         </p>
 
@@ -207,7 +191,7 @@ function BillingPageInner() {
               padding: "6px 16px",
               borderRadius: "20px",
               border: "none",
-              background: cycle === "monthly" ? "rgba(124,58,237,0.5)" : "transparent",
+              background: cycle === "monthly" ? "rgba(45,74,94,0.5)" : "transparent",
               color: cycle === "monthly" ? "#fff" : "rgba(255,255,255,0.5)",
               fontSize: "14px",
               fontWeight: 500,
@@ -223,7 +207,7 @@ function BillingPageInner() {
               padding: "6px 16px",
               borderRadius: "20px",
               border: "none",
-              background: cycle === "annual" ? "rgba(124,58,237,0.5)" : "transparent",
+              background: cycle === "annual" ? "rgba(45,74,94,0.5)" : "transparent",
               color: cycle === "annual" ? "#fff" : "rgba(255,255,255,0.5)",
               fontSize: "14px",
               fontWeight: 500,
@@ -238,8 +222,8 @@ function BillingPageInner() {
             <span
               style={{
                 fontSize: "11px",
-                background: "rgba(6,182,212,0.2)",
-                color: "#06b6d4",
+                background: "rgba(170,184,192,0.2)",
+                color: "#aab8c0",
                 padding: "2px 6px",
                 borderRadius: "20px",
                 fontWeight: 600,
@@ -266,7 +250,7 @@ function BillingPageInner() {
           <div
             key={plan.id}
             style={{
-              outline: highlightedPlan === plan.id ? "2px solid rgba(124,58,237,0.8)" : "none",
+              outline: highlightedPlan === plan.id ? "2px solid rgba(45,74,94,0.8)" : "none",
               borderRadius: "18px",
               transition: "outline 0.2s",
             }}
@@ -290,9 +274,9 @@ function BillingPageInner() {
           textAlign: "center",
         }}
       >
-        <p style={{ fontSize: "14px", color: "rgba(240,242,255,0.35)" }}>
+        <p style={{ fontSize: "14px", color: "rgba(231,236,239,0.35)" }}>
           All plans include a 14-day free trial. No credit card required for Free tier.{" "}
-          <a href="/contact" style={{ color: "#7c3aed", textDecoration: "none" }}>
+          <a href="/contact" style={{ color: "#2d4a5e", textDecoration: "none" }}>
             Questions? Talk to sales →
           </a>
         </p>
