@@ -81,15 +81,20 @@ export async function GET(request: NextRequest) {
 
     const { access_token } = await authRes.json();
 
-    jar.set(AUTH_COOKIE, access_token, {
+    // Set the session cookie ON the redirect response so Set-Cookie ships with
+    // the 302. Setting it via the cookies() jar while returning a separate
+    // NextResponse.redirect() drops the header — the browser then lands on
+    // /dashboard with no cookie and bounces to /login ("first attempt fails,
+    // second succeeds").
+    const response = NextResponse.redirect(`${base}/dashboard`);
+    response.cookies.set(AUTH_COOKIE, access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
-
-    return NextResponse.redirect(`${base}/dashboard`);
+    return response;
   } catch (error) {
     console.error("Google OAuth error:", error);
     return NextResponse.redirect(`${getBaseUrl()}/login?error=oauth_failed`);
