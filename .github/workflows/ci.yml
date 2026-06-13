@@ -237,7 +237,18 @@ jobs:
             # failure. We ignore compose's exit code and use our own health
             # checks below as the authoritative gate.
             docker compose -f docker-compose.prod.yml down --timeout 30 2>/dev/null || true
-            docker compose -f docker-compose.prod.yml up -d 2>/dev/null || true
+            # --force-recreate guarantees every container (esp. the frontend) is
+            # replaced with the freshly pulled image, even if compose thinks the
+            # service is unchanged. Without this a "successful" deploy could keep
+            # serving a stale frontend image.
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans 2>/dev/null || true
+
+            echo "=== Deployed image revisions (should match ${IMAGE_TAG}) ==="
+            for c in veldrix-ui veldrix-auth veldrix-core veldrix-connectors; do
+              rev=$(docker inspect "$c" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || echo "unknown")
+              img=$(docker inspect "$c" --format '{{.Config.Image}}' 2>/dev/null || echo "unknown")
+              echo "  ${c}: rev=${rev} image=${img}"
+            done
 
             echo "=== Waiting 60s for services to settle (including restart loops) ==="
             sleep 60
