@@ -7,12 +7,12 @@
   --d-text: #111827;
   --d-text-secondary: #6b7280;
   --d-text-muted: #9ca3af;
-  --d-accent: #6366f1;
-  --d-accent-light: #eef2ff;
-  --d-accent-hover: #4f46e5;
-  --d-success: #10b981;
+  --d-accent: #2D4A5E;
+  --d-accent-light: #e8eef1;
+  --d-accent-hover: #243B4C;
+  --d-success: #6FA98F;
   --d-success-bg: #ecfdf5;
-  --d-warning: #f59e0b;
+  --d-warning: #C2A06A;
   --d-warning-bg: #fffbeb;
   --d-error: #ef4444;
   --d-error-bg: #fef2f2;
@@ -58,7 +58,7 @@
 .dash-shell select:focus {
   outline: none;
   border-color: var(--d-accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 74, 94, 0.1);
   background: white;
 }
 
@@ -473,7 +473,7 @@
 .dash-input:focus {
   outline: none;
   border-color: var(--d-accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 74, 94, 0.1);
   background: white;
 }
 
@@ -502,7 +502,7 @@
 
 .dash-notice {
   background: var(--d-success-bg);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(111, 169, 143, 0.2);
   border-radius: var(--d-radius);
   padding: 1rem;
   margin-bottom: 1rem;
@@ -1034,7 +1034,7 @@
   background: var(--d-accent);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 1px 4px rgba(45, 74, 94, 0.3);
   transition: transform 0.15s;
 }
 
@@ -1049,7 +1049,7 @@
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 1px 4px rgba(45, 74, 94, 0.3);
 }
 
 .dash-slider-labels {
@@ -1112,9 +1112,9 @@
 }
 
 .dash-code-copy.copied {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(111, 169, 143, 0.2);
+  color: #6FA98F;
+  border-color: rgba(111, 169, 143, 0.3);
 }
 
 .dash-code-body {
@@ -1447,7 +1447,7 @@
 .dash-filter-item input:focus {
   outline: none;
   border-color: var(--d-accent);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 2px rgba(45, 74, 94, 0.08);
 }
 
 .dash-filter-actions {
@@ -1478,7 +1478,7 @@
 .dash-search-input input:focus {
   outline: none;
   border-color: var(--d-accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 74, 94, 0.1);
   background: var(--d-surface);
 }
 

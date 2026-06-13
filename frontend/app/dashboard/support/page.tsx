@@ -43,20 +43,20 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const CATEGORIES = [
-  { id: "bug_report",      label: "Bug Report",      color: "#f43f5e" },
-  { id: "billing",         label: "Billing",         color: "#f59e0b" },
-  { id: "sdk_integration", label: "SDK",             color: "#7c3aed" },
-  { id: "api_keys",        label: "API & Keys",      color: "#06b6d4" },
-  { id: "feature_request", label: "Feature Request", color: "#10b981" },
-  { id: "security",        label: "Security",        color: "#fb7185" },
+  { id: "bug_report",      label: "Bug Report",      color: "#be7468" },
+  { id: "billing",         label: "Billing",         color: "#c2a06a" },
+  { id: "sdk_integration", label: "SDK",             color: "#2d4a5e" },
+  { id: "api_keys",        label: "API & Keys",      color: "#aab8c0" },
+  { id: "feature_request", label: "Feature Request", color: "#6fa98f" },
+  { id: "security",        label: "Security",        color: "#d29a91" },
   { id: "general",         label: "General",         color: "#94a3b8" },
 ] as const;
 
 const PRIORITIES = [
-  { id: "low",      label: "Low",      color: "#10b981", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.25)",  sla: "3–5 business days" },
-  { id: "medium",   label: "Medium",   color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.25)",  sla: "1–2 business days" },
-  { id: "high",     label: "High",     color: "#f97316", bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.25)",  sla: "Within 4 hours" },
-  { id: "critical", label: "Critical", color: "#f43f5e", bg: "rgba(244,63,94,0.08)",   border: "rgba(244,63,94,0.25)",   sla: "Within 1 hour" },
+  { id: "low",      label: "Low",      color: "#6fa98f", bg: "rgba(111,169,143,0.08)",  border: "rgba(111,169,143,0.25)",  sla: "3–5 business days" },
+  { id: "medium",   label: "Medium",   color: "#c2a06a", bg: "rgba(194,160,106,0.08)",  border: "rgba(194,160,106,0.25)",  sla: "1–2 business days" },
+  { id: "high",     label: "High",     color: "#c2a06a", bg: "rgba(194,160,106,0.08)",  border: "rgba(194,160,106,0.25)",  sla: "Within 4 hours" },
+  { id: "critical", label: "Critical", color: "#be7468", bg: "rgba(190,116,104,0.08)",   border: "rgba(190,116,104,0.25)",   sla: "Within 1 hour" },
 ] as const;
 
 const SVC_STATUS = [
@@ -68,10 +68,10 @@ const SVC_STATUS = [
 ];
 
 const PRIORITY_COLOR: Record<string, string> = {
-  low: "#10b981", medium: "#f59e0b", high: "#f97316", critical: "#f43f5e",
+  low: "#6fa98f", medium: "#c2a06a", high: "#c2a06a", critical: "#be7468",
 };
 const STATUS_COLOR: Record<string, string> = {
-  open: "#06b6d4", in_progress: "#f59e0b", resolved: "#10b981", closed: "#94a3b8",
+  open: "#aab8c0", in_progress: "#c2a06a", resolved: "#6fa98f", closed: "#94a3b8",
 };
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
@@ -159,9 +159,9 @@ export default function SupportPage() {
   const descLen = description.length;
   const descMax = 5000;
   const descCountColor =
-    descLen / descMax > 0.95 ? "#f43f5e" :
-    descLen / descMax > 0.80 ? "#f59e0b" :
-    "rgba(240,242,255,0.25)";
+    descLen / descMax > 0.95 ? "#be7468" :
+    descLen / descMax > 0.80 ? "#c2a06a" :
+    "rgba(231,236,239,0.25)";
 
   /* ── Render ─────────────────────────────────────────────────────────────── */
   return (
@@ -192,8 +192,8 @@ export default function SupportPage() {
           to   { opacity:1; transform:translateX(0); }
         }
         @keyframes vxPulseDot {
-          0%,100% { box-shadow:0 0 0 0 rgba(16,185,129,.55); }
-          50%      { box-shadow:0 0 0 5px rgba(16,185,129,0); }
+          0%,100% { box-shadow:0 0 0 0 rgba(111,169,143,.55); }
+          50%      { box-shadow:0 0 0 5px rgba(111,169,143,0); }
         }
         @keyframes vxSpin {
           to { transform:rotate(360deg); }
@@ -206,8 +206,8 @@ export default function SupportPage() {
           to { stroke-dashoffset:0; }
         }
         @keyframes vxGlowPulse {
-          0%,100% { text-shadow:0 0 20px rgba(167,139,250,.4),0 0 40px rgba(167,139,250,.2); }
-          50%      { text-shadow:0 0 40px rgba(167,139,250,.85),0 0 80px rgba(6,182,212,.3); }
+          0%,100% { text-shadow:0 0 20px rgba(197,207,213,.4),0 0 40px rgba(197,207,213,.2); }
+          50%      { text-shadow:0 0 40px rgba(197,207,213,.85),0 0 80px rgba(170,184,192,.3); }
         }
         @keyframes vxSlideSuccess {
           from { opacity:0; transform:translateY(18px) scale(.96); }
@@ -225,7 +225,7 @@ export default function SupportPage() {
         .sup-btn-submit { transition:all .2s ease; }
         .sup-btn-submit:hover:not(:disabled) {
           transform:translateY(-1px);
-          box-shadow:0 10px 32px rgba(124,58,237,.5) !important;
+          box-shadow:0 10px 32px rgba(45,74,94,.5) !important;
         }
         .sup-btn-submit:disabled { opacity:.55; cursor:not-allowed; }
         .sup-input {
@@ -233,7 +233,7 @@ export default function SupportPage() {
           border:1px solid rgba(255,255,255,.09) !important;
           border-radius:12px !important;
           padding:13px 16px !important;
-          color:rgba(240,242,255,.9) !important;
+          color:rgba(231,236,239,.9) !important;
           font-family:'DM Sans',sans-serif !important;
           font-size:14px !important;
           width:100% !important;
@@ -242,18 +242,18 @@ export default function SupportPage() {
           box-sizing:border-box !important;
         }
         .sup-input:focus {
-          border-color:rgba(124,58,237,.5) !important;
-          box-shadow:0 0 0 3px rgba(124,58,237,.1) !important;
+          border-color:rgba(45,74,94,.5) !important;
+          box-shadow:0 0 0 3px rgba(45,74,94,.1) !important;
         }
-        .sup-input::placeholder { color:rgba(240,242,255,.2) !important; }
+        .sup-input::placeholder { color:rgba(231,236,239,.2) !important; }
         .sup-ticket-row { transition:background .15s; }
-        .sup-ticket-row:hover { background:rgba(124,58,237,.04) !important; }
+        .sup-ticket-row:hover { background:rgba(45,74,94,.04) !important; }
         .sup-again-btn {
           transition:all .2s;
         }
         .sup-again-btn:hover {
           transform:translateY(-1px);
-          box-shadow:0 8px 28px rgba(124,58,237,.45) !important;
+          box-shadow:0 8px 28px rgba(45,74,94,.45) !important;
         }
       `}</style>
 
@@ -262,19 +262,19 @@ export default function SupportPage() {
         <div style={{
           position:"absolute", top:"-70px", left:"3%",
           width:"520px", height:"520px", borderRadius:"50%",
-          background:"radial-gradient(circle, rgba(124,58,237,.13) 0%, transparent 65%)",
+          background:"radial-gradient(circle, rgba(45,74,94,.13) 0%, transparent 65%)",
           animation:"vxAurora1 13s ease-in-out infinite",
         }}/>
         <div style={{
           position:"absolute", top:"-90px", right:"8%",
           width:"420px", height:"420px", borderRadius:"50%",
-          background:"radial-gradient(circle, rgba(6,182,212,.09) 0%, transparent 65%)",
+          background:"radial-gradient(circle, rgba(170,184,192,.09) 0%, transparent 65%)",
           animation:"vxAurora2 16s ease-in-out infinite",
         }}/>
         <div style={{
           position:"absolute", top:"10px", left:"38%",
           width:"280px", height:"280px", borderRadius:"50%",
-          background:"radial-gradient(circle, rgba(79,70,229,.07) 0%, transparent 65%)",
+          background:"radial-gradient(circle, rgba(36,59,76,.07) 0%, transparent 65%)",
           animation:"vxAurora1 10s ease-in-out infinite reverse",
         }}/>
       </div>
@@ -287,19 +287,6 @@ export default function SupportPage() {
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"6px" }}>
             <h1 className="vx-page-title" style={{ margin:0 }}>Support Center</h1>
-            <div style={{
-              display:"inline-flex", alignItems:"center", gap:"7px",
-              padding:"5px 13px", borderRadius:"20px",
-              background:"rgba(16,185,129,.1)", border:"1px solid rgba(16,185,129,.25)",
-              fontFamily:"DM Sans, sans-serif", fontWeight:600, fontSize:"11px",
-              color:"#10b981", letterSpacing:".5px", flexShrink:0,
-            }}>
-              <div style={{
-                width:"6px", height:"6px", borderRadius:"50%", background:"#10b981",
-                animation:"vxPulseDot 2s ease infinite",
-              }}/>
-              All Systems Operational
-            </div>
           </div>
           <p className="vx-page-desc">
             Submit a support ticket and our team will respond within your selected SLA window.
@@ -322,8 +309,8 @@ export default function SupportPage() {
           {success ? (
             /* ── SUCCESS STATE ── */
             <div style={{
-              background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-              border:"1px solid rgba(16,185,129,.2)",
+              background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+              border:"1px solid rgba(111,169,143,.2)",
               borderRadius:"22px", padding:"56px 48px",
               textAlign:"center", position:"relative", overflow:"hidden",
               animation:"vxSlideSuccess .55s cubic-bezier(.34,1.56,.64,1) both",
@@ -331,7 +318,7 @@ export default function SupportPage() {
               {/* top glow line */}
               <div style={{
                 position:"absolute", top:0, left:0, right:0, height:"1px",
-                background:"linear-gradient(90deg,transparent,rgba(16,185,129,.6),transparent)",
+                background:"linear-gradient(90deg,transparent,rgba(111,169,143,.6),transparent)",
               }}/>
 
               {/* Check circle */}
@@ -339,13 +326,13 @@ export default function SupportPage() {
                 <div style={{
                   display:"inline-flex", alignItems:"center", justifyContent:"center",
                   width:"84px", height:"84px", borderRadius:"50%",
-                  background:"rgba(16,185,129,.1)", border:"2px solid rgba(16,185,129,.35)",
+                  background:"rgba(111,169,143,.1)", border:"2px solid rgba(111,169,143,.35)",
                   animation:"vxScaleIn .45s cubic-bezier(.34,1.56,.64,1) both .1s",
                 }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path
                       d="M9 19 L16 26 L29 12"
-                      stroke="#10b981" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"
+                      stroke="#6fa98f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"
                       strokeDasharray="42" strokeDashoffset="42"
                       style={{ animation:"vxCheckDraw .5s ease forwards .45s" }}
                     />
@@ -355,14 +342,14 @@ export default function SupportPage() {
 
               <div style={{
                 fontFamily:"Syne, sans-serif", fontWeight:800, fontSize:"30px",
-                color:"rgba(240,242,255,.96)", marginBottom:"10px",
+                color:"rgba(231,236,239,.96)", marginBottom:"10px",
                 animation:"vxFadeUp .4s ease both .3s",
               }}>
                 Ticket Submitted
               </div>
               <div style={{
                 fontFamily:"DM Sans, sans-serif", fontSize:"14px",
-                color:"rgba(240,242,255,.4)", marginBottom:"40px", lineHeight:1.6,
+                color:"rgba(231,236,239,.4)", marginBottom:"40px", lineHeight:1.6,
                 animation:"vxFadeUp .4s ease both .4s",
               }}>
                 Your request has been logged and our support team has been notified.
@@ -371,19 +358,19 @@ export default function SupportPage() {
               {/* Ticket ID card */}
               <div style={{
                 display:"inline-block",
-                background:"rgba(124,58,237,.08)", border:"1px solid rgba(124,58,237,.25)",
+                background:"rgba(45,74,94,.08)", border:"1px solid rgba(45,74,94,.25)",
                 borderRadius:"18px", padding:"26px 48px", marginBottom:"28px",
                 animation:"vxTicketPop .55s cubic-bezier(.34,1.56,.64,1) both .5s",
               }}>
                 <div style={{
                   fontFamily:"DM Sans, sans-serif", fontSize:"9px", letterSpacing:"3px",
-                  textTransform:"uppercase", color:"rgba(240,242,255,.28)", marginBottom:"12px",
+                  textTransform:"uppercase", color:"rgba(231,236,239,.28)", marginBottom:"12px",
                 }}>
                   Your Ticket Number
                 </div>
                 <div style={{
                   fontFamily:"JetBrains Mono, monospace", fontSize:"28px", fontWeight:700,
-                  letterSpacing:"3px", color:"#a78bfa",
+                  letterSpacing:"3px", color:"#c5cfd5",
                   animation:"vxGlowPulse 3s ease-in-out infinite",
                 }}>
                   {success.ticket_id}
@@ -392,11 +379,11 @@ export default function SupportPage() {
 
               <div style={{
                 fontFamily:"DM Sans, sans-serif", fontSize:"13px",
-                color:"rgba(240,242,255,.38)", marginBottom:"36px",
+                color:"rgba(231,236,239,.38)", marginBottom:"36px",
                 animation:"vxFadeUp .4s ease both .7s",
               }}>
                 Confirmation email sent to{" "}
-                <span style={{ color:"#a78bfa" }}>{success.user_email}</span>
+                <span style={{ color:"#c5cfd5" }}>{success.user_email}</span>
               </div>
 
               <div style={{ animation:"vxFadeUp .4s ease both .85s" }}>
@@ -405,11 +392,11 @@ export default function SupportPage() {
                   className="sup-again-btn"
                   style={{
                     padding:"13px 32px",
-                    background:"linear-gradient(135deg,#9f67ff,#7c3aed,#4f46e5)",
+                    background:"linear-gradient(135deg,#8fa6b5,#2d4a5e,#243b4c)",
                     border:"none", borderRadius:"13px",
                     color:"white", fontFamily:"Syne, sans-serif", fontWeight:700,
                     fontSize:"13px", cursor:"pointer",
-                    boxShadow:"0 4px 22px rgba(124,58,237,.38)",
+                    boxShadow:"0 4px 22px rgba(45,74,94,.38)",
                     letterSpacing:".3px",
                   }}
                 >
@@ -420,8 +407,8 @@ export default function SupportPage() {
           ) : (
             /* ── FORM ── */
             <div style={{
-              background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-              border:"1px solid rgba(124,58,237,.14)",
+              background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+              border:"1px solid rgba(45,74,94,.14)",
               borderRadius:"22px", padding:"32px 36px",
               position:"relative", overflow:"hidden",
               animation:"vxFadeLeft .5s ease both .1s",
@@ -429,18 +416,18 @@ export default function SupportPage() {
               {/* top shimmer line */}
               <div style={{
                 position:"absolute", top:0, left:0, right:0, height:"1px",
-                background:"linear-gradient(90deg,transparent,rgba(124,58,237,.5),rgba(6,182,212,.3),transparent)",
+                background:"linear-gradient(90deg,transparent,rgba(45,74,94,.5),rgba(170,184,192,.3),transparent)",
               }}/>
 
               <div style={{
                 fontFamily:"Syne, sans-serif", fontWeight:800, fontSize:"20px",
-                color:"rgba(240,242,255,.95)", marginBottom:"6px",
+                color:"rgba(231,236,239,.95)", marginBottom:"6px",
               }}>
                 Submit a Support Ticket
               </div>
               <div style={{
                 fontFamily:"DM Sans, sans-serif", fontSize:"13px",
-                color:"rgba(240,242,255,.32)", marginBottom:"30px",
+                color:"rgba(231,236,239,.32)", marginBottom:"30px",
               }}>
                 Describe your issue and our team will respond within your SLA window.
               </div>
@@ -452,7 +439,7 @@ export default function SupportPage() {
                   <div style={{
                     fontFamily:"DM Sans, sans-serif", fontWeight:600, fontSize:"11px",
                     letterSpacing:"1.5px", textTransform:"uppercase",
-                    color:"rgba(240,242,255,.38)", marginBottom:"12px",
+                    color:"rgba(231,236,239,.38)", marginBottom:"12px",
                   }}>
                     Category
                   </div>
@@ -470,7 +457,7 @@ export default function SupportPage() {
                             padding:"7px 15px", borderRadius:"20px",
                             background:active ? `${cat.color}18` : "rgba(255,255,255,.03)",
                             border:`1px solid ${active ? `${cat.color}50` : "rgba(255,255,255,.07)"}`,
-                            color:active ? cat.color : "rgba(240,242,255,.42)",
+                            color:active ? cat.color : "rgba(231,236,239,.42)",
                             fontFamily:"DM Sans, sans-serif", fontWeight:500, fontSize:"13px",
                             boxShadow:active ? `0 2px 12px ${cat.color}22` : "none",
                           }}
@@ -488,9 +475,9 @@ export default function SupportPage() {
                   <label style={{
                     display:"block", fontFamily:"DM Sans, sans-serif", fontWeight:600,
                     fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase",
-                    color:"rgba(240,242,255,.38)", marginBottom:"8px",
+                    color:"rgba(231,236,239,.38)", marginBottom:"8px",
                   }}>
-                    Subject <span style={{ color:"#f43f5e" }}>*</span>
+                    Subject <span style={{ color:"#be7468" }}>*</span>
                   </label>
                   <input
                     className="sup-input"
@@ -507,9 +494,9 @@ export default function SupportPage() {
                   <label style={{
                     display:"block", fontFamily:"DM Sans, sans-serif", fontWeight:600,
                     fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase",
-                    color:"rgba(240,242,255,.38)", marginBottom:"8px",
+                    color:"rgba(231,236,239,.38)", marginBottom:"8px",
                   }}>
-                    Description <span style={{ color:"#f43f5e" }}>*</span>
+                    Description <span style={{ color:"#be7468" }}>*</span>
                   </label>
                   <div style={{ position:"relative" }}>
                     <textarea
@@ -530,7 +517,7 @@ export default function SupportPage() {
                     </div>
                   </div>
                   {descLen > 0 && descLen < 20 && (
-                    <div style={{ marginTop:"6px", fontFamily:"DM Sans, sans-serif", fontSize:"12px", color:"#f59e0b" }}>
+                    <div style={{ marginTop:"6px", fontFamily:"DM Sans, sans-serif", fontSize:"12px", color:"#c2a06a" }}>
                       {20 - descLen} more character{20 - descLen !== 1 ? "s" : ""} required
                     </div>
                   )}
@@ -541,9 +528,9 @@ export default function SupportPage() {
                   <label style={{
                     display:"block", fontFamily:"DM Sans, sans-serif", fontWeight:600,
                     fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase",
-                    color:"rgba(240,242,255,.38)", marginBottom:"8px",
+                    color:"rgba(231,236,239,.38)", marginBottom:"8px",
                   }}>
-                    Contact Email <span style={{ color:"#f43f5e" }}>*</span>
+                    Contact Email <span style={{ color:"#be7468" }}>*</span>
                   </label>
                   <input
                     className="sup-input"
@@ -559,7 +546,7 @@ export default function SupportPage() {
                   <div style={{
                     fontFamily:"DM Sans, sans-serif", fontWeight:600, fontSize:"11px",
                     letterSpacing:"1.5px", textTransform:"uppercase",
-                    color:"rgba(240,242,255,.38)", marginBottom:"12px",
+                    color:"rgba(231,236,239,.38)", marginBottom:"12px",
                   }}>
                     Priority
                   </div>
@@ -582,14 +569,14 @@ export default function SupportPage() {
                         >
                           <div style={{
                             fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px",
-                            color:active ? pri.color : "rgba(240,242,255,.38)",
+                            color:active ? pri.color : "rgba(231,236,239,.38)",
                             marginBottom:"5px",
                           }}>
                             {pri.label}
                           </div>
                           <div style={{
                             fontFamily:"DM Sans, sans-serif", fontSize:"10px", lineHeight:1.4,
-                            color:active ? `${pri.color}99` : "rgba(240,242,255,.18)",
+                            color:active ? `${pri.color}99` : "rgba(231,236,239,.18)",
                           }}>
                             {pri.sla}
                           </div>
@@ -603,9 +590,9 @@ export default function SupportPage() {
                 {error && (
                   <div style={{
                     marginBottom:"18px", padding:"12px 16px",
-                    background:"rgba(244,63,94,.08)", border:"1px solid rgba(244,63,94,.22)",
+                    background:"rgba(190,116,104,.08)", border:"1px solid rgba(190,116,104,.22)",
                     borderRadius:"10px",
-                    fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"#f43f5e",
+                    fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"#be7468",
                     animation:"vxFadeUp .3s ease",
                   }}>
                     {error}
@@ -619,12 +606,12 @@ export default function SupportPage() {
                   className="sup-btn-submit"
                   style={{
                     width:"100%", padding:"16px",
-                    background:"linear-gradient(135deg,#9f67ff 0%,#7c3aed 50%,#4f46e5 100%)",
+                    background:"linear-gradient(135deg,#8fa6b5 0%,#2d4a5e 50%,#243b4c 100%)",
                     border:"none", borderRadius:"14px",
                     color:"white", fontFamily:"Syne, sans-serif", fontWeight:700,
                     fontSize:"14px", letterSpacing:".4px",
                     cursor:loading ? "not-allowed" : "pointer",
-                    boxShadow:"0 4px 24px rgba(124,58,237,.38)",
+                    boxShadow:"0 4px 24px rgba(45,74,94,.38)",
                     display:"flex", alignItems:"center", justifyContent:"center", gap:"10px",
                   }}
                 >
@@ -655,8 +642,8 @@ export default function SupportPage() {
           {history.length > 0 && (
             <div style={{
               marginTop:"24px",
-              background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-              border:"1px solid rgba(124,58,237,.14)", borderRadius:"20px",
+              background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+              border:"1px solid rgba(45,74,94,.14)", borderRadius:"20px",
               overflow:"hidden",
               animation:"vxFadeUp .5s ease both .3s",
             }}>
@@ -666,13 +653,13 @@ export default function SupportPage() {
               }}>
                 <div style={{
                   fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"14px",
-                  color:"rgba(240,242,255,.85)",
+                  color:"rgba(231,236,239,.85)",
                 }}>
                   Your Tickets
                 </div>
                 <div style={{
                   fontFamily:"JetBrains Mono, monospace", fontSize:"11px",
-                  color:"rgba(240,242,255,.28)",
+                  color:"rgba(231,236,239,.28)",
                 }}>
                   {history.length} ticket{history.length !== 1 ? "s" : ""}
                 </div>
@@ -689,13 +676,13 @@ export default function SupportPage() {
                 >
                   <div style={{
                     fontFamily:"JetBrains Mono, monospace", fontSize:"11px",
-                    color:"rgba(240,242,255,.28)", flexShrink:0, minWidth:"148px",
+                    color:"rgba(231,236,239,.28)", flexShrink:0, minWidth:"148px",
                   }}>
                     {t.ticket_id}
                   </div>
                   <div style={{
                     flex:1, fontFamily:"DM Sans, sans-serif", fontSize:"13px",
-                    color:"rgba(240,242,255,.65)",
+                    color:"rgba(231,236,239,.65)",
                     overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                   }}>
                     {t.subject}
@@ -703,18 +690,18 @@ export default function SupportPage() {
                   <div style={{
                     padding:"3px 9px", borderRadius:"6px", fontSize:"10px", fontWeight:600,
                     letterSpacing:"1px", textTransform:"uppercase", flexShrink:0,
-                    background:`${PRIORITY_COLOR[t.priority] ?? "#f59e0b"}15`,
-                    border:`1px solid ${PRIORITY_COLOR[t.priority] ?? "#f59e0b"}30`,
-                    color:PRIORITY_COLOR[t.priority] ?? "#f59e0b",
+                    background:`${PRIORITY_COLOR[t.priority] ?? "#c2a06a"}15`,
+                    border:`1px solid ${PRIORITY_COLOR[t.priority] ?? "#c2a06a"}30`,
+                    color:PRIORITY_COLOR[t.priority] ?? "#c2a06a",
                   }}>
                     {t.priority}
                   </div>
                   <div style={{
                     padding:"3px 9px", borderRadius:"6px", fontSize:"10px", fontWeight:600,
                     letterSpacing:"1px", textTransform:"uppercase", flexShrink:0,
-                    background:`${STATUS_COLOR[t.status] ?? "#06b6d4"}15`,
-                    border:`1px solid ${STATUS_COLOR[t.status] ?? "#06b6d4"}30`,
-                    color:STATUS_COLOR[t.status] ?? "#06b6d4",
+                    background:`${STATUS_COLOR[t.status] ?? "#aab8c0"}15`,
+                    border:`1px solid ${STATUS_COLOR[t.status] ?? "#aab8c0"}30`,
+                    color:STATUS_COLOR[t.status] ?? "#aab8c0",
                   }}>
                     {t.status.replace("_", " ")}
                   </div>
@@ -729,27 +716,27 @@ export default function SupportPage() {
 
           {/* System Status */}
           <div style={{
-            background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-            border:"1px solid rgba(124,58,237,.14)", borderRadius:"18px", padding:"22px",
+            background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+            border:"1px solid rgba(45,74,94,.14)", borderRadius:"18px", padding:"22px",
             position:"relative", overflow:"hidden",
             animation:"vxFadeRight .5s ease both .15s",
           }}>
             <div style={{
               position:"absolute", top:0, left:0, right:0, height:"1px",
-              background:"linear-gradient(90deg,transparent,rgba(16,185,129,.4),transparent)",
+              background:"linear-gradient(90deg,transparent,rgba(111,169,143,.4),transparent)",
             }}/>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"16px" }}>
-              <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(240,242,255,.85)" }}>
+              <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(231,236,239,.85)" }}>
                 System Status
               </div>
               <div style={{
                 display:"flex", alignItems:"center", gap:"5px",
                 padding:"3px 11px", borderRadius:"12px",
-                background:"rgba(16,185,129,.1)", border:"1px solid rgba(16,185,129,.22)",
+                background:"rgba(111,169,143,.1)", border:"1px solid rgba(111,169,143,.22)",
                 fontFamily:"DM Sans, sans-serif", fontSize:"10px", fontWeight:600,
-                color:"#10b981",
+                color:"#6fa98f",
               }}>
-                <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:"#10b981", animation:"vxPulseDot 2s ease infinite" }}/>
+                <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:"#6fa98f", animation:"vxPulseDot 2s ease infinite" }}/>
                 Operational
               </div>
             </div>
@@ -758,14 +745,14 @@ export default function SupportPage() {
                 <div key={name} style={{
                   display:"flex", alignItems:"center", justifyContent:"space-between",
                   padding:"8px 12px", borderRadius:"9px",
-                  background:"rgba(16,185,129,.04)", border:"1px solid rgba(16,185,129,.08)",
+                  background:"rgba(111,169,143,.04)", border:"1px solid rgba(111,169,143,.08)",
                 }}>
-                  <span style={{ fontFamily:"DM Sans, sans-serif", fontSize:"12px", color:"rgba(240,242,255,.5)" }}>
+                  <span style={{ fontFamily:"DM Sans, sans-serif", fontSize:"12px", color:"rgba(231,236,239,.5)" }}>
                     {name}
                   </span>
                   <div style={{ display:"flex", alignItems:"center", gap:"5px" }}>
-                    <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#10b981", boxShadow:"0 0 5px rgba(16,185,129,.5)" }}/>
-                    <span style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"#10b981" }}>100%</span>
+                    <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#6fa98f", boxShadow:"0 0 5px rgba(111,169,143,.5)" }}/>
+                    <span style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"#6fa98f" }}>100%</span>
                   </div>
                 </div>
               ))}
@@ -774,11 +761,11 @@ export default function SupportPage() {
 
           {/* Response SLA */}
           <div style={{
-            background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-            border:"1px solid rgba(124,58,237,.14)", borderRadius:"18px", padding:"22px",
+            background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+            border:"1px solid rgba(45,74,94,.14)", borderRadius:"18px", padding:"22px",
             animation:"vxFadeRight .5s ease both .25s",
           }}>
-            <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(240,242,255,.85)", marginBottom:"16px" }}>
+            <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(231,236,239,.85)", marginBottom:"16px" }}>
               Response SLA
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
@@ -797,7 +784,7 @@ export default function SupportPage() {
                       {pri.label}
                     </span>
                   </div>
-                  <span style={{ fontFamily:"JetBrains Mono, monospace", fontSize:"10px", color:"rgba(240,242,255,.32)" }}>
+                  <span style={{ fontFamily:"JetBrains Mono, monospace", fontSize:"10px", color:"rgba(231,236,239,.32)" }}>
                     {pri.sla}
                   </span>
                 </div>
@@ -807,11 +794,11 @@ export default function SupportPage() {
 
           {/* Direct Contact */}
           <div style={{
-            background:"rgba(15,13,31,.88)", backdropFilter:"blur(20px)",
-            border:"1px solid rgba(124,58,237,.14)", borderRadius:"18px", padding:"22px",
+            background:"rgba(18,29,35,.88)", backdropFilter:"blur(20px)",
+            border:"1px solid rgba(45,74,94,.14)", borderRadius:"18px", padding:"22px",
             animation:"vxFadeRight .5s ease both .35s",
           }}>
-            <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(240,242,255,.85)", marginBottom:"16px" }}>
+            <div style={{ fontFamily:"Syne, sans-serif", fontWeight:700, fontSize:"13px", color:"rgba(231,236,239,.85)", marginBottom:"16px" }}>
               Direct Contact
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
@@ -820,20 +807,20 @@ export default function SupportPage() {
               <div style={{ display:"flex", alignItems:"flex-start", gap:"11px" }}>
                 <div style={{
                   width:"34px", height:"34px", borderRadius:"9px", flexShrink:0,
-                  background:"rgba(124,58,237,.1)", border:"1px solid rgba(124,58,237,.22)",
+                  background:"rgba(45,74,94,.1)", border:"1px solid rgba(45,74,94,.22)",
                   display:"flex", alignItems:"center", justifyContent:"center",
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5cfd5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>
                 </div>
                 <div>
-                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(240,242,255,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
+                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(231,236,239,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
                     Email
                   </div>
                   <a href="mailto:support@veldrixai.ca" style={{
-                    fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"#a78bfa",
+                    fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"#c5cfd5",
                     textDecoration:"none", transition:"color .2s",
                   }}>
                     support@veldrixai.ca
@@ -847,19 +834,19 @@ export default function SupportPage() {
               <div style={{ display:"flex", alignItems:"flex-start", gap:"11px" }}>
                 <div style={{
                   width:"34px", height:"34px", borderRadius:"9px", flexShrink:0,
-                  background:"rgba(6,182,212,.1)", border:"1px solid rgba(6,182,212,.22)",
+                  background:"rgba(170,184,192,.1)", border:"1px solid rgba(170,184,192,.22)",
                   display:"flex", alignItems:"center", justifyContent:"center",
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aab8c0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                   </svg>
                 </div>
                 <div>
-                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(240,242,255,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
+                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(231,236,239,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
                     Business Hours
                   </div>
-                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"rgba(240,242,255,.52)" }}>
+                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"rgba(231,236,239,.52)" }}>
                     Mon–Fri, 9AM–6PM EST
                   </div>
                 </div>
@@ -871,18 +858,18 @@ export default function SupportPage() {
               <div style={{ display:"flex", alignItems:"flex-start", gap:"11px" }}>
                 <div style={{
                   width:"34px", height:"34px", borderRadius:"9px", flexShrink:0,
-                  background:"rgba(16,185,129,.1)", border:"1px solid rgba(16,185,129,.22)",
+                  background:"rgba(111,169,143,.1)", border:"1px solid rgba(111,169,143,.22)",
                   display:"flex", alignItems:"center", justifyContent:"center",
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fa98f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                   </svg>
                 </div>
                 <div>
-                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(240,242,255,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
+                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"10px", color:"rgba(231,236,239,.28)", marginBottom:"3px", letterSpacing:".5px" }}>
                     Critical Issues
                   </div>
-                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"rgba(240,242,255,.52)" }}>
+                  <div style={{ fontFamily:"DM Sans, sans-serif", fontSize:"13px", color:"rgba(231,236,239,.52)" }}>
                     24/7 monitoring active
                   </div>
                 </div>
@@ -892,18 +879,18 @@ export default function SupportPage() {
 
           {/* Security Notice */}
           <div style={{
-            background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.15)",
+            background:"rgba(45,74,94,.05)", border:"1px solid rgba(45,74,94,.15)",
             borderRadius:"14px", padding:"16px 18px",
             animation:"vxFadeRight .5s ease both .45s",
           }}>
             <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:"1px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5cfd5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:"1px" }}>
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 <polyline points="9 12 11 14 15 10"/>
               </svg>
               <p style={{
                 fontFamily:"DM Sans, sans-serif", fontSize:"12px",
-                color:"rgba(240,242,255,.32)", lineHeight:1.65, margin:0,
+                color:"rgba(231,236,239,.32)", lineHeight:1.65, margin:0,
               }}>
                 All support tickets are encrypted in transit and processed under our SOC 2 Type II
                 certified infrastructure. Your data is never shared with third parties.
