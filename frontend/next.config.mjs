@@ -9,11 +9,6 @@ const nextConfig = {
       "recharts",
     ],
   },
-  turbopack: {
-    rules: {
-      "*.css": { loaders: ["css-loader"], as: "*.css" },
-    },
-  },
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
