@@ -51,11 +51,11 @@ function useSystemStatus(): StatusState {
 }
 
 function NavLogo() {
-  return <ShieldMark size={34} />;
+  return <ShieldMark size={40} />;
 }
 
 function FooterLogo() {
-  return <ShieldMark size={28} />;
+  return <ShieldMark size={30} />;
 }
 
 function NavBar() {

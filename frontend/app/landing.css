@@ -104,12 +104,16 @@ body {
   flex-shrink: 0;
 }
 .lp-nav-logo-box {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* Subtle metallic glow lifts the shield off the near-black navbar so the
+     mark reads without a hard container box. */
+  background: radial-gradient(circle at 50% 45%, rgba(143, 166, 181, 0.18), rgba(143, 166, 181, 0) 70%);
+  filter: drop-shadow(0 0 5px rgba(143, 166, 181, 0.28));
 }
 .lp-nav-wordmark {
   font-family: var(--font-display, 'Syne', sans-serif);
@@ -918,12 +922,13 @@ body {
   text-decoration: none;
 }
 .lp-footer-logo-box {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(143, 166, 181, 0.25));
 }
 .lp-footer-wordmark {
   font-family: var(--font-display, 'Syne', sans-serif);
