@@ -29,10 +29,10 @@ function deduplicateById<T extends { id: string | number }>(records: T[]): T[] {
 const SYSTEM_ACTION_TYPES = new Set(["create_report", "delete_report"]);
 
 const VERDICT_STYLE: Record<string, { bg: string; border: string; color: string }> = {
-  ALLOW:  { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", color: "#10b981" },
-  WARN:   { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", color: "#f59e0b" },
-  REVIEW: { bg: "rgba(6,182,212,0.12)",  border: "rgba(6,182,212,0.3)",  color: "#06b6d4" },
-  BLOCK:  { bg: "rgba(244,63,94,0.12)",  border: "rgba(244,63,94,0.3)",  color: "#f43f5e" },
+  ALLOW:  { bg: "rgba(111,169,143,0.12)", border: "rgba(111,169,143,0.3)", color: "#6fa98f" },
+  WARN:   { bg: "rgba(194,160,106,0.12)", border: "rgba(194,160,106,0.3)", color: "#c2a06a" },
+  REVIEW: { bg: "rgba(170,184,192,0.12)",  border: "rgba(170,184,192,0.3)",  color: "#aab8c0" },
+  BLOCK:  { bg: "rgba(190,116,104,0.12)",  border: "rgba(190,116,104,0.3)",  color: "#be7468" },
 };
 
 function fmtTs(ts: string) {
@@ -133,7 +133,8 @@ export default function AuditTrailsPage() {
   useEffect(() => {
     // Use NEXT_PUBLIC_VELDRIX_CORE_API_URL (same as CORE_API_URL but public for browser)
     // Falls back to localhost:8001 for local dev, or empty string to disable SSE
-    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_API_URL ?? "http://localhost:8001";
+    const coreUrl = process.env.NEXT_PUBLIC_VELDRIX_CORE_API_URL ??
+      (process.env.NODE_ENV === "production" ? "" : "http://localhost:8001");
     let es: EventSource;
     try {
       es = new EventSource(`${coreUrl}/api/v1/stream`);
@@ -307,24 +308,24 @@ export default function AuditTrailsPage() {
         {/* Page heading */}
         <div className="section-reveal" style={{ marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px" }}>
           <div>
-            <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "32px", letterSpacing: "-1px", color: "#f0f2ff", marginBottom: "6px" }}>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "32px", letterSpacing: "-1px", color: "#e7ecef", marginBottom: "6px" }}>
               Audit Logs
             </h2>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: "14px", color: "rgba(240,242,255,0.45)", maxWidth: "500px", lineHeight: 1.6 }}>
+            <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: "14px", color: "rgba(231,236,239,0.45)", maxWidth: "500px", lineHeight: 1.6 }}>
               Complete governance audit trail — every request, evaluation, and enforcement action logged in real time.
             </p>
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {/* Search */}
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <svg style={{ position: "absolute", left: "12px", color: "rgba(240,242,255,0.3)", pointerEvents: "none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg style={{ position: "absolute", left: "12px", color: "rgba(231,236,239,0.3)", pointerEvents: "none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input
                 type="text"
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                style={{ paddingLeft: "36px", paddingRight: "14px", paddingTop: "10px", paddingBottom: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", color: "#f0f2ff", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", width: "180px", transition: "border-color 0.2s" }}
-                onFocus={e => (e.target.style.borderColor = "rgba(124,58,237,0.4)")}
+                style={{ paddingLeft: "36px", paddingRight: "14px", paddingTop: "10px", paddingBottom: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", color: "#e7ecef", fontFamily: "DM Sans, sans-serif", fontSize: "13px", outline: "none", width: "180px", transition: "border-color 0.2s" }}
+                onFocus={e => (e.target.style.borderColor = "rgba(45,74,94,0.4)")}
                 onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
               />
             </div>
@@ -342,9 +343,9 @@ export default function AuditTrailsPage() {
                   display: "flex", alignItems: "center", gap: "8px",
                   padding: "10px 14px",
                   background: "rgba(255,255,255,0.04)",
-                  border: `1px solid ${filterDropdownOpen ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.07)"}`,
+                  border: `1px solid ${filterDropdownOpen ? "rgba(45,74,94,0.4)" : "rgba(255,255,255,0.07)"}`,
                   borderRadius: "12px",
-                  color: actionType ? "rgba(167,139,250,0.9)" : "rgba(240,242,255,0.55)",
+                  color: actionType ? "rgba(197,207,213,0.9)" : "rgba(231,236,239,0.55)",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: "13px",
                   cursor: "pointer",
@@ -356,15 +357,15 @@ export default function AuditTrailsPage() {
               >
                 <span>{actionType || "All Actions"}</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  style={{ transform: filterDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "rgba(240,242,255,0.35)", flexShrink: 0 }}>
+                  style={{ transform: filterDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "rgba(231,236,239,0.35)", flexShrink: 0 }}>
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
               {filterDropdownOpen && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 50,
-                  background: "#0d0f1a",
-                  border: "1px solid rgba(124,58,237,0.25)",
+                  background: "#0e161a",
+                  border: "1px solid rgba(45,74,94,0.25)",
                   borderRadius: "12px",
                   overflow: "hidden",
                   minWidth: "200px",
@@ -377,20 +378,20 @@ export default function AuditTrailsPage() {
                       style={{
                         display: "block", width: "100%", textAlign: "left",
                         padding: "10px 16px",
-                        background: actionType === value ? "rgba(124,58,237,0.12)" : "transparent",
+                        background: actionType === value ? "rgba(45,74,94,0.12)" : "transparent",
                         border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)",
-                        color: actionType === value ? "#a78bfa" : "rgba(240,242,255,0.55)",
+                        color: actionType === value ? "#c5cfd5" : "rgba(231,236,239,0.55)",
                         fontFamily: "DM Sans, sans-serif",
                         fontSize: "13px",
                         cursor: "pointer",
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(124,58,237,0.1)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(240,242,255,0.85)";
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(45,74,94,0.1)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(231,236,239,0.85)";
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = actionType === value ? "rgba(124,58,237,0.12)" : "transparent";
-                        (e.currentTarget as HTMLButtonElement).style.color = actionType === value ? "#a78bfa" : "rgba(240,242,255,0.55)";
+                        (e.currentTarget as HTMLButtonElement).style.background = actionType === value ? "rgba(45,74,94,0.12)" : "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.color = actionType === value ? "#c5cfd5" : "rgba(231,236,239,0.55)";
                       }}
                     >
                       {label}
@@ -402,7 +403,7 @@ export default function AuditTrailsPage() {
             <button
               onClick={exportCSV}
               className="glass-panel"
-              style={{ padding: "10px 18px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(240,242,255,0.6)", cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: "8px", background: "none", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
+              style={{ padding: "10px 18px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(231,236,239,0.6)", cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: "8px", background: "none", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export CSV
@@ -411,19 +412,19 @@ export default function AuditTrailsPage() {
         </div>
 
         {error && (
-          <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "12px", color: "#f43f5e", fontFamily: "DM Sans, sans-serif", fontSize: "13px", marginBottom: "24px" }}>
+          <div style={{ padding: "12px 16px", background: "rgba(190,116,104,0.08)", border: "1px solid rgba(190,116,104,0.2)", borderRadius: "12px", color: "#be7468", fontFamily: "DM Sans, sans-serif", fontSize: "13px", marginBottom: "24px" }}>
             {error}
           </div>
         )}
 
         {/* ── Active Audit Stream Table ── */}
-        <div className="section-reveal" style={{ animationDelay: "0.2s", background: "#0d0f1a", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="section-reveal" style={{ animationDelay: "0.2s", background: "#0e161a", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
           {/* Table toolbar */}
-          <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.5)" }}>
-            <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "15px", color: "#f0f2ff" }}>Active Audit Stream</h4>
+          <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(14,22,26,0.5)" }}>
+            <h4 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "15px", color: "#e7ecef" }}>Active Audit Stream</h4>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="live-dot" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}/>
-              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", color: "#10b981", fontWeight: 700, letterSpacing: "1.5px" }}>LIVE</span>
+              <span className="live-dot" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#6fa98f", display: "inline-block" }}/>
+              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", color: "#6fa98f", fontWeight: 700, letterSpacing: "1.5px" }}>LIVE</span>
             </div>
           </div>
 
@@ -433,7 +434,7 @@ export default function AuditTrailsPage() {
               <thead style={{ background: "rgba(255,255,255,0.02)" }}>
                 <tr>
                   {["Request ID", "Action", "Verdict", "Trust Score", "Latency", "Timestamp", ""].map((col) => (
-                    <th key={col} style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
+                    <th key={col} style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
                       {col}
                     </th>
                   ))}
@@ -441,12 +442,12 @@ export default function AuditTrailsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
-                    <svg style={{ display: "inline-block", animation: "evalSpin 0.8s linear infinite", marginBottom: "8px" }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(231,236,239,0.3)" }}>
+                    <svg style={{ display: "inline-block", animation: "evalSpin 0.8s linear infinite", marginBottom: "8px" }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d4a5e" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                     <div>Loading records…</div>
                   </td></tr>
                 ) : !data || data.records.length === 0 ? (
-                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
+                  <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(231,236,239,0.3)" }}>
                     No audit records yet. SDK analysis calls and actions will appear here automatically.
                   </td></tr>
                 ) : (
@@ -485,23 +486,23 @@ export default function AuditTrailsPage() {
                         <td style={{ padding: "14px 20px" }}>
                           {m.requestId ? (
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                              <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", fontWeight: 700, color: "#7c3aed" }} title={m.requestId}>
+                              <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", fontWeight: 700, color: "#2d4a5e" }} title={m.requestId}>
                                 {m.requestId.slice(0, 8)}
                               </code>
                               <button
                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(m.requestId!); }}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(240,242,255,0.3)", padding: "2px", fontSize: "11px", transition: "color 0.2s" }}
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(231,236,239,0.3)", padding: "2px", fontSize: "11px", transition: "color 0.2s" }}
                                 title="Copy full request ID"
-                                onMouseEnter={e => (e.currentTarget.style.color = "#7c3aed")}
-                                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,242,255,0.3)")}
+                                onMouseEnter={e => (e.currentTarget.style.color = "#2d4a5e")}
+                                onMouseLeave={e => (e.currentTarget.style.color = "rgba(231,236,239,0.3)")}
                               >⧉</button>
                             </span>
                           ) : (
-                            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>
+                            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(231,236,239,0.25)" }}>—</span>
                           )}
                         </td>
                         <td style={{ padding: "14px 20px" }}>
-                          <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)", whiteSpace: "nowrap" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(45,74,94,0.12)", color: "#c5cfd5", border: "1px solid rgba(45,74,94,0.2)", whiteSpace: "nowrap" }}>
                             {r.action_type.replace(/_/g, " ")}
                           </span>
                         </td>
@@ -510,31 +511,31 @@ export default function AuditTrailsPage() {
                             <span style={{ display: "inline-flex", padding: "4px 10px", borderRadius: "6px", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color, whiteSpace: "nowrap" }}>
                               {m.verdict}
                             </span>
-                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(231,236,239,0.25)" }}>—</span>}
                         </td>
                         <td style={{ padding: "14px 20px" }}>
                           {m.overallScore != null ? (
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                               <div style={{ width: "50px", height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
-                                <div style={{ width: `${m.overallScore}%`, height: "100%", background: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e", borderRadius: "2px" }}/>
+                                <div style={{ width: `${m.overallScore}%`, height: "100%", background: m.overallScore >= 85 ? "#6fa98f" : m.overallScore >= 60 ? "#c2a06a" : "#be7468", borderRadius: "2px" }}/>
                               </div>
-                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e" }}>
+                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600, color: m.overallScore >= 85 ? "#6fa98f" : m.overallScore >= 60 ? "#c2a06a" : "#be7468" }}>
                                 {m.overallScore.toFixed(1)}%
                               </span>
                             </div>
-                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(231,236,239,0.25)" }}>—</span>}
                         </td>
                         <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
                           {m.totalLatencyMs != null ? (
                             <span style={{
                               fontFamily: "JetBrains Mono, monospace", fontSize: "11px", fontWeight: 600,
-                              color: m.totalLatencyMs <= 400 ? "#10b981" : m.totalLatencyMs <= 800 ? "#f59e0b" : "#f43f5e",
+                              color: m.totalLatencyMs <= 400 ? "#6fa98f" : m.totalLatencyMs <= 800 ? "#c2a06a" : "#be7468",
                             }}>
                               {Math.round(m.totalLatencyMs)}ms
                             </span>
-                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(240,242,255,0.25)" }}>—</span>}
+                          ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "12px", color: "rgba(231,236,239,0.25)" }}>—</span>}
                         </td>
-                        <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.35)", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "14px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.35)", whiteSpace: "nowrap" }}>
                           {fmtShort(r.created_at)}
                         </td>
                         <td style={{ padding: "14px 16px" }}>
@@ -547,9 +548,9 @@ export default function AuditTrailsPage() {
                                 style={{
                                   padding: "4px 12px", borderRadius: "7px", fontSize: "10px",
                                   fontFamily: "DM Sans, sans-serif", fontWeight: 600, letterSpacing: "1px",
-                                  border: done ? "1px solid rgba(16,185,129,0.35)" : "1px solid rgba(124,58,237,0.25)",
+                                  border: done ? "1px solid rgba(111,169,143,0.35)" : "1px solid rgba(45,74,94,0.25)",
                                   background: "transparent",
-                                  color: done ? "#10b981" : "#a78bfa",
+                                  color: done ? "#6fa98f" : "#c5cfd5",
                                   cursor: (generatingPdf === reqId || done) ? "default" : "pointer",
                                   opacity: generatingPdf === reqId ? 0.5 : 1,
                                   transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s", whiteSpace: "nowrap",
@@ -568,7 +569,7 @@ export default function AuditTrailsPage() {
                                   setSelected(r);
                                 }
                               }}
-                              style={{ padding: "4px 10px", borderRadius: "7px", fontSize: "10px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)", cursor: "pointer" }}
+                              style={{ padding: "4px 10px", borderRadius: "7px", fontSize: "10px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(45,74,94,0.12)", color: "#c5cfd5", border: "1px solid rgba(45,74,94,0.2)", cursor: "pointer" }}
                             >
                               {isSdk ? "Analyse ↗" : "Open ↗"}
                             </button>
@@ -584,16 +585,16 @@ export default function AuditTrailsPage() {
 
           {/* Pagination footer */}
           {data && data.total > 0 && (
-            <div style={{ padding: "14px 24px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(10,12,21,0.3)" }}>
-              <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>
+            <div style={{ padding: "14px 24px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(14,22,26,0.3)" }}>
+              <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>
                 Viewing {(page - 1) * data.limit + 1}–{Math.min(page * data.limit, data.total)} of {data.total.toLocaleString()} records
               </p>
               <div style={{ display: "flex", gap: "4px" }}>
-                <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page <= 1 ? "rgba(240,242,255,0.15)" : "rgba(240,242,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+                <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page <= 1 ? "rgba(231,236,239,0.15)" : "rgba(231,236,239,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: p === page ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.03)", color: p === page ? "#7c3aed" : "rgba(240,242,255,0.35)", border: p === page ? "1px solid rgba(124,58,237,0.3)" : "1px solid rgba(255,255,255,0.06)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{p}</button>
+                  <button key={p} onClick={() => setPage(p)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: p === page ? "rgba(45,74,94,0.2)" : "rgba(255,255,255,0.03)", color: p === page ? "#2d4a5e" : "rgba(231,236,239,0.35)", border: p === page ? "1px solid rgba(45,74,94,0.3)" : "1px solid rgba(255,255,255,0.06)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{p}</button>
                 ))}
-                <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page >= totalPages ? "rgba(240,242,255,0.15)" : "rgba(240,242,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page >= totalPages ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+                <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} style={{ width: "28px", height: "28px", borderRadius: "6px", fontSize: "12px", fontFamily: "DM Sans, sans-serif", fontWeight: 600, background: "rgba(255,255,255,0.03)", color: page >= totalPages ? "rgba(231,236,239,0.15)" : "rgba(231,236,239,0.5)", border: "1px solid rgba(255,255,255,0.06)", cursor: page >= totalPages ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
               </div>
             </div>
           )}
@@ -611,7 +612,7 @@ export default function AuditTrailsPage() {
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: systemLogsOpen ? "16px 16px 0 0" : "16px",
-              color: "rgba(240,242,255,0.45)",
+              color: "rgba(231,236,239,0.45)",
               fontFamily: "DM Sans, sans-serif",
               fontSize: "12px",
               fontWeight: 600,
@@ -622,20 +623,20 @@ export default function AuditTrailsPage() {
             <span>
               {systemLogsOpen ? "↑" : "↓"} System Action Log
               {systemLogs.length > 0 && (
-                <span style={{ marginLeft: 8, padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 6, color: "#f59e0b", fontSize: "10px" }}>
+                <span style={{ marginLeft: 8, padding: "2px 8px", background: "rgba(194,160,106,0.12)", border: "1px solid rgba(194,160,106,0.25)", borderRadius: 6, color: "#c2a06a", fontSize: "10px" }}>
                   {systemLogs.length}
                 </span>
               )}
             </span>
-            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", letterSpacing: "1px", color: "rgba(240,242,255,0.25)" }}>
+            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "10px", letterSpacing: "1px", color: "rgba(231,236,239,0.25)" }}>
               REPORT_CREATED · REPORT_DELETED
             </span>
           </button>
 
           {systemLogsOpen && (
-            <div style={{ background: "rgba(10,12,21,0.6)", border: "1px solid rgba(255,255,255,0.05)", borderTop: "none", borderRadius: "0 0 16px 16px", overflow: "hidden" }}>
+            <div style={{ background: "rgba(14,22,26,0.6)", border: "1px solid rgba(255,255,255,0.05)", borderTop: "none", borderRadius: "0 0 16px 16px", overflow: "hidden" }}>
               {systemLogs.length === 0 ? (
-                <div style={{ padding: "32px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(240,242,255,0.2)" }}>
+                <div style={{ padding: "32px", textAlign: "center", fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(231,236,239,0.2)" }}>
                   No system actions recorded yet.
                 </div>
               ) : (
@@ -643,7 +644,7 @@ export default function AuditTrailsPage() {
                   <thead>
                     <tr>
                       {["Type", "Related Request", "Actor", "Timestamp"].map((col) => (
-                        <th key={col} style={{ padding: "10px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.2)", borderBottom: "1px solid rgba(255,255,255,0.04)", whiteSpace: "nowrap" }}>
+                        <th key={col} style={{ padding: "10px 20px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: "9px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.2)", borderBottom: "1px solid rgba(255,255,255,0.04)", whiteSpace: "nowrap" }}>
                           {col}
                         </th>
                       ))}
@@ -652,7 +653,7 @@ export default function AuditTrailsPage() {
                   <tbody>
                     {systemLogs.map((r) => {
                       const isCreate = r.action_type === "create_report";
-                      const borderColor = isCreate ? "#f59e0b" : "#F43F5E";
+                      const borderColor = isCreate ? "#c2a06a" : "#be7468";
                       const relatedId = (r.metadata as Record<string, unknown>)?.source_request_id as string | undefined
                         || (r.metadata as Record<string, unknown>)?.request_id as string | undefined;
                       return (
@@ -684,18 +685,18 @@ export default function AuditTrailsPage() {
                             {relatedId ? (
                               <button
                                 onClick={() => router.push(`/dashboard/audit-trails/${r.id}`)}
-                                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", padding: 0, textDecoration: "underline", textDecorationColor: "rgba(124,58,237,0.3)" }}
+                                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#2d4a5e", padding: 0, textDecoration: "underline", textDecorationColor: "rgba(45,74,94,0.3)" }}
                               >
                                 {relatedId.slice(0, 12)}…
                               </button>
                             ) : (
-                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.2)" }}>—</span>
+                              <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.2)" }}>—</span>
                             )}
                           </td>
-                          <td style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.4)" }}>
+                          <td style={{ padding: "12px 20px", fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(231,236,239,0.4)" }}>
                             {(r.metadata as Record<string, unknown>)?.actor as string || r.ip_address || "—"}
                           </td>
-                          <td style={{ padding: "12px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.3)", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.3)", whiteSpace: "nowrap" }}>
                             {fmtShort(r.created_at)}
                           </td>
                         </tr>
@@ -719,20 +720,20 @@ export default function AuditTrailsPage() {
             {/* Overlay */}
             <div
               onClick={() => setSelected(null)}
-              style={{ position: "fixed", inset: 0, background: "rgba(5,8,16,0.6)", backdropFilter: "blur(4px)", zIndex: 200 }}
+              style={{ position: "fixed", inset: 0, background: "rgba(10,16,20,0.6)", backdropFilter: "blur(4px)", zIndex: 200 }}
             />
             {/* Drawer panel */}
-            <div className="audit-detail-drawer" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "420px", background: "#0b0d1c", borderLeft: "1px solid rgba(255,255,255,0.07)", zIndex: 201, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+            <div className="audit-detail-drawer" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "420px", background: "#0a1014", borderLeft: "1px solid rgba(255,255,255,0.07)", zIndex: 201, display: "flex", flexDirection: "column", overflowY: "auto" }}>
               {/* Drawer header */}
               <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
                 <div>
-                  <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "18px", color: "#f0f2ff", marginBottom: "4px" }}>Audit Detail</h3>
-                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.3)", letterSpacing: "0.5px" }}>{selected.id.slice(0, 24)}…</p>
+                  <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "18px", color: "#e7ecef", marginBottom: "4px" }}>Audit Detail</h3>
+                  <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.3)", letterSpacing: "0.5px" }}>{selected.id.slice(0, 24)}…</p>
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "rgba(240,242,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "rgba(231,236,239,0.5)", display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(190,116,104,0.1)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -741,19 +742,19 @@ export default function AuditTrailsPage() {
               {/* Drawer body */}
               <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: "16px" }}>
                 {/* Core details card */}
-                <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ background: "#15222a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
                   {[
-                    { key: "Action", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}>{selected.action_type.replace(/_/g, " ")}</span> },
-                    m.requestId ? { key: "Request ID", value: <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#7c3aed", wordBreak: "break-all" }}>{m.requestId}</code> } : null,
+                    { key: "Action", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontFamily: "DM Sans, sans-serif", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(45,74,94,0.12)", color: "#c5cfd5", border: "1px solid rgba(45,74,94,0.2)" }}>{selected.action_type.replace(/_/g, " ")}</span> },
+                    m.requestId ? { key: "Request ID", value: <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#2d4a5e", wordBreak: "break-all" }}>{m.requestId}</code> } : null,
                     (vs && m.verdict) ? { key: "Verdict", value: <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", background: vs.bg, border: `1px solid ${vs.border}`, color: vs.color }}>{m.verdict}</span> } : null,
-                    m.overallScore != null ? { key: "Trust Score", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "14px", color: m.overallScore >= 85 ? "#10b981" : m.overallScore >= 60 ? "#f59e0b" : "#f43f5e" }}>{m.overallScore.toFixed(1)}%</span> } : null,
-                    m.totalLatencyMs != null ? { key: "Latency", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "rgba(240,242,255,0.7)" }}>{m.totalLatencyMs}ms</span> } : null,
-                    m.sdkVersion ? { key: "SDK Version", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{m.sdkVersion}</span> } : null,
-                    { key: "Timestamp", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{fmtTs(selected.created_at)}</span> },
-                    { key: "IP Address", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)" }}>{selected.ip_address || "—"}</span> },
+                    m.overallScore != null ? { key: "Trust Score", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontWeight: 700, fontSize: "14px", color: m.overallScore >= 85 ? "#6fa98f" : m.overallScore >= 60 ? "#c2a06a" : "#be7468" }}>{m.overallScore.toFixed(1)}%</span> } : null,
+                    m.totalLatencyMs != null ? { key: "Latency", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "rgba(231,236,239,0.7)" }}>{m.totalLatencyMs}ms</span> } : null,
+                    m.sdkVersion ? { key: "SDK Version", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.5)" }}>{m.sdkVersion}</span> } : null,
+                    { key: "Timestamp", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.5)" }}>{fmtTs(selected.created_at)}</span> },
+                    { key: "IP Address", value: <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.5)" }}>{selected.ip_address || "—"}</span> },
                   ].filter(Boolean).map((row) => row && (
                     <div key={row.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-                      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", flexShrink: 0 }}>{row.key}</span>
+                      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", flexShrink: 0 }}>{row.key}</span>
                       <span>{row.value}</span>
                     </div>
                   ))}
@@ -761,14 +762,14 @@ export default function AuditTrailsPage() {
 
                 {/* Pillar scores */}
                 {m.pillarScores && Object.keys(m.pillarScores).length > 0 && (
-                  <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
-                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "16px" }}>Pillar Scores</h4>
+                  <div style={{ background: "#15222a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
+                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", marginBottom: "16px" }}>Pillar Scores</h4>
                     {Object.entries(m.pillarScores).map(([pillar, score]) => {
                       const pct = score * 100;
-                      const color = pct >= 85 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
+                      const color = pct >= 85 ? "#6fa98f" : pct >= 60 ? "#c2a06a" : "#be7468";
                       return (
                         <div key={pillar} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-                          <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "capitalize", color: "rgba(240,242,255,0.4)", minWidth: "110px" }}>{pillar.replace(/_/g, " ")}</span>
+                          <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "capitalize", color: "rgba(231,236,239,0.4)", minWidth: "110px" }}>{pillar.replace(/_/g, " ")}</span>
                           <div style={{ flex: 1, height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
                             <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
                           </div>
@@ -781,9 +782,9 @@ export default function AuditTrailsPage() {
 
                 {/* Critical flags */}
                 {m.criticalFlags.length > 0 && (
-                  <div style={{ padding: "14px 16px", background: "rgba(244,63,94,0.06)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "12px" }}>
-                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#f43f5e", marginBottom: "8px" }}>Critical Flags</div>
-                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(244,63,94,0.8)", lineHeight: 1.6 }}>
+                  <div style={{ padding: "14px 16px", background: "rgba(190,116,104,0.06)", border: "1px solid rgba(190,116,104,0.2)", borderRadius: "12px" }}>
+                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#be7468", marginBottom: "8px" }}>Critical Flags</div>
+                    <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(190,116,104,0.8)", lineHeight: 1.6 }}>
                       {m.criticalFlags.join(" · ")}
                     </div>
                   </div>
@@ -794,7 +795,7 @@ export default function AuditTrailsPage() {
                   <button
                     disabled={generatingPdf === m.requestId || pdfDone.has(m.requestId)}
                     onClick={(e) => generatePdf(selected, e)}
-                    style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", background: "linear-gradient(135deg, #9f67ff 0%, #7c3aed 50%, #4f46e5 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "opacity 0.2s", opacity: (generatingPdf === m.requestId) ? 0.6 : 1 }}
+                    style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", background: "linear-gradient(135deg, #8fa6b5 0%, #2d4a5e 50%, #243b4c 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "opacity 0.2s", opacity: (generatingPdf === m.requestId) ? 0.6 : 1 }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     {generatingPdf === m.requestId ? "Generating PDF…" : pdfDone.has(m.requestId) ? "✓ Report Ready" : "Generate PDF Report"}
@@ -803,9 +804,9 @@ export default function AuditTrailsPage() {
 
                 {/* Raw metadata */}
                 {selected.metadata && Object.keys(selected.metadata).length > 0 && (
-                  <div style={{ background: "#111422", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
-                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", marginBottom: "12px" }}>Raw Metadata</h4>
-                    <pre style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(240,242,255,0.5)", whiteSpace: "pre-wrap", wordBreak: "break-all", lineHeight: 1.7 }}>
+                  <div style={{ background: "#15222a", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px" }}>
+                    <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "10px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", marginBottom: "12px" }}>Raw Metadata</h4>
+                    <pre style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "rgba(231,236,239,0.5)", whiteSpace: "pre-wrap", wordBreak: "break-all", lineHeight: 1.7 }}>
                       {JSON.stringify(selected.metadata, null, 2)}
                     </pre>
                   </div>
@@ -819,7 +820,7 @@ export default function AuditTrailsPage() {
       {/* Toast notifications */}
       <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "8px", zIndex: 300 }}>
         {toasts.map((t) => (
-          <div key={t.id} style={{ padding: "12px 16px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 500, color: "#f0f2ff", background: t.type === "error" ? "rgba(244,63,94,0.9)" : "rgba(16,185,129,0.9)", backdropFilter: "blur(12px)", border: `1px solid ${t.type === "error" ? "rgba(244,63,94,0.5)" : "rgba(16,185,129,0.5)"}`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", animation: "telRowIn 0.3s ease both" }}>
+          <div key={t.id} style={{ padding: "12px 16px", borderRadius: "12px", fontFamily: "DM Sans, sans-serif", fontSize: "13px", fontWeight: 500, color: "#e7ecef", background: t.type === "error" ? "rgba(190,116,104,0.9)" : "rgba(111,169,143,0.9)", backdropFilter: "blur(12px)", border: `1px solid ${t.type === "error" ? "rgba(190,116,104,0.5)" : "rgba(111,169,143,0.5)"}`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", animation: "telRowIn 0.3s ease both" }}>
             {t.message}
           </div>
         ))}

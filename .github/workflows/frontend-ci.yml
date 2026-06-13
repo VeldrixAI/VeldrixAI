@@ -57,8 +57,11 @@ jobs:
       - name: Check for localhost in production bundle
         working-directory: frontend
         run: |
-          if grep -r "localhost" .next/static/ 2>/dev/null | grep -v "node_modules"; then
-            echo "FAIL: localhost reference found in production bundle"
+          # Flag hardcoded local endpoints (localhost:PORT or //localhost) only —
+          # a bare "localhost" token can legitimately appear inside third-party
+          # URL-parser libraries and is not an endpoint we ship.
+          if grep -rE "localhost:[0-9]|//localhost" .next/static/ 2>/dev/null | grep -v "node_modules"; then
+            echo "FAIL: hardcoded localhost endpoint found in production bundle"
             exit 1
           fi
-          echo "OK: no localhost in production bundle"
+          echo "OK: no localhost endpoints in production bundle"

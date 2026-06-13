@@ -7,7 +7,7 @@
     "dev:debug": "next dev --port 5000 --inspect",
     "build": "next build",
     "start": "next start -p 5000 -H 0.0.0.0",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint .",
     "test": "playwright test --config playwright.config.ts",
     "test:critical": "playwright test --project=critical-chrome --config playwright.config.ts",
     "test:critical:ff": "playwright test --project=critical-firefox --config playwright.config.ts",

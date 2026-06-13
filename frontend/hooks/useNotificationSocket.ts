@@ -48,12 +48,17 @@ export function useNotificationSocket({
   onNotificationRef.current = onNotification;
   const onTokenExpiredRef = useRef(onTokenExpired);
   onTokenExpiredRef.current = onTokenExpired;
+  // Holds the latest `connect` so the reconnect timer can call it without
+  // referencing `connect` inside its own definition.
+  const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
     if (!userId || !token || !enabled || !mountedRef.current) return;
 
     const coreUrl =
-      process.env.NEXT_PUBLIC_VELDRIX_CORE_URL || "http://localhost:8001";
+      process.env.NEXT_PUBLIC_VELDRIX_CORE_URL ||
+      (process.env.NODE_ENV === "production" ? "" : "http://localhost:8001");
+    if (!coreUrl) return;
     const wsBase = coreUrl
       .replace(/^https:\/\//, "wss://")
       .replace(/^http:\/\//, "ws://");
@@ -87,11 +92,12 @@ export function useNotificationSocket({
         onTokenExpiredRef.current?.();
         return;
       }
-      reconnectRef.current = setTimeout(connect, 3_000);
+      reconnectRef.current = setTimeout(() => connectRef.current(), 3_000);
     };
 
     ws.onerror = () => ws.close();
   }, [userId, token, enabled]);
+  connectRef.current = connect;
 
   useEffect(() => {
     mountedRef.current = true;

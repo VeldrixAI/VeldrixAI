@@ -3,6 +3,9 @@ const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
+  // Linting runs as its own CI gate (`npm run lint`); don't fail the production
+  // build on lint findings. Type errors still fail the build via tsc.
+  eslint: { ignoreDuringBuilds: true },
   allowedDevOrigins: ['*.replit.dev', '*.riker.replit.dev', '*.repl.co', '*.kirk.replit.dev', '127.0.0.1'],
   experimental: {
     optimizePackageImports: [

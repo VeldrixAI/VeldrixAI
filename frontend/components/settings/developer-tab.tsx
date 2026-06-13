@@ -9,9 +9,9 @@ interface DeveloperTabProps {
 
 const ENV_VARS = [
   { name: "VELDRIX_API_KEY", description: "Your API authentication key", example: "veldrix_live_xxxxxxxxxxxx" },
-  { name: "VELDRIX_CORE_API_URL", description: "Trust evaluation API base URL", example: "http://localhost:8001" },
-  { name: "VELDRIX_CONNECTORS_API_URL", description: "Reports & connectors API base URL", example: "http://localhost:8002" },
-  { name: "VELDRIX_AUTH_API_URL", description: "Auth service base URL", example: "http://localhost:8000" },
+  { name: "VELDRIX_CORE_API_URL", description: "Trust evaluation API base URL", example: "https://api.veldrixai.ca" },
+  { name: "VELDRIX_CONNECTORS_API_URL", description: "Reports & connectors API base URL", example: "https://api.veldrixai.ca" },
+  { name: "VELDRIX_AUTH_API_URL", description: "Auth service base URL", example: "https://api.veldrixai.ca" },
 ];
 
 export default function DeveloperTab({ searchQuery, showToast }: DeveloperTabProps) {

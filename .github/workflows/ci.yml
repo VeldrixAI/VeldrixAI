@@ -95,7 +95,7 @@ jobs:
         env:
           RESEND_API_KEY:         "re_test_placeholder"
           EMAIL_FROM:             "noreply@veldrixai.ca"
-          EMAIL_FROM_NAME:        "VeldrixAI"
+          EMAIL_FROM_NAME:        "Veldrix"
           EMAIL_SUPPORT_ADDRESS:  "rudramani031@veldrixai.ca"
           VELDRIX_UI_URL:         "https://app.veldrix.com"
           DATABASE_URL:           "postgresql://ci:ci@localhost/ci"
@@ -216,7 +216,7 @@ jobs:
             update_env "GITHUB_CLIENT_SECRET" "${{ secrets.GH_CLIENT_SECRET }}"
             update_env "RESEND_API_KEY"        "${{ secrets.RESEND_API_KEY }}"
             update_env "EMAIL_FROM"            "noreply@veldrixai.ca"
-            update_env "EMAIL_FROM_NAME"       "VeldrixAI"
+            update_env "EMAIL_FROM_NAME"       "Veldrix"
             update_env "EMAIL_SUPPORT_ADDRESS" "support@veldrixai.ca"
 
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
