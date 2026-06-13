@@ -62,9 +62,9 @@ function NavBar() {
   return (
     <header className="lp-nav" role="banner">
       <nav className="lp-container lp-nav-inner" aria-label="Main navigation">
-        <Link href="/" className="lp-brand" aria-label="VeldrixAI home">
+        <Link href="/" className="lp-brand" aria-label="Veldrix home">
           <div className="lp-nav-logo-box"><NavLogo /></div>
-          <span className="lp-nav-wordmark">Veldrix<span className="lp-wordmark-ai">AI</span></span>
+          <span className="lp-nav-wordmark">Veldrix</span>
         </Link>
         <div className="lp-nav-links" role="list">
           {NAV_LINKS.map((link) =>
@@ -207,7 +207,7 @@ function FivePillarsSection() {
           transition={{ delay: 0.1, stiffness: 300, damping: 30 }}
           style={{ fontFamily: "var(--font-body)", fontSize: "1rem", color: "rgba(231,236,239,0.5)", maxWidth: "52ch", marginBottom: "64px", lineHeight: 1.7 }}
         >
-          VeldrixAI runs five parallel evaluations on every LLM response. Any pillar can trigger enforcement. All verdicts write to the audit log.
+          Veldrix runs five parallel evaluations on every LLM response. Any pillar can trigger enforcement. All verdicts write to the audit log.
         </motion.p>
         <div>
           {PILLARS_DATA.map((pillar, i) => (
@@ -384,9 +384,9 @@ function FooterSection() {
     <footer className="lp-footer" role="contentinfo">
       <div className="lp-footer-inner">
         <div>
-          <Link href="/" className="lp-footer-brand-logo" aria-label="VeldrixAI home">
+          <Link href="/" className="lp-footer-brand-logo" aria-label="Veldrix home">
             <div className="lp-footer-logo-box"><FooterLogo /></div>
-            <span className="lp-footer-wordmark">Veldrix<span className="lp-wordmark-ai">AI</span></span>
+            <span className="lp-footer-wordmark">Veldrix</span>
           </Link>
           <p className="lp-footer-tagline">
             Runtime evaluation for production AI. Five pillars. Sub-500ms. An audit trail your compliance team will accept.
@@ -422,7 +422,7 @@ function FooterSection() {
         </div>
       </div>
       <div className="lp-footer-bottom">
-        <span>© 2026 VeldrixAI Inc. · Toronto</span>
+        <span>© 2026 Veldrix Inc. · Toronto</span>
         <div className="lp-status-indicator">
           <span className={`lp-status-dot ${status !== "operational" ? "degraded" : ""}`} aria-hidden="true" />
           <span>{status === "operational" ? "All systems operational" : "Status unknown"}</span>

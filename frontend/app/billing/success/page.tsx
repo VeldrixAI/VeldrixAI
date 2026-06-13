@@ -59,7 +59,7 @@ function ConfettiCanvas() {
       color: string; size: number; rotation: number; rotationSpeed: number;
     }> = [];
 
-    const colors = ["#7c3aed", "#06b6d4", "#a78bfa", "#67e8f9", "#10b981", "#f0f2ff"];
+    const colors = ["#2d4a5e", "#aab8c0", "#c5cfd5", "#abc8bd", "#6fa98f", "#e7ecef"];
 
     for (let i = 0; i < 120; i++) {
       particles.push({
@@ -156,8 +156,8 @@ function BillingSuccessInner() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#050810",
-        color: "#f0f2ff",
+        background: "#0a1014",
+        color: "#e7ecef",
         fontFamily: "'DM Sans', sans-serif",
         display: "flex",
         flexDirection: "column",
@@ -190,7 +190,7 @@ function BillingSuccessInner() {
           transform: "translate(-50%, -50%)",
           width: "600px",
           height: "600px",
-          background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(45,74,94,0.12) 0%, transparent 70%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -212,8 +212,8 @@ function BillingSuccessInner() {
             width: "80px",
             height: "80px",
             borderRadius: "50%",
-            background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.1))",
-            border: "1px solid rgba(16,185,129,0.4)",
+            background: "linear-gradient(135deg, rgba(111,169,143,0.2), rgba(170,184,192,0.1))",
+            border: "1px solid rgba(111,169,143,0.4)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -230,7 +230,7 @@ function BillingSuccessInner() {
             fontSize: "12px",
             letterSpacing: "4px",
             textTransform: "uppercase",
-            color: "#10b981",
+            color: "#6fa98f",
             marginBottom: "12px",
             fontWeight: 500,
           }}
@@ -248,10 +248,10 @@ function BillingSuccessInner() {
             lineHeight: 1.2,
           }}
         >
-          Welcome to VeldrixAI{" "}
+          Welcome to Veldrix{" "}
           <span
             style={{
-              background: "linear-gradient(90deg, #a78bfa, #67e8f9)",
+              background: "linear-gradient(90deg, #c5cfd5, #abc8bd)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
@@ -260,7 +260,7 @@ function BillingSuccessInner() {
           </span>
         </h1>
 
-        <p style={{ fontSize: "16px", color: "rgba(240,242,255,0.55)", margin: "0 0 36px" }}>
+        <p style={{ fontSize: "16px", color: "rgba(231,236,239,0.55)", margin: "0 0 36px" }}>
           Your runtime trust infrastructure is now active. You&apos;re all set to govern every AI response.
         </p>
 
@@ -280,7 +280,7 @@ function BillingSuccessInner() {
               fontSize: "11px",
               letterSpacing: "3px",
               textTransform: "uppercase",
-              color: "rgba(240,242,255,0.4)",
+              color: "rgba(231,236,239,0.4)",
               marginBottom: "16px",
             }}
           >
@@ -294,9 +294,9 @@ function BillingSuccessInner() {
               gap: "8px",
               marginBottom: "16px",
               padding: "10px 14px",
-              background: "rgba(124,58,237,0.1)",
+              background: "rgba(45,74,94,0.1)",
               borderRadius: "8px",
-              border: "1px solid rgba(124,58,237,0.2)",
+              border: "1px solid rgba(45,74,94,0.2)",
             }}
           >
             <span style={{ fontSize: "20px" }}>⚡</span>
@@ -309,9 +309,9 @@ function BillingSuccessInner() {
             {planInfo.features.map((feat) => (
               <li
                 key={feat}
-                style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "rgba(240,242,255,0.75)" }}
+                style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "rgba(231,236,239,0.75)" }}
               >
-                <span style={{ color: "#10b981", fontSize: "16px" }}>✓</span>
+                <span style={{ color: "#6fa98f", fontSize: "16px" }}>✓</span>
                 {feat}
               </li>
             ))}
@@ -350,7 +350,7 @@ function BillingSuccessInner() {
               <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "2px" }}>
                 {item.title}
               </div>
-              <div style={{ fontSize: "12px", color: "rgba(240,242,255,0.4)" }}>{item.desc}</div>
+              <div style={{ fontSize: "12px", color: "rgba(231,236,239,0.4)" }}>{item.desc}</div>
             </a>
           ))}
         </div>
@@ -363,29 +363,29 @@ function BillingSuccessInner() {
             padding: "14px",
             borderRadius: "10px",
             border: "none",
-            background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+            background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
             color: "#fff",
             fontSize: "15px",
             fontWeight: 600,
             cursor: "pointer",
-            boxShadow: "0 8px 32px rgba(124,58,237,0.3)",
+            boxShadow: "0 8px 32px rgba(45,74,94,0.3)",
             transition: "transform 0.15s, box-shadow 0.15s",
           }}
           onMouseEnter={(e) => {
             (e.target as HTMLButtonElement).style.transform = "translateY(-2px)";
-            (e.target as HTMLButtonElement).style.boxShadow = "0 12px 40px rgba(124,58,237,0.45)";
+            (e.target as HTMLButtonElement).style.boxShadow = "0 12px 40px rgba(45,74,94,0.45)";
           }}
           onMouseLeave={(e) => {
             (e.target as HTMLButtonElement).style.transform = "translateY(0)";
-            (e.target as HTMLButtonElement).style.boxShadow = "0 8px 32px rgba(124,58,237,0.3)";
+            (e.target as HTMLButtonElement).style.boxShadow = "0 8px 32px rgba(45,74,94,0.3)";
           }}
         >
           Go to Dashboard →
         </button>
 
-        <p style={{ fontSize: "12px", color: "rgba(240,242,255,0.25)", marginTop: "16px" }}>
+        <p style={{ fontSize: "12px", color: "rgba(231,236,239,0.25)", marginTop: "16px" }}>
           A receipt has been sent to your email.{" "}
-          <a href="/dashboard/billing" style={{ color: "rgba(167,139,250,0.7)", textDecoration: "none" }}>
+          <a href="/dashboard/billing" style={{ color: "rgba(197,207,213,0.7)", textDecoration: "none" }}>
             Manage billing
           </a>
         </p>

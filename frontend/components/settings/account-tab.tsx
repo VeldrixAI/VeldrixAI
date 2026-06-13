@@ -33,7 +33,7 @@ export default function AccountTab({ searchQuery, showToast }: AccountTabProps) 
         <div className="vx-card-header">
           <div>
             <div className="vx-card-title">Profile</div>
-            <div className="vx-card-subtitle">Your account details from VeldrixAI Auth</div>
+            <div className="vx-card-subtitle">Your account details from Veldrix Auth</div>
           </div>
         </div>
         <div className="vx-detail-row">

@@ -46,7 +46,7 @@ export default function SettingsPage() {
       <div className="vx-page-header">
         <div>
           <h1 className="vx-page-title">Settings</h1>
-          <p className="vx-page-desc">Manage your VeldrixAI workspace, policies, and security.</p>
+          <p className="vx-page-desc">Manage your Veldrix workspace, policies, and security.</p>
         </div>
       </div>
 

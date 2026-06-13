@@ -39,10 +39,10 @@ export const metadata: Metadata = {
     "AI compliance",
   ],
   openGraph: {
-    title: "VeldrixAI — Runtime Trust Infrastructure",
+    title: "Veldrix — Runtime Trust Infrastructure",
     description: "The control layer between your AI and the real world.",
     url: "https://veldrixai.ca",
-    siteName: "VeldrixAI",
+    siteName: "Veldrix",
     type: "website",
   },
 };

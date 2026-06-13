@@ -131,7 +131,7 @@ export default function Navbar() {
           <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <div style={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', background: '#abc8bd', animation: 'pulse 2s infinite' }} />
             <span className="announcement-text" style={{ fontSize: 13, color: 'rgba(231,236,239,0.8)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              🚀 VeldrixAI v1.0 is live — Runtime Trust Infrastructure for AI Systems
+              🚀 Veldrix v1.0 is live — Runtime Trust Infrastructure for AI Systems
             </span>
             <a href="/changelog" className="announcement-link" style={{ fontSize: 13, color: '#aab8c0', textDecoration: 'underline', fontWeight: 500, flexShrink: 0 }}>See what&apos;s new →</a>
             <button
@@ -186,7 +186,7 @@ export default function Navbar() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-            }}>VeldrixAI</span>
+            }}>Veldrix</span>
           </Link>
 
           {/* Desktop Nav Links */}
@@ -647,7 +647,7 @@ export default function Navbar() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-              }}>VeldrixAI</span>
+              }}>Veldrix</span>
             </Link>
             <button onClick={() => setMobileOpen(false)} style={{
               background: 'none',

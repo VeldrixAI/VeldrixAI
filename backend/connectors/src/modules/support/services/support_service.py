@@ -21,7 +21,7 @@ _ENV_FILE = Path(__file__).resolve().parents[5] / ".env"  # → backend/.env
 class _EmailSettings(BaseSettings):
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "noreply@veldrixai.ca"
-    EMAIL_FROM_NAME: str = "VeldrixAI"
+    EMAIL_FROM_NAME: str = "Veldrix"
     EMAIL_SUPPORT_ADDRESS: str = "support@veldrixai.ca"
     VELDRIX_UI_URL: str = "https://app.veldrixai.ca"
 
@@ -56,11 +56,12 @@ _PRIORITY_SLA = {
     "critical": "Within 1 hour",
 }
 
+# Desaturated, brand-aligned severity pills (cold metallic semantics — no neon).
 _PRIORITY_PILLS = {
-    "low":      {"color": "#16a34a", "bg": "#f0fdf4", "border": "#bbf7d0"},
-    "medium":   {"color": "#d97706", "bg": "#fffbeb", "border": "#fde68a"},
-    "high":     {"color": "#ea580c", "bg": "#fff7ed", "border": "#fed7aa"},
-    "critical": {"color": "#e11d48", "bg": "#fff1f2", "border": "#fecdd3"},
+    "low":      {"color": "#3E6B59", "bg": "#EAF2EE", "border": "#CFE0D8"},
+    "medium":   {"color": "#8A6A38", "bg": "#F3EDE1", "border": "#E5D7BD"},
+    "high":     {"color": "#A85D3A", "bg": "#F4E9E1", "border": "#E6CDBB"},
+    "critical": {"color": "#9E4A3D", "bg": "#F4E5E2", "border": "#E2C6BF"},
 }
 
 
@@ -103,7 +104,7 @@ def _html_notification(ticket: SupportTicket) -> str:
     try:
         template = _jinja_env.get_template("ticket-notification.html")
         return template.render(
-            brand_name="VeldrixAI",
+            brand_name="Veldrix",
             brand_url=frontend_url,
             support_email=support_addr,
             current_year=datetime.utcnow().year,
@@ -141,7 +142,7 @@ def _html_confirmation(ticket: SupportTicket) -> str:
     try:
         template = _jinja_env.get_template("ticket-confirmation.html")
         return template.render(
-            brand_name="VeldrixAI",
+            brand_name="Veldrix",
             brand_url=frontend_url,
             support_email=support_addr,
             current_year=datetime.utcnow().year,
@@ -164,7 +165,7 @@ def _html_confirmation(ticket: SupportTicket) -> str:
             f"<p>Hi, your ticket <strong>{ticket.ticket_id}</strong> has been received.</p>"
             f"<p>Subject: {ticket.subject}</p>"
             f"<p>Expected response: {sla}</p>"
-            f"<p>VeldrixAI Support &mdash; {support_addr}</p>"
+            f"<p>Veldrix Support &mdash; {support_addr}</p>"
         )
 
 

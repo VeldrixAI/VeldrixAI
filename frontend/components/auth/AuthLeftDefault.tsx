@@ -66,7 +66,7 @@ export default function AuthLeftDefault() {
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
           lineHeight: 1,
-        }}>VeldrixAI</h1>
+        }}>Veldrix</h1>
         <p style={{
           fontFamily: 'var(--font-body)',
           fontSize: 13,

@@ -1,65 +1,66 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome to VeldrixAI — {{ user_name }}{% endblock %}
-{% block preheader %}Your AI trust infrastructure is live. Here's everything you need to know.{% endblock %}
+{% block title %}Welcome to Veldrix, {{ user_name }}{% endblock %}
+{% block preheader %}Your runtime trust layer is live. Here's how to put it to work.{% endblock %}
 
 {% block content %}
 
 <!-- Status pill -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px;">
   <tr>
-    <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:100px;padding:6px 16px;">
-      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;
-                   color:#16a34a;letter-spacing:1.5px;text-transform:uppercase;">
-        Account Activated
+    <td style="background:#eaf2ee;border:1px solid #cfe0d8;border-radius:100px;padding:6px 15px;">
+      <span style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;
+                   color:#3e6b59;letter-spacing:1.4px;text-transform:uppercase;">
+        Account Active
       </span>
     </td>
   </tr>
 </table>
 
 <!-- Headline -->
-<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:26px;
-           font-weight:700;color:#1a1a2e;letter-spacing:-0.5px;line-height:1.2;">
-  Welcome to VeldrixAI,<br>{{ user_name }}.
+<p style="margin:0 0 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:27px;
+           font-weight:700;color:#16252F;letter-spacing:-0.6px;line-height:1.25;">
+  Welcome to Veldrix, {{ user_name }}.
 </p>
-<p style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
-           color:#5a5a7a;line-height:1.75;">
-  Your AI governance layer is now live. Every response your models generate
-  is being evaluated in real time across five trust dimensions.
+<p style="margin:0 0 18px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;
+           color:#44525a;line-height:1.7;">
+  You've just put a control layer between your AI and the real world. From here on,
+  every response your models produce can be evaluated, scored, and — when it matters —
+  stopped before it reaches a user. In real time, at production scale.
 </p>
-
-<!-- Divider -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin-bottom:28px;">
-  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
-</table>
+<p style="margin:0 0 30px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;
+           color:#44525a;line-height:1.7;">
+  The teams that win with AI aren't the ones who ship fastest — they're the ones who can
+  <strong style="color:#16252F;">prove</strong> their systems behave. That's the work you
+  started today, and we're glad to be building it with you.
+</p>
 
 <!-- Account card -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="background:#f8f8fb;border:1px solid #ebebef;border-radius:10px;margin-bottom:28px;">
+       style="background:#f5f7f8;border:1px solid #e8edef;border-radius:12px;margin-bottom:30px;">
   <tr>
     <td style="padding:20px 24px;">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
-                  text-transform:uppercase;color:#9090a8;margin-bottom:14px;">Your Account</div>
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.5px;
+                  text-transform:uppercase;color:#8593a0;margin-bottom:14px;">Your Account</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+          <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
                      padding-bottom:8px;width:90px;">Name</td>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;
-                     color:#1a1a2e;padding-bottom:8px;">{{ user_name }}</td>
+          <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;
+                     color:#16252F;padding-bottom:8px;">{{ user_name }}</td>
         </tr>
         <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+          <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
                      padding-bottom:8px;">Email</td>
-          <td style="font-family:'Courier New',Courier,monospace;font-size:13px;
-                     color:#4f46e5;padding-bottom:8px;">{{ user_email }}</td>
+          <td style="font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;
+                     color:#2D4A5E;padding-bottom:8px;">{{ user_email }}</td>
         </tr>
         <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;">Status</td>
+          <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;">Status</td>
           <td>
-            <span style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;
-                         padding:2px 10px;font-family:Arial,Helvetica,sans-serif;
-                         font-size:11px;font-weight:700;color:#16a34a;letter-spacing:0.5px;">
+            <span style="background:#eaf2ee;border:1px solid #cfe0d8;border-radius:6px;
+                         padding:2px 10px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                         font-size:11px;font-weight:700;color:#3e6b59;letter-spacing:0.5px;">
               Active
             </span>
           </td>
@@ -69,160 +70,89 @@
   </tr>
 </table>
 
-<!-- Five pillars -->
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
-            text-transform:uppercase;color:#9090a8;margin-bottom:14px;">
-  What's active on your account
+<!-- Pillars -->
+<div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#8593a0;margin-bottom:16px;">
+  Five pillars, evaluated on every response
 </div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin-bottom:4px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:30px;">
+  {% set pillars = [
+    ('Safety', 'Harmful or policy-violating content is caught before it ships.'),
+    ('Hallucination', 'Every assertion is scored for factual reliability.'),
+    ('Bias & Fairness', 'Discriminatory patterns are detected and flagged.'),
+    ('Prompt Security', 'Injection and jailbreak attempts are intercepted.'),
+    ('Compliance & PII', 'GDPR / HIPAA exposure and data leakage are prevented.')
+  ] %}
+  {% for name, desc in pillars %}
   <tr>
-    <td width="50%" valign="top" style="padding:0 4px 8px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
-        <tr>
-          <td style="padding:0 0 0 0;height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5);
-                     font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td style="padding:14px 16px;">
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
-                        color:#1a1a2e;margin-bottom:4px;">Safety &amp; Toxicity</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
-                        line-height:1.5;">Harmful content blocked before it reaches users</div>
-          </td>
-        </tr>
-      </table>
+    <td valign="top" width="16" style="padding:0 0 14px 0;">
+      <div style="width:7px;height:7px;border-radius:2px;background:#2D4A5E;margin-top:6px;"></div>
     </td>
-    <td width="50%" valign="top" style="padding:0 0 8px 4px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
-        <tr>
-          <td style="padding:0 0 0 0;height:3px;background:linear-gradient(90deg,#4f46e5,#06b6d4);
-                     font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td style="padding:14px 16px;">
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
-                        color:#1a1a2e;margin-bottom:4px;">Hallucination Guard</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
-                        line-height:1.5;">Confidence scoring on every AI assertion</div>
-          </td>
-        </tr>
-      </table>
+    <td valign="top" style="padding:0 0 14px 0;">
+      <span style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;
+                   color:#16252F;">{{ name }}</span>
+      <span style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#6b7980;">
+        &nbsp;—&nbsp;{{ desc }}</span>
     </td>
   </tr>
-  <tr>
-    <td width="50%" valign="top" style="padding:0 4px 8px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
-        <tr>
-          <td style="height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5);
-                     font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td style="padding:14px 16px;">
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
-                        color:#1a1a2e;margin-bottom:4px;">Bias &amp; Fairness</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
-                        line-height:1.5;">Discriminatory patterns detected and flagged</div>
-          </td>
-        </tr>
-      </table>
-    </td>
-    <td width="50%" valign="top" style="padding:0 0 8px 4px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
-        <tr>
-          <td style="height:3px;background:linear-gradient(90deg,#4f46e5,#06b6d4);
-                     font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td style="padding:14px 16px;">
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
-                        color:#1a1a2e;margin-bottom:4px;">Prompt Security</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
-                        line-height:1.5;">Injection and jailbreak attempts intercepted</div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" valign="top" style="padding:0 0 8px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="border:1px solid #ebebef;border-radius:10px;overflow:hidden;">
-        <tr>
-          <td style="height:3px;background:linear-gradient(90deg,#7c3aed,#4f46e5,#06b6d4);
-                     font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td style="padding:14px 16px;">
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
-                        color:#1a1a2e;margin-bottom:4px;">Compliance &amp; PII</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9090a8;
-                        line-height:1.5;">GDPR &amp; HIPAA data masking with regulatory guardrails</div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
+  {% endfor %}
 </table>
 
 <!-- Divider -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin:20px 0 24px;">
-  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:26px;">
+  <tr><td style="height:1px;background:#e8edef;font-size:0;line-height:0;">&nbsp;</td></tr>
 </table>
 
-<!-- Get started steps -->
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;
-            text-transform:uppercase;color:#9090a8;margin-bottom:18px;">
-  Get started in 3 steps
+<!-- Get started -->
+<div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.5px;
+            text-transform:uppercase;color:#8593a0;margin-bottom:18px;">
+  Three steps to your first verdict
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td width="36" valign="top" style="padding-top:1px;padding-bottom:16px;">
-      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
-                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
-                  font-size:11px;font-weight:700;color:#ffffff;">1</div>
+    <td width="38" valign="top" style="padding-bottom:18px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:#2D4A5E;
+                  text-align:center;line-height:28px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                  font-size:12px;font-weight:700;color:#ffffff;">1</div>
     </td>
-    <td valign="top" style="padding-bottom:16px;">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
-                  color:#1a1a2e;margin-bottom:3px;">Install the SDK</div>
-      <div style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#4f46e5;
-                  background:#f4f0ff;border-radius:6px;padding:5px 10px;display:inline-block;">
+    <td valign="top" style="padding-bottom:18px;">
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;
+                  color:#16252F;margin-bottom:6px;">Install the SDK</div>
+      <div style="font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;color:#2D4A5E;
+                  background:#eef2f3;border:1px solid #e1e7ea;border-radius:7px;padding:7px 12px;display:inline-block;">
         pip install veldrixai
       </div>
     </td>
   </tr>
   <tr>
-    <td width="36" valign="top" style="padding-top:1px;padding-bottom:16px;">
-      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
-                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
-                  font-size:11px;font-weight:700;color:#ffffff;">2</div>
+    <td width="38" valign="top" style="padding-bottom:18px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:#2D4A5E;
+                  text-align:center;line-height:28px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                  font-size:12px;font-weight:700;color:#ffffff;">2</div>
     </td>
-    <td valign="top" style="padding-bottom:16px;">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
-                  color:#1a1a2e;margin-bottom:3px;">Wrap your LLM calls</div>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;line-height:1.5;">
-        Pass your API key, wrap any model call in one line, and trust scores flow automatically.
+    <td valign="top" style="padding-bottom:18px;">
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;
+                  color:#16252F;margin-bottom:5px;">Wrap a model call</div>
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#6b7980;line-height:1.6;">
+        Drop your API key in, wrap any LLM call in a single line, and trust scores start
+        flowing automatically — no rewiring your stack.
       </div>
     </td>
   </tr>
   <tr>
-    <td width="36" valign="top" style="padding-top:1px;">
-      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
-                  text-align:center;line-height:28px;font-family:Arial,Helvetica,sans-serif;
-                  font-size:11px;font-weight:700;color:#ffffff;">3</div>
+    <td width="38" valign="top">
+      <div style="width:28px;height:28px;border-radius:8px;background:#2D4A5E;
+                  text-align:center;line-height:28px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                  font-size:12px;font-weight:700;color:#ffffff;">3</div>
     </td>
     <td valign="top">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;
-                  color:#1a1a2e;margin-bottom:3px;">Review your dashboard</div>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;line-height:1.5;">
-        See trust scores, flag distributions, and governance health in real time.
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;
+                  color:#16252F;margin-bottom:5px;">Watch the dashboard</div>
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#6b7980;line-height:1.6;">
+        Trust scores, flagged responses, and an audit trail your compliance team will
+        actually accept — updating in real time.
       </div>
     </td>
   </tr>
@@ -232,43 +162,28 @@
 
 {% block cta_section %}
 <tr>
-  <td style="padding:0 40px 40px;">
+  <td style="padding:4px 40px 38px;">
 
     <!-- Primary CTA -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-           style="margin-bottom:16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
       <tr>
-        <td style="border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);
-                   text-align:center;">
+        <td style="border-radius:10px;background:#2D4A5E;">
           <a href="{{ dashboard_url }}"
-             style="display:block;padding:16px;font-family:Arial,Helvetica,sans-serif;
+             style="display:inline-block;padding:15px 32px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
                     font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;
                     border-radius:10px;letter-spacing:0.2px;">
-            Open Your Dashboard &rarr;
+            Open your dashboard &rarr;
           </a>
         </td>
       </tr>
     </table>
 
-    <!-- Secondary link -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td align="center">
-          <a href="{{ docs_url }}"
-             style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#7c3aed;
-                    text-decoration:none;">
-            Read the documentation
-          </a>
-          <span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;
-                       color:#b0b0c4;">&nbsp;&middot;&nbsp;</span>
-          <a href="{{ dashboard_url }}/billing"
-             style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#7c3aed;
-                    text-decoration:none;">
-            View plan details
-          </a>
-        </td>
-      </tr>
-    </table>
+    <!-- Secondary links -->
+    <p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#8593a0;line-height:1.6;">
+      New here? Start with the
+      <a href="{{ docs_url }}" style="color:#2D4A5E;text-decoration:none;font-weight:600;">documentation</a>,
+      or just reply to this email — a real person on our team reads every message.
+    </p>
 
   </td>
 </tr>

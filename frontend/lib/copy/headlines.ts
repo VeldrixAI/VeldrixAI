@@ -2,7 +2,7 @@ export const HEADLINES = {
   a: {
     primary: "Runtime Trust Infrastructure for Production AI.",
     secondary:
-      "VeldrixAI evaluates every LLM response in under 500ms and gives you the audit trail to prove it.",
+      "Veldrix evaluates every LLM response in under 500ms and gives you the audit trail to prove it.",
   },
   b: {
     primary: "Catch what your LLM gets wrong.",

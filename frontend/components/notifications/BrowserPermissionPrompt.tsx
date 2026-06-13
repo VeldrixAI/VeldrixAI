@@ -14,8 +14,8 @@ export function BrowserPermissionPrompt({ onAllow, onDismiss }: Props) {
           top: "calc(100% + 8px)",
           right: 0,
           width: 320,
-          background: "#0C0F1A",
-          border: "1px solid rgba(124,58,237,0.3)",
+          background: "#0e161a",
+          border: "1px solid rgba(45,74,94,0.3)",
           borderRadius: 14,
           padding: "18px 20px",
           boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
@@ -27,7 +27,7 @@ export function BrowserPermissionPrompt({ onAllow, onDismiss }: Props) {
           style={{
             fontSize: 13,
             fontWeight: 600,
-            color: "#F0F2FF",
+            color: "#e7ecef",
             fontFamily: "Syne, sans-serif",
             marginBottom: 8,
           }}
@@ -37,13 +37,13 @@ export function BrowserPermissionPrompt({ onAllow, onDismiss }: Props) {
         <div
           style={{
             fontSize: 12,
-            color: "rgba(240,242,255,0.45)",
+            color: "rgba(231,236,239,0.45)",
             fontFamily: "DM Sans, sans-serif",
             lineHeight: 1.5,
             marginBottom: 16,
           }}
         >
-          Get instant OS notifications when VeldrixAI intercepts a flagged or
+          Get instant OS notifications when Veldrix intercepts a flagged or
           blocked request — even when this tab is in the background.
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -51,7 +51,7 @@ export function BrowserPermissionPrompt({ onAllow, onDismiss }: Props) {
             onClick={onAllow}
             style={{
               flex: 1,
-              background: "#7C3AED",
+              background: "#2d4a5e",
               color: "#fff",
               border: "none",
               borderRadius: 8,
@@ -76,7 +76,7 @@ export function BrowserPermissionPrompt({ onAllow, onDismiss }: Props) {
             style={{
               flex: 1,
               background: "rgba(255,255,255,0.05)",
-              color: "rgba(240,242,255,0.5)",
+              color: "rgba(231,236,239,0.5)",
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 8,
               padding: "7px 0",

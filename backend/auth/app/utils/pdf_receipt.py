@@ -1,8 +1,8 @@
 """
-VeldrixAI PDF Receipt Generator — ReportLab
+Veldrix PDF Receipt Generator — ReportLab
 Branded with the "Royal Governance" metallic palette (deep-audit void
 background, slate/platinum accents, icy silver-green for success) and the
-VeldrixAI shield mark. Matches the product UI; no legacy violet/cyan.
+Veldrix shield mark. Matches the product UI; no legacy violet/cyan.
 """
 import os
 from datetime import datetime, timezone
@@ -82,18 +82,14 @@ def generate_receipt_pdf(
         c.drawImage(_SHIELD_PATH, 42, H - 64, width=_ls, height=_ls,
                     mask="auto", preserveAspectRatio=True)
     else:
-        c.setStrokeColor(HexColor(_SNOW))
-        c.setLineWidth(2.5)
-        c.setLineCap(1)
-        c.line(48, H - 48, 62, H - 66)
-        c.line(62, H - 66, 76, H - 48)
-        c.setFillColor(HexColor(_SILVER))
-        c.circle(62, H - 66, 3.5, fill=1, stroke=0)
+        # Neutral slate roundel fallback (no legacy chevron mark)
+        c.setFillColor(HexColor(_SLATE))
+        c.roundRect(42, H - 64, _ls, _ls, 8, fill=1, stroke=0)
 
     # Brand name
     c.setFont("Helvetica-Bold", 18)
     c.setFillColor(HexColor(_SNOW))
-    c.drawString(86, H - 44, "VeldrixAI")
+    c.drawString(86, H - 44, "Veldrix")
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor(_MUTED))
     c.drawString(86, H - 57, "Runtime Trust Infrastructure")
@@ -173,9 +169,9 @@ def generate_receipt_pdf(
 
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor(_MUTED))
-    c.drawCentredString(W / 2, footer_y, "VeldrixAI · Runtime Trust Infrastructure · support@veldrixai.ca")
+    c.drawCentredString(W / 2, footer_y, "Veldrix · Runtime Trust Infrastructure · support@veldrixai.ca")
     c.setFillColor(HexColor(_BORDER))
-    c.drawCentredString(W / 2, footer_y - 14, "© 2026 VeldrixAI Inc. All rights reserved.")
+    c.drawCentredString(W / 2, footer_y - 14, "© 2026 Veldrix Inc. All rights reserved.")
 
     # Trust badges
     badges = ["SOC 2 Type II", "ISO 27001", "AES-256 Encrypted"]

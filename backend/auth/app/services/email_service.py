@@ -49,12 +49,12 @@ class EmailService:
     def _render(self, template_name: str, context: Dict[str, Any]) -> str:
         """Render a Jinja2 template with brand context injected."""
         base_ctx: Dict[str, Any] = {
-            "brand_name": "VeldrixAI",
+            "brand_name": "Veldrix",
             "brand_url": self.frontend_url,
-            "brand_primary": "#7C3AED",
-            "brand_cyan": "#06B6D4",
-            "brand_emerald": "#10B981",
-            "brand_void": "#050810",
+            "brand_primary": "#2D4A5E",   # slate governance
+            "brand_silver": "#8FA6B5",    # burnished silver-blue
+            "brand_success": "#6FA98F",   # icy silver-green
+            "brand_ink": "#16252F",
             "support_email": self.support_address,
             "current_year": datetime.date.today().year,
         }
@@ -121,7 +121,7 @@ class EmailService:
         )
         return self._send(
             to_email=to_email,
-            subject="Welcome to VeldrixAI — Your AI Governance Layer is Ready",
+            subject="Welcome to Veldrix — your runtime trust layer is live",
             html_body=html,
         )
 
@@ -145,7 +145,7 @@ class EmailService:
         )
         return self._send(
             to_email=to_email,
-            subject="You're live on VeldrixAI — Trust Infrastructure Activated",
+            subject="You're live on Veldrix — trust infrastructure activated",
             html_body=html,
         )
 
@@ -175,7 +175,7 @@ class EmailService:
         )
         return self._send(
             to_email=to_email,
-            subject=f"[VeldrixAI Support] Ticket #{ticket_number} Received — {ticket_subject}",
+            subject=f"[Veldrix Support] Ticket #{ticket_number} received — {ticket_subject}",
             html_body=html,
             from_address=self.support_address,
         )

@@ -119,7 +119,7 @@ function BillingPageInner() {
         >
           <ShieldMark size={32} />
           <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "18px", color: "#fff" }}>
-            VeldrixAI
+            Veldrix
           </span>
         </a>
         <div style={{ display: "flex", gap: "12px" }}>

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # Email (Resend — https://resend.com)
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "noreply@veldrixai.ca"
-    EMAIL_FROM_NAME: str = "VeldrixAI"
+    EMAIL_FROM_NAME: str = "Veldrix"
     EMAIL_SUPPORT_ADDRESS: str = "rudramani031@veldrixai.ca"
 
     model_config = SettingsConfigDict(

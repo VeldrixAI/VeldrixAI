@@ -24,8 +24,8 @@ const SEVERITY_CONFIG: Record<
   { color: string; bg: string; label: string; icon: React.ReactNode }
 > = {
   blocked: {
-    color: "#F43F5E",
-    bg: "rgba(244,63,94,0.12)",
+    color: "#be7468",
+    bg: "rgba(190,116,104,0.12)",
     label: "BLOCKED",
     icon: (
       <svg
@@ -33,7 +33,7 @@ const SEVERITY_CONFIG: Record<
         height="13"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#F43F5E"
+        stroke="#be7468"
         strokeWidth="2.5"
         strokeLinecap="round"
       >
@@ -43,8 +43,8 @@ const SEVERITY_CONFIG: Record<
     ),
   },
   flagged: {
-    color: "#F59E0B",
-    bg: "rgba(245,158,11,0.12)",
+    color: "#c2a06a",
+    bg: "rgba(194,160,106,0.12)",
     label: "FLAGGED",
     icon: (
       <svg
@@ -52,7 +52,7 @@ const SEVERITY_CONFIG: Record<
         height="13"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#F59E0B"
+        stroke="#c2a06a"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -64,8 +64,8 @@ const SEVERITY_CONFIG: Record<
     ),
   },
   masked: {
-    color: "#EC4899",
-    bg: "rgba(236,72,153,0.12)",
+    color: "#8fa6b5",
+    bg: "rgba(143,166,181,0.12)",
     label: "MASKED",
     icon: (
       <svg
@@ -73,7 +73,7 @@ const SEVERITY_CONFIG: Record<
         height="13"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#EC4899"
+        stroke="#8fa6b5"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -84,8 +84,8 @@ const SEVERITY_CONFIG: Record<
     ),
   },
   escalated: {
-    color: "#7C3AED",
-    bg: "rgba(124,58,237,0.12)",
+    color: "#2d4a5e",
+    bg: "rgba(45,74,94,0.12)",
     label: "ESCALATED",
     icon: (
       <svg
@@ -93,7 +93,7 @@ const SEVERITY_CONFIG: Record<
         height="13"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#7C3AED"
+        stroke="#2d4a5e"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -162,11 +162,11 @@ export function NotificationPanel({
           right: 0,
           width: 400,
           maxHeight: "calc(100vh - 80px)",
-          background: "#0C0F1A",
-          border: "1px solid rgba(124,58,237,0.25)",
+          background: "#0e161a",
+          border: "1px solid rgba(45,74,94,0.25)",
           borderRadius: 16,
           boxShadow:
-            "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,58,237,0.1)",
+            "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(45,74,94,0.1)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
@@ -191,7 +191,7 @@ export function NotificationPanel({
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 14,
-                color: "#F0F2FF",
+                color: "#e7ecef",
                 letterSpacing: "-0.2px",
               }}
             >
@@ -200,7 +200,7 @@ export function NotificationPanel({
             {unreadCount > 0 && (
               <span
                 style={{
-                  background: "#F43F5E",
+                  background: "#be7468",
                   color: "#fff",
                   fontSize: 10,
                   fontWeight: 600,
@@ -219,7 +219,7 @@ export function NotificationPanel({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "rgba(240,242,255,0.35)",
+                color: "rgba(231,236,239,0.35)",
                 fontSize: 11,
                 fontFamily: "DM Sans, sans-serif",
                 cursor: "pointer",
@@ -240,12 +240,12 @@ export function NotificationPanel({
               style={{
                 padding: "40px 20px",
                 textAlign: "center",
-                color: "rgba(240,242,255,0.25)",
+                color: "rgba(231,236,239,0.25)",
                 fontFamily: "DM Sans, sans-serif",
                 fontSize: 13,
               }}
             >
-              No alerts yet. VeldrixAI is watching.
+              No alerts yet. Veldrix is watching.
             </div>
           ) : (
             notifications.map((n, i) => {
@@ -266,7 +266,7 @@ export function NotificationPanel({
                         : "none",
                     cursor: "pointer",
                     background: !n.is_read
-                      ? "rgba(124,58,237,0.05)"
+                      ? "rgba(45,74,94,0.05)"
                       : "transparent",
                     transition: "background 0.12s",
                   }}
@@ -276,7 +276,7 @@ export function NotificationPanel({
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLDivElement).style.background =
-                      !n.is_read ? "rgba(124,58,237,0.05)" : "transparent";
+                      !n.is_read ? "rgba(45,74,94,0.05)" : "transparent";
                   }}
                 >
                   {/* Severity icon */}
@@ -322,7 +322,7 @@ export function NotificationPanel({
                       <span
                         style={{
                           fontSize: 10,
-                          color: "rgba(240,242,255,0.25)",
+                          color: "rgba(231,236,239,0.25)",
                           fontFamily: "DM Sans, sans-serif",
                           whiteSpace: "nowrap",
                           flexShrink: 0,
@@ -335,7 +335,7 @@ export function NotificationPanel({
                     <div
                       style={{
                         fontSize: 12.5,
-                        color: "rgba(240,242,255,0.85)",
+                        color: "rgba(231,236,239,0.85)",
                         fontFamily: "DM Sans, sans-serif",
                         lineHeight: 1.45,
                         marginBottom: 4,
@@ -347,7 +347,7 @@ export function NotificationPanel({
                     <div
                       style={{
                         fontSize: 11,
-                        color: "rgba(240,242,255,0.35)",
+                        color: "rgba(231,236,239,0.35)",
                         fontFamily: "DM Sans, sans-serif",
                         lineHeight: 1.4,
                         marginBottom: n.model_name || n.agent_name || n.endpoint ? 4 : 0,
@@ -361,7 +361,7 @@ export function NotificationPanel({
                         style={{
                           fontSize: 10,
                           fontFamily: "JetBrains Mono, monospace",
-                          color: "rgba(240,242,255,0.2)",
+                          color: "rgba(231,236,239,0.2)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -383,7 +383,7 @@ export function NotificationPanel({
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        background: "#7C3AED",
+                        background: "#2d4a5e",
                         flexShrink: 0,
                         marginTop: 6,
                       }}
@@ -411,7 +411,7 @@ export function NotificationPanel({
               border: "none",
               padding: 0,
               fontSize: 12,
-              color: "#7C3AED",
+              color: "#2d4a5e",
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 500,
               cursor: "pointer",

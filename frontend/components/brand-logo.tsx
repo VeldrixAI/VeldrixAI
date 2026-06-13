@@ -3,9 +3,9 @@ import { ShieldMark } from "./shield-mark";
 
 export function BrandLogo({ href = "/" }: { href?: string }) {
   return (
-    <Link className="brand" href={href} aria-label="VeldrixAI home">
+    <Link className="brand" href={href} aria-label="Veldrix home">
       <ShieldMark className="brand-icon" />
-      <span>VeldrixAI</span>
+      <span>Veldrix</span>
     </Link>
   );
 }

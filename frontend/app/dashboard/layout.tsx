@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           borderTopColor: "#2d4a5e",
           animation: "spin 0.9s linear infinite",
         }}/>
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(231,236,239,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>Loading VeldrixAI</p>
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "13px", color: "rgba(231,236,239,0.4)", letterSpacing: "2px", textTransform: "uppercase" }}>Loading Veldrix</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -257,7 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div>
               <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "19px", letterSpacing: "-0.4px", color: "white", lineHeight: 1 }}>
-                Veldrix<span className="shimmer-text">AI</span>
+                Veldrix
               </div>
               <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 500, fontSize: "9px", letterSpacing: "3px", textTransform: "uppercase", color: "rgba(231,236,239,0.35)", marginTop: "2px" }}>
                 Governance Layer
@@ -455,7 +455,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Footer */}
         <footer className="vx-app-footer">
           <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", color: "rgba(231,236,239,0.2)", letterSpacing: "1px" }}>
-            © 2026 VeldrixAI · Runtime Trust Infrastructure · AES-256 Encrypted
+            © 2026 Veldrix · Runtime Trust Infrastructure · AES-256 Encrypted
           </span>
           <div style={{ display: "flex", gap: "20px" }}>
             {["Privacy Policy", "Terms of Service", "Security Audit"].map((l) => (

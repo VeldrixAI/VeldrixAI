@@ -16,7 +16,7 @@ function IcoBell({ active }: { active: boolean }) {
       height="20"
       viewBox="0 0 24 24"
       fill="none"
-      stroke={active ? "#7C3AED" : "currentColor"}
+      stroke={active ? "#2d4a5e" : "currentColor"}
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -31,7 +31,7 @@ function fireBrowserNotification(n: NotificationPayload) {
   if (typeof window === "undefined" || typeof Notification === "undefined")
     return;
   try {
-    const notif = new Notification(`VeldrixAI — ${n.title}`, {
+    const notif = new Notification(`Veldrix — ${n.title}`, {
       body: n.message,
       icon: "/favicon.ico",
       tag: n.id,
@@ -223,10 +223,10 @@ export function NotificationBell({ userId }: Props) {
         style={{
           padding: "8px",
           borderRadius: "50%",
-          background: hov || isOpen ? "rgba(124,58,237,0.12)" : "none",
+          background: hov || isOpen ? "rgba(45,74,94,0.12)" : "none",
           border: "none",
           cursor: "pointer",
-          color: "rgba(240,242,255,0.6)",
+          color: "rgba(231,236,239,0.6)",
           transition: "background 0.2s",
           display: "flex",
           alignItems: "center",
@@ -244,7 +244,7 @@ export function NotificationBell({ userId }: Props) {
               minWidth: 16,
               height: 16,
               borderRadius: 9999,
-              background: "#F43F5E",
+              background: "#be7468",
               color: "#fff",
               fontSize: 9,
               fontWeight: 700,
@@ -253,7 +253,7 @@ export function NotificationBell({ userId }: Props) {
               alignItems: "center",
               justifyContent: "center",
               padding: "0 3px",
-              border: "2px solid #050810",
+              border: "2px solid #0a1014",
               animation: "veldrix-badge-pulse 2s ease-in-out infinite",
               lineHeight: 1,
             }}
@@ -289,8 +289,8 @@ export function NotificationBell({ userId }: Props) {
 
       <style>{`
         @keyframes veldrix-badge-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.5); }
-          50%       { box-shadow: 0 0 0 4px rgba(244,63,94,0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(190,116,104,0.5); }
+          50%       { box-shadow: 0 0 0 4px rgba(190,116,104,0); }
         }
         @keyframes veldrix-panel-in {
           from { opacity: 0; transform: translateY(-6px) scale(0.98); }

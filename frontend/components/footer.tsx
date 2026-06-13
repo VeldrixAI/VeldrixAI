@@ -43,7 +43,7 @@ export function Footer() {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} VeldrixAI. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Veldrix. All rights reserved.</p>
           <div className="footer-social">
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

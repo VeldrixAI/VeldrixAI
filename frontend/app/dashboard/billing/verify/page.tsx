@@ -60,10 +60,10 @@ function OTPInput({
             height: "64px",
             borderRadius: "12px",
             border: digit
-              ? "2px solid rgba(124,58,237,0.7)"
+              ? "2px solid rgba(45,74,94,0.7)"
               : "1px solid rgba(255,255,255,0.12)",
             background: digit
-              ? "rgba(124,58,237,0.08)"
+              ? "rgba(45,74,94,0.08)"
               : "rgba(255,255,255,0.03)",
             color: "#fff",
             fontFamily: "'JetBrains Mono', 'Courier New', monospace",
@@ -72,7 +72,7 @@ function OTPInput({
             textAlign: "center",
             outline: "none",
             transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
-            boxShadow: digit ? "0 0 0 3px rgba(124,58,237,0.12)" : "none",
+            boxShadow: digit ? "0 0 0 3px rgba(45,74,94,0.12)" : "none",
           }}
         />
       ))}
@@ -90,7 +90,7 @@ function CountdownTimer({ seconds }: { seconds: number }) {
     <span style={{
       fontFamily: "'JetBrains Mono', 'Courier New', monospace",
       fontSize: "13px",
-      color: urgent ? "var(--vx-rose)" : "var(--vx-text-dim)",
+      color: urgent ? "var(--vx-error)" : "var(--vx-text-dim)",
       fontWeight: urgent ? 600 : 400,
     }}>
       {mins}:{String(secs).padStart(2, "0")}
@@ -215,7 +215,7 @@ function VerifyInner() {
           {/* Top shimmer */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-            background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.7), rgba(6,182,212,0.5), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(45,74,94,0.7), rgba(170,184,192,0.5), transparent)",
           }} />
 
           {/* Lock icon */}
@@ -223,8 +223,8 @@ function VerifyInner() {
             width: "60px",
             height: "60px",
             borderRadius: "50%",
-            background: "rgba(124,58,237,0.12)",
-            border: "1px solid rgba(124,58,237,0.25)",
+            background: "rgba(45,74,94,0.12)",
+            border: "1px solid rgba(45,74,94,0.25)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -254,7 +254,7 @@ function VerifyInner() {
             marginBottom: "28px",
           }}>
             We sent a 6-digit verification code to{" "}
-            <span style={{ color: "var(--vx-violet)", fontWeight: 500 }}>{maskedEmail}</span>
+            <span style={{ color: "var(--vx-slate)", fontWeight: 500 }}>{maskedEmail}</span>
           </p>
 
           {/* OTP input */}
@@ -285,10 +285,10 @@ function VerifyInner() {
             <div style={{
               marginBottom: "16px",
               padding: "12px 16px",
-              background: "rgba(244,63,94,0.08)",
-              border: "1px solid rgba(244,63,94,0.25)",
+              background: "rgba(190,116,104,0.08)",
+              border: "1px solid rgba(190,116,104,0.25)",
               borderRadius: "10px",
-              color: "var(--vx-rose)",
+              color: "var(--vx-error)",
               fontFamily: "var(--vx-font-body)",
               fontSize: "13px",
               textAlign: "left",
@@ -302,10 +302,10 @@ function VerifyInner() {
             <div style={{
               marginBottom: "16px",
               padding: "12px 16px",
-              background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.25)",
+              background: "rgba(194,160,106,0.08)",
+              border: "1px solid rgba(194,160,106,0.25)",
               borderRadius: "10px",
-              color: "var(--vx-amber)",
+              color: "var(--vx-warning)",
               fontFamily: "var(--vx-font-body)",
               fontSize: "13px",
             }}>
@@ -322,8 +322,8 @@ function VerifyInner() {
               padding: "15px 24px",
               borderRadius: "12px",
               background: (otp.length !== 6 || loading || expired)
-                ? "rgba(124,58,237,0.3)"
-                : "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                ? "rgba(45,74,94,0.3)"
+                : "linear-gradient(135deg, #2d4a5e, #243b4c)",
               border: "none",
               color: "#fff",
               fontFamily: "var(--vx-font-display)",
@@ -332,7 +332,7 @@ function VerifyInner() {
               letterSpacing: "1px",
               textTransform: "uppercase",
               cursor: (otp.length !== 6 || loading || expired) ? "not-allowed" : "pointer",
-              boxShadow: "0 8px 28px rgba(124,58,237,0.3)",
+              boxShadow: "0 8px 28px rgba(45,74,94,0.3)",
               marginBottom: "12px",
             }}
           >
@@ -346,7 +346,7 @@ function VerifyInner() {
             style={{
               background: "none",
               border: "none",
-              color: resending || (!expired && secondsLeft > 540) ? "var(--vx-text-dim)" : "var(--vx-violet)",
+              color: resending || (!expired && secondsLeft > 540) ? "var(--vx-text-dim)" : "var(--vx-slate)",
               fontFamily: "var(--vx-font-body)",
               fontSize: "12px",
               cursor: resending || (!expired && secondsLeft > 540) ? "not-allowed" : "pointer",
@@ -374,7 +374,7 @@ function VerifyInner() {
               fontSize: "11px",
               color: "var(--vx-text-dim)",
             }}>
-              Never share this code. VeldrixAI will never ask for it by phone or chat.
+              Never share this code. Veldrix will never ask for it by phone or chat.
             </span>
           </div>
         </div>

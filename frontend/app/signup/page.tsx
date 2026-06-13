@@ -157,7 +157,7 @@ function SignupForm() {
             <VBrandMark suffix="signup-header" size={26} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.5px', color: 'white' }}>
-            Veldrix<span className="shimmer-text">AI</span>
+            Veldrix
           </span>
         </Link>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -198,7 +198,7 @@ function SignupForm() {
 
             {/* Subheading */}
             <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '16px', lineHeight: 1.7, color: 'rgba(231,236,239,0.5)', maxWidth: '360px', marginBottom: '48px' }}>
-              VeldrixAI orchestrates enterprise governance with impenetrable security frameworks and real-time audit intelligence.
+              Veldrix orchestrates enterprise governance with impenetrable security frameworks and real-time audit intelligence.
             </p>
 
             {/* Trust Metrics Bento Grid */}
@@ -481,11 +481,11 @@ function SignupForm() {
             <VBrandMark suffix="signup-footer" size={20} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px', color: 'white' }}>
-            Veldrix<span className="shimmer-text">AI</span>
+            Veldrix
           </span>
         </div>
         <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.2)' }}>
-          © 2026 VeldrixAI Technologies Inc. All Rights Reserved.
+          © 2026 Veldrix Technologies Inc. All Rights Reserved.
         </span>
         <div style={{ display: 'flex', gap: '24px' }}>
           <Link href="/privacy" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.25)', textDecoration: 'none', transition: 'color 0.2s' }}>Privacy Policy</Link>

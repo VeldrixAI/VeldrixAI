@@ -112,7 +112,7 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `VeldrixAI_${(report.report_name || "Report").replace(/ /g, "_")}_${report.vx_report_id || report.id.slice(0, 8)}.pdf`;
+      a.download = `Veldrix_${(report.report_name || "Report").replace(/ /g, "_")}_${report.vx_report_id || report.id.slice(0, 8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -142,7 +142,7 @@ export default function ReportsPage() {
 
   return (
     <>
-      <div style={{ padding: "48px", minHeight: "100%", background: "#050810" }}>
+      <div style={{ padding: "48px", minHeight: "100%", background: "#0a1014" }}>
         {/* Hero */}
         <section
           className="section-reveal"
@@ -162,7 +162,7 @@ export default function ReportsPage() {
                 fontWeight: 800,
                 fontSize: "clamp(32px, 4vw, 52px)",
                 letterSpacing: "-2px",
-                color: "#f0f2ff",
+                color: "#e7ecef",
                 marginBottom: "16px",
                 lineHeight: 1.05,
               }}
@@ -174,7 +174,7 @@ export default function ReportsPage() {
                   fontWeight: 300,
                   fontSize: "28px",
                   letterSpacing: "-0.5px",
-                  color: "rgba(240,242,255,0.3)",
+                  color: "rgba(231,236,239,0.3)",
                   marginLeft: "12px",
                 }}
               >
@@ -186,7 +186,7 @@ export default function ReportsPage() {
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 300,
                 fontSize: "17px",
-                color: "rgba(240,242,255,0.5)",
+                color: "rgba(231,236,239,0.5)",
                 lineHeight: 1.7,
               }}
             >
@@ -200,7 +200,7 @@ export default function ReportsPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span
                 className="live-dot"
-                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}
+                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#6fa98f", display: "inline-block" }}
               />
               <span
                 style={{
@@ -209,7 +209,7 @@ export default function ReportsPage() {
                   fontWeight: 700,
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "#10b981",
+                  color: "#6fa98f",
                 }}
               >
                 System Status: Optimal
@@ -234,7 +234,7 @@ export default function ReportsPage() {
                     fontWeight: 600,
                     letterSpacing: "2px",
                     textTransform: "uppercase",
-                    color: "rgba(240,242,255,0.3)",
+                    color: "rgba(231,236,239,0.3)",
                     marginBottom: "4px",
                   }}
                 >
@@ -245,7 +245,7 @@ export default function ReportsPage() {
                     fontFamily: "JetBrains Mono, monospace",
                     fontWeight: 700,
                     fontSize: "22px",
-                    color: "#7c3aed",
+                    color: "#2d4a5e",
                     letterSpacing: "-0.5px",
                   }}
                 >
@@ -263,7 +263,7 @@ export default function ReportsPage() {
                     fontWeight: 600,
                     letterSpacing: "2px",
                     textTransform: "uppercase",
-                    color: "rgba(240,242,255,0.3)",
+                    color: "rgba(231,236,239,0.3)",
                     marginBottom: "4px",
                   }}
                 >
@@ -274,7 +274,7 @@ export default function ReportsPage() {
                     fontFamily: "JetBrains Mono, monospace",
                     fontWeight: 700,
                     fontSize: "22px",
-                    color: "#10b981",
+                    color: "#6fa98f",
                     letterSpacing: "-0.5px",
                   }}
                 >
@@ -311,7 +311,7 @@ export default function ReportsPage() {
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: "18px",
-                color: "#f0f2ff",
+                color: "#e7ecef",
                 marginBottom: "12px",
               }}
             >
@@ -322,7 +322,7 @@ export default function ReportsPage() {
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 300,
                 fontSize: "14px",
-                color: "rgba(240,242,255,0.4)",
+                color: "rgba(231,236,239,0.4)",
                 marginBottom: "24px",
               }}
             >
@@ -337,7 +337,7 @@ export default function ReportsPage() {
                 padding: "12px 24px",
                 borderRadius: "100px",
                 textDecoration: "none",
-                background: "linear-gradient(135deg, #9f67ff 0%, #7c3aed 50%, #4f46e5 100%)",
+                background: "linear-gradient(135deg, #8fa6b5 0%, #2d4a5e 50%, #243b4c 100%)",
                 color: "white",
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
@@ -357,10 +357,10 @@ export default function ReportsPage() {
                 score == null
                   ? "rgba(255,255,255,0.15)"
                   : score >= 80
-                  ? "#10b981"
+                  ? "#6fa98f"
                   : score >= 60
-                  ? "#f59e0b"
-                  : "#f43f5e";
+                  ? "#c2a06a"
+                  : "#be7468";
               const cardIdx = Math.min(i + 1, 8);
               const canDownload = report.status === "completed";
 
@@ -380,8 +380,8 @@ export default function ReportsPage() {
                     transition: "border-color 0.3s, box-shadow 0.3s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(124,58,237,0.25)";
-                    e.currentTarget.style.boxShadow = "0 8px 40px rgba(124,58,237,0.1)";
+                    e.currentTarget.style.borderColor = "rgba(45,74,94,0.25)";
+                    e.currentTarget.style.boxShadow = "0 8px 40px rgba(45,74,94,0.1)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
@@ -427,7 +427,7 @@ export default function ReportsPage() {
                             fontFamily: "Syne, sans-serif",
                             fontWeight: 800,
                             fontSize: "14px",
-                            color: "#f0f2ff",
+                            color: "#e7ecef",
                           }}
                         >
                           {score != null ? score.toFixed(0) : "—"}
@@ -446,18 +446,18 @@ export default function ReportsPage() {
                         textTransform: "uppercase",
                         background:
                           status === "complete"
-                            ? "rgba(16,185,129,0.1)"
+                            ? "rgba(111,169,143,0.1)"
                             : status === "processing"
-                            ? "rgba(124,58,237,0.1)"
-                            : "rgba(244,63,94,0.1)",
+                            ? "rgba(45,74,94,0.1)"
+                            : "rgba(190,116,104,0.1)",
                         color:
-                          status === "complete" ? "#10b981" : status === "processing" ? "#7c3aed" : "#f43f5e",
+                          status === "complete" ? "#6fa98f" : status === "processing" ? "#2d4a5e" : "#be7468",
                         border: `1px solid ${
                           status === "complete"
-                            ? "rgba(16,185,129,0.2)"
+                            ? "rgba(111,169,143,0.2)"
                             : status === "processing"
-                            ? "rgba(124,58,237,0.2)"
-                            : "rgba(244,63,94,0.2)"
+                            ? "rgba(45,74,94,0.2)"
+                            : "rgba(190,116,104,0.2)"
                         }`,
                       }}
                     >
@@ -472,13 +472,13 @@ export default function ReportsPage() {
                         fontFamily: "Syne, sans-serif",
                         fontWeight: 700,
                         fontSize: "16px",
-                        color: "#f0f2ff",
+                        color: "#e7ecef",
                         marginBottom: "6px",
                         transition: "color 0.2s",
                         cursor: "default",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "#a78bfa")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "#f0f2ff")}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#c5cfd5")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#e7ecef")}
                     >
                       {report.report_name || report.title || `${(report.report_type || "report").replace(/_/g, " ")} · ${report.id.slice(0, 8)}`}
                     </h3>
@@ -487,7 +487,7 @@ export default function ReportsPage() {
                         style={{
                           fontFamily: "JetBrains Mono, monospace",
                           fontSize: "11px",
-                          color: "rgba(240,242,255,0.3)",
+                          color: "rgba(231,236,239,0.3)",
                           marginBottom: "6px",
                           letterSpacing: "0.5px",
                         }}
@@ -495,7 +495,7 @@ export default function ReportsPage() {
                         {report.vx_report_id}
                       </p>
                     )}
-                    <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(240,242,255,0.4)" }}>
+                    <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "12px", color: "rgba(231,236,239,0.4)" }}>
                       {report.report_type.replace(/_/g, " ")}
                     </p>
                   </div>
@@ -518,7 +518,7 @@ export default function ReportsPage() {
                         fontFamily: "DM Sans, sans-serif",
                         fontSize: "10px",
                         fontWeight: 500,
-                        color: "rgba(240,242,255,0.3)",
+                        color: "rgba(231,236,239,0.3)",
                       }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -535,7 +535,7 @@ export default function ReportsPage() {
                         fontFamily: "DM Sans, sans-serif",
                         fontSize: "10px",
                         fontWeight: 500,
-                        color: "rgba(240,242,255,0.3)",
+                        color: "rgba(231,236,239,0.3)",
                       }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -565,21 +565,21 @@ export default function ReportsPage() {
                         padding: "10px",
                         borderRadius: "10px",
                         cursor: canDownload ? "pointer" : "not-allowed",
-                        background: canDownload ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
-                        color: canDownload ? "#7c3aed" : "rgba(240,242,255,0.2)",
+                        background: canDownload ? "rgba(45,74,94,0.15)" : "rgba(255,255,255,0.04)",
+                        color: canDownload ? "#2d4a5e" : "rgba(231,236,239,0.2)",
                         fontFamily: "Syne, sans-serif",
                         fontWeight: 700,
                         fontSize: "11px",
                         letterSpacing: "1px",
                         textTransform: "uppercase",
                         transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
-                        border: `1px solid ${canDownload ? "rgba(124,58,237,0.25)" : "rgba(255,255,255,0.04)"}`,
+                        border: `1px solid ${canDownload ? "rgba(45,74,94,0.25)" : "rgba(255,255,255,0.04)"}`,
                       }}
                       onMouseEnter={(e) => {
-                        if (canDownload) e.currentTarget.style.background = "rgba(124,58,237,0.25)";
+                        if (canDownload) e.currentTarget.style.background = "rgba(45,74,94,0.25)";
                       }}
                       onMouseLeave={(e) => {
-                        if (canDownload) e.currentTarget.style.background = "rgba(124,58,237,0.15)";
+                        if (canDownload) e.currentTarget.style.background = "rgba(45,74,94,0.15)";
                       }}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -602,9 +602,9 @@ export default function ReportsPage() {
                           gap: "6px",
                           padding: "10px",
                           borderRadius: "10px",
-                          border: "1px solid rgba(244,63,94,0.4)",
-                          background: "rgba(244,63,94,0.15)",
-                          color: "#f43f5e",
+                          border: "1px solid rgba(190,116,104,0.4)",
+                          background: "rgba(190,116,104,0.15)",
+                          color: "#be7468",
                           fontFamily: "Syne, sans-serif",
                           fontWeight: 700,
                           fontSize: "10px",
@@ -647,7 +647,7 @@ export default function ReportsPage() {
                           borderRadius: "10px",
                           border: "1px solid rgba(255,255,255,0.05)",
                           background: "transparent",
-                          color: "rgba(240,242,255,0.3)",
+                          color: "rgba(231,236,239,0.3)",
                           fontFamily: "Syne, sans-serif",
                           fontWeight: 700,
                           fontSize: "11px",
@@ -657,11 +657,11 @@ export default function ReportsPage() {
                           transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#f43f5e";
-                          e.currentTarget.style.borderColor = "rgba(244,63,94,0.25)";
+                          e.currentTarget.style.color = "#be7468";
+                          e.currentTarget.style.borderColor = "rgba(190,116,104,0.25)";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.color = "rgba(240,242,255,0.3)";
+                          e.currentTarget.style.color = "rgba(231,236,239,0.3)";
                           e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
                         }}
                       >
@@ -698,7 +698,7 @@ export default function ReportsPage() {
           <div
             key={t.id}
             style={{
-              background: t.type === "success" ? "#10b981" : "#f43f5e",
+              background: t.type === "success" ? "#6fa98f" : "#be7468",
               color: "white",
               padding: "12px 18px",
               borderRadius: "10px",

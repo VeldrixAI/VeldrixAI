@@ -1,84 +1,76 @@
 {% extends "base.html" %}
 
-{% block title %}Ticket {{ ticket_id }} Received{% endblock %}
+{% block title %}Ticket {{ ticket_id }} received{% endblock %}
 {% block preheader %}We've received your request and will respond within {{ sla }}.{% endblock %}
 
 {% block content %}
 
 <!-- Greeting -->
-<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:22px;
-           font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;">
+<p style="margin:0 0 8px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:23px;
+           font-weight:700;color:#16252F;letter-spacing:-0.4px;">
   We've got your ticket.
 </p>
-<p style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
-           color:#5a5a7a;line-height:1.6;">
-  Hi {{ user_name }}, your request has been logged. The VeldrixAI support team
-  will respond within <strong style="color:#1a1a2e;">{{ sla }}</strong>.
+<p style="margin:0 0 30px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;
+           color:#44525a;line-height:1.7;">
+  Hi {{ user_name }}, your request is logged. A member of the Veldrix support team will
+  respond within <strong style="color:#16252F;">{{ sla }}</strong>.
 </p>
 
 <!-- Ticket ID badge -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
   <tr>
-    <td style="background:#f4f0ff;border:1px solid #ddd4fb;border-radius:8px;
-               padding:14px 20px;">
-      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7c3aed;
+    <td style="background:#eef2f3;border:1px solid #dbe3e6;border-radius:10px;padding:14px 20px;">
+      <span style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#2D4A5E;
                    letter-spacing:2px;text-transform:uppercase;">Ticket Number</span><br>
-      <span style="font-family:'Courier New',Courier,monospace;font-size:20px;
-                   font-weight:700;color:#4f46e5;letter-spacing:1px;">{{ ticket_id }}</span>
+      <span style="font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:20px;
+                   font-weight:700;color:#16252F;letter-spacing:1px;">{{ ticket_id }}</span>
     </td>
     <td style="padding-left:12px;vertical-align:middle;">
       <div style="background:{{ priority_bg }};border:1px solid {{ priority_border }};
                   border-radius:100px;padding:5px 14px;display:inline-block;">
-        <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;
-                     font-weight:600;color:{{ priority_color }};
-                     text-transform:uppercase;letter-spacing:1px;">{{ priority }}</span>
+        <span style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;
+                     color:{{ priority_color }};text-transform:uppercase;letter-spacing:1px;">{{ priority }}</span>
       </div>
     </td>
   </tr>
 </table>
 
 <!-- Divider -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin-bottom:28px;">
-  <tr><td style="height:1px;background:#ebebef;font-size:0;line-height:0;">&nbsp;</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:26px;">
+  <tr><td style="height:1px;background:#e8edef;font-size:0;line-height:0;">&nbsp;</td></tr>
 </table>
 
 <!-- Details -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin-bottom:28px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:26px;">
   <tr>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
-               text-transform:uppercase;letter-spacing:1.5px;padding-bottom:6px;
-               width:100px;">Subject</td>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;
-               color:#1a1a2e;padding-bottom:6px;">{{ subject }}</td>
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
+               text-transform:uppercase;letter-spacing:1.5px;padding-bottom:6px;width:100px;">Subject</td>
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;
+               color:#16252F;padding-bottom:6px;">{{ subject }}</td>
   </tr>
   <tr>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
                text-transform:uppercase;letter-spacing:1.5px;padding-bottom:6px;">Category</td>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#5a5a7a;
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#44525a;
                padding-bottom:6px;">{{ category }}</td>
   </tr>
   <tr>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
                text-transform:uppercase;letter-spacing:1.5px;padding-bottom:6px;">Submitted</td>
-    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#5a5a7a;
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#44525a;
                padding-bottom:6px;">{{ submitted_at }}</td>
   </tr>
 </table>
 
 <!-- Description box -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="margin-bottom:32px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:30px;">
   <tr>
-    <td style="background:#f8f8fb;border-left:3px solid #7c3aed;border-radius:0 8px 8px 0;
-               padding:16px 20px;">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9090a8;
+    <td style="background:#f5f7f8;border-left:3px solid #2D4A5E;border-radius:0 8px 8px 0;padding:16px 20px;">
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#8593a0;
                   text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">
         Your message
       </div>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#5a5a7a;
-                  line-height:1.7;">
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#44525a;line-height:1.7;">
         {{ description | truncate(500) }}
       </div>
     </td>
@@ -86,12 +78,9 @@
 </table>
 
 <!-- Reply note -->
-<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;
-           color:#9090a8;line-height:1.6;">
-  To add more detail, simply reply to this email with your ticket number.
-  You can also reach us at
-  <a href="mailto:{{ support_email }}"
-     style="color:#7c3aed;text-decoration:none;">{{ support_email }}</a>.
+<p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#8593a0;line-height:1.7;">
+  Need to add detail? Just reply to this email with your ticket number, or reach us at
+  <a href="mailto:{{ support_email }}" style="color:#2D4A5E;text-decoration:none;font-weight:600;">{{ support_email }}</a>.
 </p>
 
 {% endblock %}

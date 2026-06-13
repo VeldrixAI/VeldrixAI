@@ -21,7 +21,7 @@ def _make_mock_resend():
 def _mock_settings():
     s = MagicMock()
     s.RESEND_API_KEY = "re_test_key_abc123"
-    s.EMAIL_FROM_NAME = "VeldrixAI"
+    s.EMAIL_FROM_NAME = "Veldrix"
     s.EMAIL_FROM = "noreply@veldrixai.ca"
     s.EMAIL_SUPPORT_ADDRESS = "rudramani031@veldrixai.ca"
     s.VELDRIX_UI_URL = "https://app.veldrix.com"
@@ -50,7 +50,7 @@ def test_send_auth_welcome_success(email_svc):
     mock_resend.Emails.send.assert_called_once()
     payload = mock_resend.Emails.send.call_args[0][0]
     assert payload["to"] == ["user@example.com"]
-    assert "Welcome to VeldrixAI" in payload["subject"]
+    assert "Welcome to Veldrix" in payload["subject"]
     assert "noreply@veldrixai.ca" in payload["from"]
 
 
@@ -130,7 +130,7 @@ def test_send_onboarding_complete_success(email_svc):
     assert result is True
     payload = mock_resend.Emails.send.call_args[0][0]
     assert payload["to"] == ["user@example.com"]
-    assert "live on VeldrixAI" in payload["subject"]
+    assert "live on Veldrix" in payload["subject"]
 
 
 # ── Template rendering ────────────────────────────────────────────────────────
@@ -146,8 +146,8 @@ def test_render_injects_brand_context(email_svc):
             "docs_url": "https://app.veldrix.com/docs",
         },
     )
-    assert "VeldrixAI" in html
-    assert "7c3aed" in html        # brand primary colour
+    assert "Veldrix" in html
+    assert "2D4A5E" in html        # brand primary colour (slate governance)
     assert "Rudra" in html
     assert "rudra@example.com" in html
 

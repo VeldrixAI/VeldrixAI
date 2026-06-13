@@ -128,7 +128,7 @@ export default function ApiKeysPage() {
   const govOffset = govHealth !== null ? (691 * (1 - govHealth / 100)).toFixed(1) : "110";
 
   return (
-    <div style={{ padding: "48px", minHeight: "100%", background: "#050810", position: "relative" }}>
+    <div style={{ padding: "48px", minHeight: "100%", background: "#0a1014", position: "relative" }}>
       {/* Error banner */}
       {error && (
         <div
@@ -136,9 +136,9 @@ export default function ApiKeysPage() {
             marginBottom: "16px",
             padding: "12px 16px",
             borderRadius: "10px",
-            background: "rgba(244,63,94,0.1)",
-            border: "1px solid rgba(244,63,94,0.2)",
-            color: "#f43f5e",
+            background: "rgba(190,116,104,0.1)",
+            border: "1px solid rgba(190,116,104,0.2)",
+            color: "#be7468",
             fontFamily: "DM Sans, sans-serif",
             fontSize: "14px",
             display: "flex",
@@ -149,7 +149,7 @@ export default function ApiKeysPage() {
           {error}
           <button
             onClick={() => setError("")}
-            style={{ background: "none", border: "none", color: "#f43f5e", cursor: "pointer", fontSize: "18px", lineHeight: 1 }}
+            style={{ background: "none", border: "none", color: "#be7468", cursor: "pointer", fontSize: "18px", lineHeight: 1 }}
           >
             ×
           </button>
@@ -163,8 +163,8 @@ export default function ApiKeysPage() {
             marginBottom: "24px",
             padding: "20px 24px",
             borderRadius: "16px",
-            background: "rgba(16,185,129,0.08)",
-            border: "1px solid rgba(16,185,129,0.2)",
+            background: "rgba(111,169,143,0.08)",
+            border: "1px solid rgba(111,169,143,0.2)",
           }}
         >
           <div
@@ -172,7 +172,7 @@ export default function ApiKeysPage() {
               fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: "14px",
-              color: "#10b981",
+              color: "#6fa98f",
               marginBottom: "12px",
             }}
           >
@@ -184,7 +184,7 @@ export default function ApiKeysPage() {
                 flex: 1,
                 fontFamily: "JetBrains Mono, monospace",
                 fontSize: "13px",
-                color: "#f0f2ff",
+                color: "#e7ecef",
                 wordBreak: "break-all",
                 background: "rgba(0,0,0,0.3)",
                 padding: "10px 14px",
@@ -199,9 +199,9 @@ export default function ApiKeysPage() {
               style={{
                 padding: "10px 16px",
                 borderRadius: "8px",
-                border: "1px solid rgba(16,185,129,0.3)",
-                background: "rgba(16,185,129,0.1)",
-                color: "#10b981",
+                border: "1px solid rgba(111,169,143,0.3)",
+                background: "rgba(111,169,143,0.1)",
+                color: "#6fa98f",
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 600,
                 fontSize: "12px",
@@ -218,7 +218,7 @@ export default function ApiKeysPage() {
                 borderRadius: "8px",
                 border: "1px solid rgba(255,255,255,0.07)",
                 background: "transparent",
-                color: "rgba(240,242,255,0.4)",
+                color: "rgba(231,236,239,0.4)",
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 600,
                 fontSize: "12px",
@@ -240,7 +240,7 @@ export default function ApiKeysPage() {
               fontWeight: 800,
               fontSize: "clamp(32px, 4vw, 52px)",
               letterSpacing: "-2px",
-              color: "#f0f2ff",
+              color: "#e7ecef",
               lineHeight: 1.05,
             }}
           >
@@ -251,11 +251,11 @@ export default function ApiKeysPage() {
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 300,
               fontSize: "17px",
-              color: "rgba(240,242,255,0.5)",
+              color: "rgba(231,236,239,0.5)",
               lineHeight: 1.7,
             }}
           >
-            The API key is the root of trust for your VeldrixAI instances. Manage cryptographic
+            The API key is the root of trust for your Veldrix instances. Manage cryptographic
             identities and monitor real-time governance health across your entire infrastructure.
           </p>
           <div>
@@ -275,14 +275,14 @@ export default function ApiKeysPage() {
                 color: "white",
                 cursor: "pointer",
                 transition: "color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s",
-                boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
+                boxShadow: "0 4px 20px rgba(45,74,94,0.35)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = "0 8px 40px rgba(124,58,237,0.55)";
+                e.currentTarget.style.boxShadow = "0 8px 40px rgba(45,74,94,0.55)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(124,58,237,0.35)";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,74,94,0.35)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -322,7 +322,7 @@ export default function ApiKeysPage() {
             style={{
               padding: "20px 28px",
               borderBottom: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(10,12,21,0.4)",
+              background: "rgba(14,22,26,0.4)",
             }}
           >
             <h3
@@ -332,7 +332,7 @@ export default function ApiKeysPage() {
                 fontWeight: 700,
                 letterSpacing: "3px",
                 textTransform: "uppercase",
-                color: "rgba(240,242,255,0.35)",
+                color: "rgba(231,236,239,0.35)",
               }}
             >
               Active Credentials
@@ -353,7 +353,7 @@ export default function ApiKeysPage() {
                         fontWeight: 700,
                         letterSpacing: "2px",
                         textTransform: "uppercase",
-                        color: "rgba(240,242,255,0.25)",
+                        color: "rgba(231,236,239,0.25)",
                         borderBottom: "1px solid rgba(255,255,255,0.05)",
                         textAlign: idx === 3 ? "right" : "left",
                       }}
@@ -390,7 +390,7 @@ export default function ApiKeysPage() {
                         textAlign: "center",
                         fontFamily: "DM Sans, sans-serif",
                         fontSize: "14px",
-                        color: "rgba(240,242,255,0.25)",
+                        color: "rgba(231,236,239,0.25)",
                       }}
                     >
                       No API keys found. Generate your first key above.
@@ -420,7 +420,7 @@ export default function ApiKeysPage() {
                                 height: "8px",
                                 borderRadius: "50%",
                                 flexShrink: 0,
-                                background: isActive ? "#10b981" : "#f43f5e",
+                                background: isActive ? "#6fa98f" : "#be7468",
                               }}
                             />
                             <span
@@ -428,7 +428,7 @@ export default function ApiKeysPage() {
                                 fontFamily: "Syne, sans-serif",
                                 fontWeight: 700,
                                 fontSize: "14px",
-                                color: "#f0f2ff",
+                                color: "#e7ecef",
                               }}
                             >
                               {key.name || `Key · ${key.key_prefix || key.id.slice(0, 8)}`}
@@ -443,7 +443,7 @@ export default function ApiKeysPage() {
                               style={{
                                 fontFamily: "JetBrains Mono, monospace",
                                 fontSize: "12px",
-                                color: "rgba(240,242,255,0.35)",
+                                color: "rgba(231,236,239,0.35)",
                                 letterSpacing: "0.5px",
                               }}
                             >
@@ -460,7 +460,7 @@ export default function ApiKeysPage() {
                                 border: "none",
                                 cursor: "pointer",
                                 padding: "4px",
-                                color: copiedId === key.id ? "#10b981" : "rgba(240,242,255,0.25)",
+                                color: copiedId === key.id ? "#6fa98f" : "rgba(231,236,239,0.25)",
                                 transition: "color 0.2s",
                               }}
                               title="Copy hash"
@@ -485,7 +485,7 @@ export default function ApiKeysPage() {
                             style={{
                               fontFamily: "DM Sans, sans-serif",
                               fontSize: "13px",
-                              color: key.last_used_at ? "rgba(240,242,255,0.5)" : "rgba(240,242,255,0.2)",
+                              color: key.last_used_at ? "rgba(231,236,239,0.5)" : "rgba(231,236,239,0.2)",
                             }}
                           >
                             {key.last_used_at ? formatRelativeTime(key.last_used_at) : "Inactive"}
@@ -502,9 +502,9 @@ export default function ApiKeysPage() {
                                   style={{
                                     padding: "6px 12px",
                                     borderRadius: "8px",
-                                    border: "1px solid rgba(244,63,94,0.4)",
-                                    background: "rgba(244,63,94,0.12)",
-                                    color: "#f43f5e",
+                                    border: "1px solid rgba(190,116,104,0.4)",
+                                    background: "rgba(190,116,104,0.12)",
+                                    color: "#be7468",
                                     fontFamily: "DM Sans, sans-serif",
                                     fontSize: "11px",
                                     fontWeight: 700,
@@ -521,7 +521,7 @@ export default function ApiKeysPage() {
                                     borderRadius: "8px",
                                     border: "1px solid rgba(255,255,255,0.07)",
                                     background: "transparent",
-                                    color: "rgba(240,242,255,0.4)",
+                                    color: "rgba(231,236,239,0.4)",
                                     fontFamily: "DM Sans, sans-serif",
                                     fontSize: "11px",
                                     fontWeight: 600,
@@ -539,7 +539,7 @@ export default function ApiKeysPage() {
                                   borderRadius: "8px",
                                   border: "1px solid rgba(255,255,255,0.07)",
                                   background: "transparent",
-                                  color: "rgba(240,242,255,0.35)",
+                                  color: "rgba(231,236,239,0.35)",
                                   fontFamily: "DM Sans, sans-serif",
                                   fontSize: "11px",
                                   fontWeight: 600,
@@ -547,11 +547,11 @@ export default function ApiKeysPage() {
                                   transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.color = "#f43f5e";
-                                  e.currentTarget.style.borderColor = "rgba(244,63,94,0.3)";
+                                  e.currentTarget.style.color = "#be7468";
+                                  e.currentTarget.style.borderColor = "rgba(190,116,104,0.3)";
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.color = "rgba(240,242,255,0.35)";
+                                  e.currentTarget.style.color = "rgba(231,236,239,0.35)";
                                   e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
                                 }}
                               >
@@ -566,7 +566,7 @@ export default function ApiKeysPage() {
                                 fontWeight: 600,
                                 letterSpacing: "2px",
                                 textTransform: "uppercase",
-                                color: "rgba(240,242,255,0.2)",
+                                color: "rgba(231,236,239,0.2)",
                               }}
                             >
                               Revoked
@@ -602,7 +602,7 @@ export default function ApiKeysPage() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "radial-gradient(circle at 50% 50%, rgba(16,185,129,0.06), transparent 70%)",
+              background: "radial-gradient(circle at 50% 50%, rgba(111,169,143,0.06), transparent 70%)",
               pointerEvents: "none",
             }}
           />
@@ -615,7 +615,7 @@ export default function ApiKeysPage() {
                 cy="128"
                 r="110"
                 fill="transparent"
-                stroke="#10b981"
+                stroke="#6fa98f"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray="691"
@@ -639,7 +639,7 @@ export default function ApiKeysPage() {
                   fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: "44px",
-                  color: "#10b981",
+                  color: "#6fa98f",
                   letterSpacing: "-2px",
                   lineHeight: 1,
                 }}
@@ -653,7 +653,7 @@ export default function ApiKeysPage() {
                   fontWeight: 600,
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "rgba(240,242,255,0.35)",
+                  color: "rgba(231,236,239,0.35)",
                   marginTop: "6px",
                 }}
               >
@@ -667,7 +667,7 @@ export default function ApiKeysPage() {
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 300,
               fontSize: "13px",
-              color: "rgba(240,242,255,0.4)",
+              color: "rgba(231,236,239,0.4)",
               textAlign: "center",
               lineHeight: 1.6,
               maxWidth: "180px",
@@ -688,16 +688,16 @@ export default function ApiKeysPage() {
           zIndex: 50,
           padding: "12px 20px",
           borderRadius: "100px",
-          border: "1px solid rgba(16,185,129,0.2)",
+          border: "1px solid rgba(111,169,143,0.2)",
           display: "flex",
           alignItems: "center",
           gap: "12px",
-          boxShadow: "0 4px 20px rgba(16,185,129,0.1)",
+          boxShadow: "0 4px 20px rgba(111,169,143,0.1)",
         }}
       >
         <span
           className="live-dot"
-          style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}
+          style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#6fa98f", display: "inline-block" }}
         />
         <span
           style={{
@@ -706,7 +706,7 @@ export default function ApiKeysPage() {
             fontWeight: 700,
             letterSpacing: "3px",
             textTransform: "uppercase",
-            color: "rgba(240,242,255,0.5)",
+            color: "rgba(231,236,239,0.5)",
           }}
         >
           Network: Secure &amp; Verifiable
@@ -719,7 +719,7 @@ export default function ApiKeysPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(5,8,16,0.8)",
+            background: "rgba(10,16,20,0.8)",
             backdropFilter: "blur(8px)",
             zIndex: 100,
             display: "flex",
@@ -736,8 +736,8 @@ export default function ApiKeysPage() {
               borderRadius: "24px",
               padding: "40px",
               minWidth: "440px",
-              border: "1px solid rgba(124,58,237,0.2)",
-              boxShadow: "0 20px 80px rgba(124,58,237,0.2)",
+              border: "1px solid rgba(45,74,94,0.2)",
+              boxShadow: "0 20px 80px rgba(45,74,94,0.2)",
             }}
           >
             <h3
@@ -745,7 +745,7 @@ export default function ApiKeysPage() {
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: "24px",
-                color: "#f0f2ff",
+                color: "#e7ecef",
                 marginBottom: "8px",
                 letterSpacing: "-0.5px",
               }}
@@ -757,7 +757,7 @@ export default function ApiKeysPage() {
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 300,
                 fontSize: "14px",
-                color: "rgba(240,242,255,0.45)",
+                color: "rgba(231,236,239,0.45)",
                 marginBottom: "28px",
                 lineHeight: 1.6,
               }}
@@ -773,7 +773,7 @@ export default function ApiKeysPage() {
                   fontWeight: 600,
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "rgba(240,242,255,0.35)",
+                  color: "rgba(231,236,239,0.35)",
                 }}
               >
                 Key Name (optional)
@@ -785,18 +785,18 @@ export default function ApiKeysPage() {
                 placeholder="e.g. Production_Main_01 (leave empty to auto-generate)"
                 autoFocus
                 style={{
-                  background: "#0a0c15",
+                  background: "#0a1014",
                   border: "1px solid rgba(255,255,255,0.07)",
                   borderRadius: "12px",
                   padding: "14px 16px",
-                  color: "#f0f2ff",
+                  color: "#e7ecef",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: "15px",
                   outline: "none",
                   transition: "border-color 0.2s",
                   width: "100%",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "rgba(124,58,237,0.5)")}
+                onFocus={(e) => (e.target.style.borderColor = "rgba(45,74,94,0.5)")}
                 onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCreateKey();
@@ -853,7 +853,7 @@ export default function ApiKeysPage() {
                   borderRadius: "12px",
                   border: "1px solid rgba(255,255,255,0.07)",
                   background: "transparent",
-                  color: "rgba(240,242,255,0.5)",
+                  color: "rgba(231,236,239,0.5)",
                   fontFamily: "DM Sans, sans-serif",
                   fontWeight: 600,
                   fontSize: "14px",

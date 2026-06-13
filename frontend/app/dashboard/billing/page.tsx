@@ -75,7 +75,7 @@ function CardBase({ children, style, className }: { children: React.ReactNode; s
       transition: "box-shadow 0.25s",
       ...style,
     }}
-    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 6px 28px rgba(124,58,237,0.09)"; }}
+    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 6px 28px rgba(45,74,94,0.09)"; }}
     onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
     >
       {children}
@@ -88,7 +88,7 @@ const BillingVelocityChart = dynamic(
     import("@/components/charts/BillingVelocityChart").catch(() => ({
       default: () => (
         <div style={{ height: "220px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontFamily: "var(--vx-font-body, 'DM Sans', sans-serif)", fontSize: "13px", color: "rgba(240,242,255,0.3)" }}>
+          <span style={{ fontFamily: "var(--vx-font-body, 'DM Sans', sans-serif)", fontSize: "13px", color: "rgba(231,236,239,0.3)" }}>
             Chart unavailable
           </span>
         </div>
@@ -221,9 +221,9 @@ export default function BillingPage() {
 
   const statusBadge = (status: Invoice["status"]) => {
     const map = {
-      paid:    { bg: "var(--vx-emerald-lt)", color: "var(--vx-emerald)", border: "rgba(16,185,129,0.22)" },
-      pending: { bg: "var(--vx-amber-lt)",   color: "var(--vx-amber)",   border: "rgba(245,158,11,0.22)" },
-      failed:  { bg: "var(--vx-rose-lt)",    color: "var(--vx-rose)",    border: "rgba(244,63,94,0.22)"  },
+      paid:    { bg: "var(--vx-success-soft)", color: "var(--vx-success)", border: "rgba(111,169,143,0.22)" },
+      pending: { bg: "var(--vx-warning-soft)",   color: "var(--vx-warning)",   border: "rgba(194,160,106,0.22)" },
+      failed:  { bg: "var(--vx-error-soft)",    color: "var(--vx-error)",    border: "rgba(190,116,104,0.22)"  },
     };
     const s = map[status];
     return (
@@ -262,7 +262,7 @@ export default function BillingPage() {
             lineHeight: 1,
             margin: 0,
           }}>
-            Billing <span style={{ color: "var(--vx-violet)" }}>&</span> Usage
+            Billing <span style={{ color: "var(--vx-slate)" }}>&</span> Usage
           </h1>
           <p style={{
             fontFamily: "var(--vx-font-body)",
@@ -286,7 +286,7 @@ export default function BillingPage() {
             borderRadius: "10px",
             background: "rgba(255,255,255,0.06)",
             border: "1px solid rgba(255,255,255,0.10)",
-            color: "rgba(240,242,255,0.60)",
+            color: "rgba(231,236,239,0.60)",
             fontFamily: "var(--vx-font-body)",
             fontWeight: 500,
             fontSize: "9px",
@@ -307,7 +307,7 @@ export default function BillingPage() {
             gap: "6px",
             padding: "10px 20px",
             borderRadius: "10px",
-            background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+            background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
             border: "none",
             color: "#fff",
             fontFamily: "var(--vx-font-display)",
@@ -334,7 +334,7 @@ export default function BillingPage() {
         {/* 2a — Usage Tracker */}
         <CardBase>
           {/* Top accent */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #7c3aed, #4f46e5)", borderRadius: "16px 16px 0 0" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #2d4a5e, #243b4c)", borderRadius: "16px 16px 0 0" }} />
           <SectionLabel>Resource Consumption</SectionLabel>
           <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
             {/* Conic gauge */}
@@ -342,8 +342,8 @@ export default function BillingPage() {
               width: "180px",
               height: "180px",
               borderRadius: "50%",
-              background: `conic-gradient(#7c3aed 0% ${pct}%, rgba(124,58,237,0.10) ${pct}% 100%)`,
-              boxShadow: "0 0 40px rgba(124,58,237,0.20)",
+              background: `conic-gradient(#2d4a5e 0% ${pct}%, rgba(45,74,94,0.10) ${pct}% 100%)`,
+              boxShadow: "0 0 40px rgba(45,74,94,0.20)",
               position: "relative",
               flexShrink: 0,
             }}>
@@ -351,14 +351,14 @@ export default function BillingPage() {
                 position: "absolute",
                 inset: "14px",
                 borderRadius: "50%",
-                background: "#0d1120",
+                background: "#0e161a",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "2px",
               }}>
-                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "28px", letterSpacing: "-1px", color: "var(--vx-violet)", lineHeight: 1 }}>
+                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "28px", letterSpacing: "-1px", color: "var(--vx-slate)", lineHeight: 1 }}>
                   {pctLabel}%
                 </span>
                 <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "9px", letterSpacing: "2.5px", textTransform: "uppercase", color: "var(--vx-text-dim)" }}>
@@ -379,13 +379,13 @@ export default function BillingPage() {
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                   <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "10px", color: "var(--vx-text-dim)", letterSpacing: "1px" }}>Monthly quota</span>
-                  <span style={{ fontFamily: "var(--vx-font-mono)", fontWeight: 400, fontSize: "10px", color: "var(--vx-violet)" }}>{remaining} left</span>
+                  <span style={{ fontFamily: "var(--vx-font-mono)", fontWeight: 400, fontSize: "10px", color: "var(--vx-slate)" }}>{remaining} left</span>
                 </div>
-                <div style={{ height: "6px", background: "rgba(124,58,237,0.10)", borderRadius: "99px", overflow: "hidden" }}>
+                <div style={{ height: "6px", background: "rgba(45,74,94,0.10)", borderRadius: "99px", overflow: "hidden" }}>
                   <div style={{
                     height: "100%",
                     width: `${pct}%`,
-                    background: "linear-gradient(90deg, #7c3aed, #4f46e5)",
+                    background: "linear-gradient(90deg, #2d4a5e, #243b4c)",
                     borderRadius: "99px",
                     transition: "width 1s ease",
                   }} />
@@ -393,8 +393,8 @@ export default function BillingPage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <span style={{
-                  background: "var(--vx-violet-lt)",
-                  color: "var(--vx-violet)",
+                  background: "var(--vx-slate-soft)",
+                  color: "var(--vx-slate)",
                   fontFamily: "var(--vx-font-body)",
                   fontWeight: 600,
                   fontSize: "9px",
@@ -402,7 +402,7 @@ export default function BillingPage() {
                   textTransform: "uppercase",
                   padding: "3px 8px",
                   borderRadius: "5px",
-                  border: "1px solid rgba(124,58,237,0.20)",
+                  border: "1px solid rgba(45,74,94,0.20)",
                 }}>
                   RESETS {usage.resetDate}
                 </span>
@@ -414,7 +414,7 @@ export default function BillingPage() {
                   fontSize: "10px",
                   letterSpacing: "1px",
                   textTransform: "uppercase",
-                  color: "var(--vx-violet)",
+                  color: "var(--vx-slate)",
                   textDecoration: "underline",
                   textUnderlineOffset: "2px",
                   background: "none",
@@ -430,7 +430,7 @@ export default function BillingPage() {
         </CardBase>
 
         {/* 2b — Current Plan */}
-        <CardBase style={{ borderLeft: "3px solid var(--vx-violet)" }}>
+        <CardBase style={{ borderLeft: "3px solid var(--vx-slate)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
             <div>
               <SectionLabel>Current Plan</SectionLabel>
@@ -444,9 +444,9 @@ export default function BillingPage() {
               gap: "5px",
               padding: "4px 10px",
               borderRadius: "5px",
-              background: plan.status === "active" ? "var(--vx-emerald-lt)" : "var(--vx-amber-lt)",
-              color: plan.status === "active" ? "var(--vx-emerald)" : "var(--vx-amber)",
-              border: `1px solid ${plan.status === "active" ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`,
+              background: plan.status === "active" ? "var(--vx-success-soft)" : "var(--vx-warning-soft)",
+              color: plan.status === "active" ? "var(--vx-success)" : "var(--vx-warning)",
+              border: `1px solid ${plan.status === "active" ? "rgba(111,169,143,0.25)" : "rgba(194,160,106,0.25)"}`,
               fontFamily: "var(--vx-font-body)",
               fontWeight: 700,
               fontSize: "9px",
@@ -455,16 +455,16 @@ export default function BillingPage() {
               flexShrink: 0,
               marginTop: "2px",
             }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: plan.status === "active" ? "var(--vx-emerald)" : "var(--vx-amber)", animation: "vx-blink 2s ease-in-out infinite" }} />
+              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: plan.status === "active" ? "var(--vx-success)" : "var(--vx-warning)", animation: "vx-blink 2s ease-in-out infinite" }} />
               {billingStatus?.plan_status ?? "Active"}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: "4px", margin: "16px 0 20px" }}>
             {plan.priceMonthly === 0 && currentTier === "free" ? (
-              <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>Free</span>
+              <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-slate)" }}>Free</span>
             ) : (
               <>
-                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>
+                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-slate)" }}>
                   ${plan.priceMonthly.toLocaleString()}
                 </span>
                 <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "var(--vx-text-dim)" }}>/month</span>
@@ -498,7 +498,7 @@ export default function BillingPage() {
                 width: "100%",
                 padding: "11px 16px",
                 borderRadius: "10px",
-                background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
                 border: "none",
                 color: "#fff",
                 fontFamily: "var(--vx-font-display)",
@@ -521,7 +521,7 @@ export default function BillingPage() {
                   borderRadius: "10px",
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.10)",
-                  color: "rgba(240,242,255,0.60)",
+                  color: "rgba(231,236,239,0.60)",
                   fontFamily: "var(--vx-font-body)",
                   fontWeight: 500,
                   fontSize: "10px",
@@ -539,7 +539,7 @@ export default function BillingPage() {
 
         {/* 2c — Quick Stats */}
         <CardBase>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #10b981, #06b6d4)", borderRadius: "16px 16px 0 0" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #6fa98f, #aab8c0)", borderRadius: "16px 16px 0 0" }} />
           <SectionLabel>Usage Breakdown</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             {[
@@ -547,19 +547,19 @@ export default function BillingPage() {
                 label: "Evaluations",
                 value: sdkStats != null ? (sdkStats.total_requests ?? 0).toLocaleString() : "—",
                 sub: "Last 30 days (all types)",
-                color: "var(--vx-violet)",
+                color: "var(--vx-slate)",
               },
               {
                 label: "Avg Latency",
                 value: sdkStats?.avg_latency_ms ? `${sdkStats.avg_latency_ms}ms` : "—",
                 sub: "Evaluation pipeline",
-                color: "rgba(240,242,255,0.90)",
+                color: "rgba(231,236,239,0.90)",
               },
               {
                 label: "Blocked",
                 value: sdkStats ? (sdkStats.verdict_breakdown?.BLOCK ?? 0).toLocaleString() : "—",
                 sub: "Prompt security",
-                color: "var(--vx-rose)",
+                color: "var(--vx-error)",
               },
               {
                 label: "Avg Trust Score",
@@ -567,12 +567,12 @@ export default function BillingPage() {
                   ? `${(sdkStats.avg_trust_score * 100).toFixed(1)}%`
                   : "—",
                 sub: "Composite pillar score",
-                color: "var(--vx-emerald)",
+                color: "var(--vx-success)",
               },
             ].map((chip) => (
               <div key={chip.label} style={{
                 background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(124,58,237,0.18)",
+                border: "1px solid rgba(45,74,94,0.18)",
                 borderRadius: "10px",
                 padding: "14px 18px",
                 display: "flex",
@@ -590,7 +590,7 @@ export default function BillingPage() {
 
       {/* ── Section 3: Request Velocity Chart ────────────────────────────── */}
       <CardBase className="vx-fade-3" style={{ padding: "28px" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, #7c3aed, #06b6d4)", opacity: 0.5, borderRadius: "16px 16px 0 0" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, #2d4a5e, #aab8c0)", opacity: 0.5, borderRadius: "16px 16px 0 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
           <div>
             <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 700, fontSize: "16px", letterSpacing: "-0.3px", color: "var(--vx-text-primary)" }}>
@@ -616,9 +616,9 @@ export default function BillingPage() {
                   border: "none",
                   cursor: "pointer",
                   transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
-                  background: period === p ? "rgba(124,58,237,0.22)" : "transparent",
-                  color: period === p ? "#c4b5fd" : "rgba(240,242,255,0.40)",
-                  boxShadow: period === p ? "0 1px 8px rgba(124,58,237,0.25)" : "none",
+                  background: period === p ? "rgba(45,74,94,0.22)" : "transparent",
+                  color: period === p ? "#c5cfd5" : "rgba(231,236,239,0.40)",
+                  boxShadow: period === p ? "0 1px 8px rgba(45,74,94,0.25)" : "none",
                 }}
               >
                 {p === "30d" ? "30 Days" : p === "90d" ? "90 Days" : "Year"}
@@ -663,9 +663,9 @@ export default function BillingPage() {
             padding: "28px",
             position: "relative",
             overflow: "hidden",
-            background: "linear-gradient(135deg, #0f0d1f 0%, #1a1040 50%, #0a0e24 100%)",
-            border: "1px solid rgba(124,58,237,0.35)",
-            boxShadow: "0 12px 48px rgba(124,58,237,0.20)",
+            background: "linear-gradient(135deg, #121d23 0%, #15222a 50%, #0e161a 100%)",
+            border: "1px solid rgba(45,74,94,0.35)",
+            boxShadow: "0 12px 48px rgba(45,74,94,0.20)",
             transition: "box-shadow 0.25s, transform 0.25s",
             cursor: "pointer",
           }}
@@ -673,12 +673,12 @@ export default function BillingPage() {
           onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
           >
             {/* Shimmer top line */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8), rgba(6,182,212,0.6), transparent)" }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(45,74,94,0.8), rgba(170,184,192,0.6), transparent)" }} />
             {/* Badge */}
             <div style={{ position: "absolute", top: "18px", right: "18px" }}>
               <span style={{
-                background: "rgba(124,58,237,0.20)",
-                color: "#c4b5fd",
+                background: "rgba(45,74,94,0.20)",
+                color: "#c5cfd5",
                 fontFamily: "var(--vx-font-body)",
                 fontWeight: 700,
                 fontSize: "8px",
@@ -686,7 +686,7 @@ export default function BillingPage() {
                 textTransform: "uppercase",
                 padding: "4px 10px",
                 borderRadius: "100px",
-                border: "1px solid rgba(124,58,237,0.30)",
+                border: "1px solid rgba(45,74,94,0.30)",
               }}>
                 Current Plan
               </span>
@@ -696,13 +696,13 @@ export default function BillingPage() {
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "20px" }}>
               <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "#ffffff" }}>${planMeta.price.toLocaleString()}</span>
-              <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "rgba(240,242,255,0.40)", marginLeft: "4px" }}>/month</span>
+              <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "rgba(231,236,239,0.40)", marginLeft: "4px" }}>/month</span>
             </div>
             <div style={{ margin: "0 0 20px", display: "flex", flexDirection: "column" }}>
               {(PLAN_FEATURES[currentTier] ?? PLAN_FEATURES.free).map((f) => (
                 <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-cyan)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "12px", color: "rgba(240,242,255,0.65)" }}>{f}</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-platinum)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "12px", color: "rgba(231,236,239,0.65)" }}>{f}</span>
                 </div>
               ))}
             </div>
@@ -710,9 +710,9 @@ export default function BillingPage() {
               width: "100%",
               padding: "11px 16px",
               borderRadius: "10px",
-              background: "rgba(124,58,237,0.20)",
-              color: "#c4b5fd",
-              border: "1px solid rgba(124,58,237,0.30)",
+              background: "rgba(45,74,94,0.20)",
+              color: "#c5cfd5",
+              border: "1px solid rgba(45,74,94,0.30)",
               fontFamily: "var(--vx-font-body)",
               fontWeight: 600,
               fontSize: "10px",
@@ -753,8 +753,8 @@ export default function BillingPage() {
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLDivElement;
                 el.style.transform = "translateY(-3px)";
-                el.style.borderColor = "rgba(124,58,237,0.30)";
-                el.style.boxShadow = "0 8px 32px rgba(124,58,237,0.08)";
+                el.style.borderColor = "rgba(45,74,94,0.30)";
+                el.style.boxShadow = "0 8px 32px rgba(45,74,94,0.08)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLDivElement;
@@ -767,13 +767,13 @@ export default function BillingPage() {
                 {p.name}
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "20px" }}>
-                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-violet)" }}>{p.price}</span>
+                <span style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "36px", letterSpacing: "-1.5px", color: "var(--vx-slate)" }}>{p.price}</span>
                 <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "12px", color: "var(--vx-text-dim)", marginLeft: "4px" }}>/month</span>
               </div>
               <div style={{ margin: "0 0 20px", display: "flex", flexDirection: "column" }}>
                 {p.features.map((f) => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-emerald)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "var(--vx-success)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "12px", color: "var(--vx-text-secondary)" }}>{f}</span>
                   </div>
                 ))}
@@ -785,8 +785,8 @@ export default function BillingPage() {
                 padding: "11px 16px",
                 borderRadius: "10px",
                 background: "transparent",
-                color: "var(--vx-violet)",
-                border: "1px solid rgba(124,58,237,0.30)",
+                color: "var(--vx-slate)",
+                border: "1px solid rgba(45,74,94,0.30)",
                 fontFamily: "var(--vx-font-body)",
                 fontWeight: 600,
                 fontSize: "10px",
@@ -797,7 +797,7 @@ export default function BillingPage() {
                 opacity: currentTier === p.id ? 0.4 : 1,
               }}
               onMouseEnter={(e) => {
-                if (currentTier !== p.id) (e.currentTarget as HTMLButtonElement).style.background = "var(--vx-violet-lt)";
+                if (currentTier !== p.id) (e.currentTarget as HTMLButtonElement).style.background = "var(--vx-slate-soft)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.background = "transparent";
@@ -821,14 +821,14 @@ export default function BillingPage() {
                 width: "48px",
                 height: "32px",
                 borderRadius: "6px",
-                background: "linear-gradient(135deg, #1e1b4b, #312e81)",
-                border: "1px solid rgba(124,58,237,0.20)",
+                background: "linear-gradient(135deg, #15222a, #1e3442)",
+                border: "1px solid rgba(45,74,94,0.20)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
               }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "rgba(124,58,237,0.8)" }}>credit_card</span>
+                <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "rgba(45,74,94,0.8)" }}>credit_card</span>
               </div>
               <div>
                 <div style={{ fontFamily: "var(--vx-font-mono)", fontWeight: 500, fontSize: "13px", color: "var(--vx-text-primary)" }}>
@@ -856,12 +856,12 @@ export default function BillingPage() {
                 cursor: portalLoading ? "wait" : "pointer",
                 transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
                 background: btn.primary ? "transparent" : "rgba(255,255,255,0.06)",
-                color: btn.primary ? "var(--vx-violet)" : "rgba(240,242,255,0.60)",
-                border: btn.primary ? "1px solid rgba(124,58,237,0.30)" : "1px solid rgba(255,255,255,0.10)",
+                color: btn.primary ? "var(--vx-slate)" : "rgba(231,236,239,0.60)",
+                border: btn.primary ? "1px solid rgba(45,74,94,0.30)" : "1px solid rgba(255,255,255,0.10)",
                 opacity: portalLoading ? 0.6 : 1,
               }}
               onMouseEnter={(e) => {
-                if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "rgba(124,58,237,0.15)";
+                if (btn.primary) (e.currentTarget as HTMLButtonElement).style.background = "rgba(45,74,94,0.15)";
                 else (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.10)";
               }}
               onMouseLeave={(e) => {
@@ -895,7 +895,7 @@ export default function BillingPage() {
           <div>
             <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 700, fontSize: "16px", color: "var(--vx-text-primary)" }}>Billing History</div>
             <div style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "11px", color: "var(--vx-text-dim)", marginTop: "2px" }}>
-              Complete invoice history for your VeldrixAI subscription
+              Complete invoice history for your Veldrix subscription
             </div>
           </div>
           <button style={{
@@ -904,9 +904,9 @@ export default function BillingPage() {
             gap: "6px",
             padding: "7px 14px",
             borderRadius: "8px",
-            background: "var(--vx-violet-lt)",
-            color: "var(--vx-violet)",
-            border: "1px solid rgba(124,58,237,0.25)",
+            background: "var(--vx-slate-soft)",
+            color: "var(--vx-slate)",
+            border: "1px solid rgba(45,74,94,0.25)",
             fontFamily: "var(--vx-font-body)",
             fontWeight: 600,
             fontSize: "9px",
@@ -917,13 +917,13 @@ export default function BillingPage() {
           }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.background = "var(--vx-violet)";
+            el.style.background = "var(--vx-slate)";
             el.style.color = "#fff";
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.background = "var(--vx-violet-lt)";
-            el.style.color = "var(--vx-violet)";
+            el.style.background = "var(--vx-slate-soft)";
+            el.style.color = "var(--vx-slate)";
           }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>download</span>
@@ -942,7 +942,7 @@ export default function BillingPage() {
                   fontSize: "9px",
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "rgba(240,242,255,0.40)",
+                  color: "rgba(231,236,239,0.40)",
                   textAlign: i >= 4 ? "right" : "left",
                   borderBottom: "1px solid rgba(255,255,255,0.06)",
                 }}>
@@ -954,7 +954,7 @@ export default function BillingPage() {
           <tbody>
             <tr>
               <td colSpan={6} style={{ padding: "40px 20px", textAlign: "center" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "rgba(124,58,237,0.40)", display: "block", marginBottom: "10px" }}>receipt_long</span>
+                <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "rgba(45,74,94,0.40)", display: "block", marginBottom: "10px" }}>receipt_long</span>
                 <div style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "13px", color: "var(--vx-text-muted)" }}>
                   Invoice history is available in the Stripe Customer Portal.
                 </div>
@@ -970,9 +970,9 @@ export default function BillingPage() {
                     marginTop: "12px",
                     padding: "8px 18px",
                     borderRadius: "8px",
-                    background: "var(--vx-violet-lt)",
-                    color: "var(--vx-violet)",
-                    border: "1px solid rgba(124,58,237,0.25)",
+                    background: "var(--vx-slate-soft)",
+                    color: "var(--vx-slate)",
+                    border: "1px solid rgba(45,74,94,0.25)",
                     fontFamily: "var(--vx-font-body)",
                     fontWeight: 600,
                     fontSize: "10px",
@@ -997,7 +997,7 @@ export default function BillingPage() {
           justifyContent: "space-between",
           alignItems: "center",
         }}>
-          <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.35)" }}>
+          <span style={{ fontFamily: "var(--vx-font-body)", fontWeight: 400, fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(231,236,239,0.35)" }}>
             Invoice history via Stripe Portal
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
@@ -1006,9 +1006,9 @@ export default function BillingPage() {
                 width: "32px",
                 height: "32px",
                 borderRadius: "6px",
-                border: "1px solid rgba(124,58,237,0.20)",
+                border: "1px solid rgba(45,74,94,0.20)",
                 background: "rgba(255,255,255,0.06)",
-                color: "rgba(240,242,255,0.50)",
+                color: "rgba(231,236,239,0.50)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1017,15 +1017,15 @@ export default function BillingPage() {
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = "var(--vx-violet)";
+                el.style.background = "var(--vx-slate)";
                 el.style.color = "#fff";
-                el.style.borderColor = "var(--vx-violet)";
+                el.style.borderColor = "var(--vx-slate)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLButtonElement;
                 el.style.background = "rgba(255,255,255,0.06)";
-                el.style.color = "rgba(240,242,255,0.50)";
-                el.style.borderColor = "rgba(124,58,237,0.20)";
+                el.style.color = "rgba(231,236,239,0.50)";
+                el.style.borderColor = "rgba(45,74,94,0.20)";
               }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>{icon}</span>
@@ -1042,7 +1042,7 @@ export default function BillingPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(5,8,16,0.82)",
+            background: "rgba(10,16,20,0.82)",
             backdropFilter: "blur(10px)",
             zIndex: 200,
             display: "flex",
@@ -1054,21 +1054,21 @@ export default function BillingPage() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "linear-gradient(135deg, #0f0d1f 0%, #1a1040 60%, #0a0e24 100%)",
-              border: "1px solid rgba(124,58,237,0.35)",
+              background: "linear-gradient(135deg, #121d23 0%, #15222a 60%, #0e161a 100%)",
+              border: "1px solid rgba(45,74,94,0.35)",
               borderRadius: "20px",
               padding: "40px",
               maxWidth: "480px",
               width: "90%",
               position: "relative",
-              boxShadow: "0 24px 64px rgba(124,58,237,0.25)",
+              boxShadow: "0 24px 64px rgba(45,74,94,0.25)",
             }}
           >
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8), rgba(6,182,212,0.6), transparent)" }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(45,74,94,0.8), rgba(170,184,192,0.6), transparent)" }} />
             <div style={{ fontFamily: "var(--vx-font-display)", fontWeight: 800, fontSize: "24px", letterSpacing: "-0.5px", color: "#fff", marginBottom: "12px" }}>
               Enterprise Billing
             </div>
-            <p style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "14px", color: "rgba(240,242,255,0.6)", lineHeight: 1.7, marginBottom: "28px" }}>
+            <p style={{ fontFamily: "var(--vx-font-body)", fontWeight: 300, fontSize: "14px", color: "rgba(231,236,239,0.6)", lineHeight: 1.7, marginBottom: "28px" }}>
               Billing is being activated on this server. To upgrade your plan, contact our enterprise team — we&apos;ll get you set up within one business day.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -1081,7 +1081,7 @@ export default function BillingPage() {
                   gap: "8px",
                   padding: "13px 20px",
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                  background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
                   color: "#fff",
                   fontFamily: "var(--vx-font-display)",
                   fontWeight: 700,
@@ -1101,7 +1101,7 @@ export default function BillingPage() {
                   borderRadius: "12px",
                   background: "transparent",
                   border: "1px solid rgba(255,255,255,0.10)",
-                  color: "rgba(240,242,255,0.45)",
+                  color: "rgba(231,236,239,0.45)",
                   fontFamily: "var(--vx-font-body)",
                   fontWeight: 500,
                   fontSize: "13px",

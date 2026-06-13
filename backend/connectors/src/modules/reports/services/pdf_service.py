@@ -1,5 +1,5 @@
 """
-VeldrixAI PDF Service
+Veldrix PDF Service
 Generates branded PDF reports with NVIDIA NIM-powered narrative intelligence.
 """
 
@@ -52,7 +52,7 @@ def _nim_narrative(report_data: Dict[str, Any]) -> Optional[Dict]:
     )
     enforcement_lines = ", ".join(f"{k}: {v}" for k, v in enforcement.items())
 
-    prompt = f"""You are the VeldrixAI Governance Intelligence Engine — an expert AI safety auditor.
+    prompt = f"""You are the Veldrix Governance Intelligence Engine — an expert AI safety auditor.
 Generate a professional, data-driven governance report narrative based on these real evaluation results.
 
 EVALUATION DATA:
@@ -225,7 +225,7 @@ class PDFService:
         created_at: datetime,
         report_name: str = "Cobalt Nexus",
         vx_report_id: str = "VX-00000000-0000",
-        tenant: str = "VeldrixAI Platform",
+        tenant: str = "Veldrix Platform",
     ) -> bytes:
         # Data can come from either:
         # 1. input_payload.result (from trust evaluation response)
@@ -342,7 +342,7 @@ class PDFService:
             )
             executive_summary = output_summary or (
                 "This report presents the trust evaluation results for the specified AI model "
-                "response, evaluated against the VeldrixAI five-pillar governance framework. "
+                "response, evaluated against the Veldrix five-pillar governance framework. "
                 "Each pillar was assessed independently using dedicated detection models and "
                 "heuristics, with results combined into a weighted overall trust score."
             )
@@ -351,7 +351,7 @@ class PDFService:
             "report_name":    report_name,
             "vx_report_id":   vx_report_id,
             "title":          title or "AI Model Trust Evaluation Report",
-            "subtitle":       "Deep Research Analysis · VeldrixAI Runtime Evaluation",
+            "subtitle":       "Deep Research Analysis · Veldrix Runtime Evaluation",
             "report_type":    report_type.replace("_", " ").title(),
             "generated_at":   created_at.strftime("%B %d, %Y %H:%M UTC"),
             "model_name":     model_name,
