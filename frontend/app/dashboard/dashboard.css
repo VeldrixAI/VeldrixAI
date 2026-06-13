@@ -1068,7 +1068,7 @@
 
 .dash-code-block {
   position: relative;
-  background: #1e1e2e;
+  background: #0E161A;
   border-radius: var(--d-radius);
   overflow: hidden;
   margin-bottom: 1rem;
@@ -1127,7 +1127,7 @@
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 0.82rem;
   line-height: 1.6;
-  color: #cdd6f4;
+  color: #C5CFD5;
   white-space: pre;
   background: none;
 }
