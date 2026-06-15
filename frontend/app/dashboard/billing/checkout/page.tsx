@@ -16,8 +16,8 @@ interface PlanInfo {
 // ── Plan display helpers ─────────────────────────────────────────────────────
 
 const PLAN_DISPLAY: Record<string, { label: string; quota: string; color: string }> = {
-  grow:  { label: "Grow",       quota: "10,000 evals/mo",    color: "#7c3aed" },
-  scale: { label: "Scale",      quota: "100,000 evals/mo",   color: "#06b6d4" },
+  grow:  { label: "Grow",       quota: "10,000 evals/mo",    color: "#2d4a5e" },
+  scale: { label: "Scale",      quota: "100,000 evals/mo",   color: "#aab8c0" },
 };
 
 const PLAN_FEATURES: Record<string, string[]> = {
@@ -105,11 +105,11 @@ function CheckoutInner() {
       appearance: {
         theme: "night",
         variables: {
-          colorPrimary: "#7c3aed",
-          colorBackground: "#0d1120",
-          colorText: "#f0f2ff",
-          colorDanger: "#f43f5e",
-          colorTextPlaceholder: "rgba(240,242,255,0.3)",
+          colorPrimary: "#2d4a5e",
+          colorBackground: "#0e161a",
+          colorText: "#e7ecef",
+          colorDanger: "#be7468",
+          colorTextPlaceholder: "rgba(231,236,239,0.3)",
           fontFamily: "DM Sans, system-ui, sans-serif",
           fontSizeBase: "14px",
           borderRadius: "10px",
@@ -117,17 +117,17 @@ function CheckoutInner() {
         },
         rules: {
           ".Input": {
-            border: "1px solid rgba(124,58,237,0.25)",
+            border: "1px solid rgba(45,74,94,0.25)",
             boxShadow: "none",
             backgroundColor: "rgba(255,255,255,0.04)",
           },
           ".Input:focus": {
-            border: "1px solid rgba(124,58,237,0.6)",
-            boxShadow: "0 0 0 3px rgba(124,58,237,0.12)",
+            border: "1px solid rgba(45,74,94,0.6)",
+            boxShadow: "0 0 0 3px rgba(45,74,94,0.12)",
           },
-          ".Label": { color: "rgba(240,242,255,0.5)", fontSize: "11px", letterSpacing: "1.5px", textTransform: "uppercase" },
+          ".Label": { color: "rgba(231,236,239,0.5)", fontSize: "11px", letterSpacing: "1.5px", textTransform: "uppercase" },
           ".Tab": { border: "1px solid rgba(255,255,255,0.08)", backgroundColor: "rgba(255,255,255,0.03)" },
-          ".Tab--selected": { border: "1px solid rgba(124,58,237,0.4)", backgroundColor: "rgba(124,58,237,0.08)" },
+          ".Tab--selected": { border: "1px solid rgba(45,74,94,0.4)", backgroundColor: "rgba(45,74,94,0.08)" },
         },
       },
     });
@@ -238,7 +238,7 @@ function CheckoutInner() {
               color: "var(--vx-text-primary)",
               margin: 0,
             }}>
-              Secure <span style={{ color: "var(--vx-violet)" }}>Checkout</span>
+              Secure <span style={{ color: "var(--vx-slate)" }}>Checkout</span>
             </h1>
             <p style={{
               fontFamily: "var(--vx-font-body)",
@@ -253,15 +253,15 @@ function CheckoutInner() {
 
           {initError && (
             <div style={{
-              background: "rgba(244,63,94,0.08)",
-              border: "1px solid rgba(244,63,94,0.25)",
+              background: "rgba(190,116,104,0.08)",
+              border: "1px solid rgba(190,116,104,0.25)",
               borderRadius: "12px",
               padding: "20px 24px",
               marginBottom: "24px",
               fontFamily: "var(--vx-font-body)",
               fontSize: "13px",
             }}>
-              <p style={{ color: "var(--vx-rose)", margin: "0 0 14px" }}>{initError}</p>
+              <p style={{ color: "var(--vx-error)", margin: "0 0 14px" }}>{initError}</p>
               <a
                 href="mailto:enterprise@veldrixai.ca"
                 style={{
@@ -270,7 +270,7 @@ function CheckoutInner() {
                   gap: "6px",
                   padding: "9px 18px",
                   borderRadius: "9px",
-                  background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                  background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
                   color: "#fff",
                   fontWeight: 700,
                   fontSize: "11px",
@@ -297,7 +297,7 @@ function CheckoutInner() {
             }}>
               <div style={{
                 position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-                background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), transparent)",
+                background: "linear-gradient(90deg, transparent, rgba(45,74,94,0.6), rgba(170,184,192,0.4), transparent)",
               }} />
 
               <div style={{
@@ -328,10 +328,10 @@ function CheckoutInner() {
                 <div style={{
                   marginTop: "16px",
                   padding: "12px 16px",
-                  background: "rgba(244,63,94,0.08)",
-                  border: "1px solid rgba(244,63,94,0.25)",
+                  background: "rgba(190,116,104,0.08)",
+                  border: "1px solid rgba(190,116,104,0.25)",
                   borderRadius: "10px",
-                  color: "var(--vx-rose)",
+                  color: "var(--vx-error)",
                   fontFamily: "var(--vx-font-body)",
                   fontSize: "13px",
                 }}>
@@ -348,8 +348,8 @@ function CheckoutInner() {
                   padding: "15px 24px",
                   borderRadius: "12px",
                   background: (!elementsReady || loading || !!initError)
-                    ? "rgba(124,58,237,0.3)"
-                    : "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                    ? "rgba(45,74,94,0.3)"
+                    : "linear-gradient(135deg, #2d4a5e, #243b4c)",
                   border: "none",
                   color: "#fff",
                   fontFamily: "var(--vx-font-display)",
@@ -359,7 +359,7 @@ function CheckoutInner() {
                   textTransform: "uppercase",
                   cursor: (!elementsReady || loading || !!initError) ? "not-allowed" : "pointer",
                   transition: "opacity 0.2s",
-                  boxShadow: "0 8px 28px rgba(124,58,237,0.35)",
+                  boxShadow: "0 8px 28px rgba(45,74,94,0.35)",
                 }}
               >
                 {loading
@@ -397,17 +397,17 @@ function CheckoutInner() {
 
               {/* Plan card */}
               <div style={{
-                background: "linear-gradient(135deg, #0f0d1f 0%, #1a1040 60%, #0a0e24 100%)",
-                border: "1px solid rgba(124,58,237,0.35)",
+                background: "linear-gradient(135deg, #121d23 0%, #15222a 60%, #0e161a 100%)",
+                border: "1px solid rgba(45,74,94,0.35)",
                 borderRadius: "20px",
                 padding: "28px",
                 position: "relative",
                 overflow: "hidden",
-                boxShadow: "0 12px 40px rgba(124,58,237,0.18)",
+                boxShadow: "0 12px 40px rgba(45,74,94,0.18)",
               }}>
                 <div style={{
                   position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-                  background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8), rgba(6,182,212,0.5), transparent)",
+                  background: "linear-gradient(90deg, transparent, rgba(45,74,94,0.8), rgba(170,184,192,0.5), transparent)",
                 }} />
 
                 <div style={{
@@ -416,7 +416,7 @@ function CheckoutInner() {
                   fontSize: "9px",
                   letterSpacing: "3px",
                   textTransform: "uppercase",
-                  color: "rgba(240,242,255,0.3)",
+                  color: "rgba(231,236,239,0.3)",
                   marginBottom: "16px",
                 }}>
                   Order Summary
@@ -434,9 +434,9 @@ function CheckoutInner() {
                   <span style={{
                     fontFamily: "var(--vx-font-body)",
                     fontSize: "11px",
-                    color: "rgba(240,242,255,0.35)",
-                    background: "rgba(124,58,237,0.15)",
-                    border: "1px solid rgba(124,58,237,0.25)",
+                    color: "rgba(231,236,239,0.35)",
+                    background: "rgba(45,74,94,0.15)",
+                    border: "1px solid rgba(45,74,94,0.25)",
                     padding: "3px 8px",
                     borderRadius: "100px",
                     letterSpacing: "1px",
@@ -459,7 +459,7 @@ function CheckoutInner() {
                     fontFamily: "var(--vx-font-body)",
                     fontWeight: 300,
                     fontSize: "12px",
-                    color: "rgba(240,242,255,0.35)",
+                    color: "rgba(231,236,239,0.35)",
                   }}>
                     /{cycle === "annual" ? "yr" : "mo"}
                   </span>
@@ -468,12 +468,12 @@ function CheckoutInner() {
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {planFeatures.map((f) => (
                     <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ color: "var(--vx-cyan)", fontSize: "14px" }}>✓</span>
+                      <span style={{ color: "var(--vx-platinum)", fontSize: "14px" }}>✓</span>
                       <span style={{
                         fontFamily: "var(--vx-font-body)",
                         fontWeight: 400,
                         fontSize: "12px",
-                        color: "rgba(240,242,255,0.6)",
+                        color: "rgba(231,236,239,0.6)",
                       }}>
                         {f}
                       </span>
@@ -516,15 +516,15 @@ function CheckoutInner() {
                       width: "22px",
                       height: "22px",
                       borderRadius: "50%",
-                      background: "rgba(124,58,237,0.15)",
-                      border: "1px solid rgba(124,58,237,0.25)",
+                      background: "rgba(45,74,94,0.15)",
+                      border: "1px solid rgba(45,74,94,0.25)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontFamily: "var(--vx-font-display)",
                       fontWeight: 700,
                       fontSize: "10px",
-                      color: "var(--vx-violet)",
+                      color: "var(--vx-slate)",
                       flexShrink: 0,
                     }}>
                       {n}

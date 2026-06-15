@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 
 import EvaluationHeader   from "./components/EvaluationHeader";
@@ -97,23 +97,23 @@ function resolveActor(actor: string | null, email: string | null): string | null
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  LOW:      "#10B981",
-  MEDIUM:   "#f59e0b",
-  HIGH:     "#F43F5E",
-  CRITICAL: "#F43F5E",
+  LOW:      "#6fa98f",
+  MEDIUM:   "#c2a06a",
+  HIGH:     "#be7468",
+  CRITICAL: "#be7468",
 };
 
 const PATTERN_COLORS: Record<string, string> = {
-  ISOLATED:     "#06B6D4",
-  RECURRING:    "#f59e0b",
-  DRIFT_SIGNAL: "#F43F5E",
-  SYSTEMIC:     "#F43F5E",
+  ISOLATED:     "#aab8c0",
+  RECURRING:    "#c2a06a",
+  DRIFT_SIGNAL: "#be7468",
+  SYSTEMIC:     "#be7468",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  IMMEDIATE:  "#F43F5E",
-  SHORT_TERM: "#f59e0b",
-  MONITORING: "#06B6D4",
+  IMMEDIATE:  "#be7468",
+  SHORT_TERM: "#c2a06a",
+  MONITORING: "#aab8c0",
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ function Skeleton({ w = "100%", h = 16 }: { w?: string; h?: number }) {
   return (
     <div style={{
       width: w, height: h, borderRadius: 6,
-      background: "rgba(124,58,237,0.06)",
+      background: "rgba(45,74,94,0.06)",
       animation: "pulse 1.8s ease-in-out infinite",
     }} />
   );
@@ -161,7 +161,7 @@ function Card({
         height: 1,
         background: highlight
           ? `linear-gradient(90deg, transparent, ${highlight}80, transparent)`
-          : "linear-gradient(90deg, transparent, rgba(124,58,237,0.5), rgba(6,182,212,0.5), transparent)",
+          : "linear-gradient(90deg, transparent, rgba(45,74,94,0.5), rgba(170,184,192,0.5), transparent)",
       }} />
       {children}
     </div>
@@ -176,7 +176,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       fontSize:      10,
       letterSpacing: "3px",
       textTransform: "uppercase",
-      color:         "rgba(240,242,255,0.35)",
+      color:         "rgba(231,236,239,0.35)",
       marginBottom:  16,
     }}>
       {children}
@@ -215,8 +215,8 @@ const _ML_LABELS: Record<_MLPillarKey, string> = {
   prompt_security: "Prompt Security", compliance: "Compliance",
 };
 const _ML_COLORS: Record<_MLPillarKey, string> = {
-  safety: "#F43F5E", hallucination: "#7C3AED", bias: "#4F46E5",
-  prompt_security: "#06B6D4", compliance: "#10B981",
+  safety: "#be7468", hallucination: "#2d4a5e", bias: "#243b4c",
+  prompt_security: "#aab8c0", compliance: "#6fa98f",
 };
 
 function _safeDiv(n: number, d: number): number { return d === 0 ? 0 : n / d; }
@@ -268,31 +268,31 @@ function MLMetricsPanel({
 
   const hasHistory   = Object.values(pillarMetrics).some(m => m?.status === "ok" && m.f1 != null);
 
-  const verdictColor = verdict === "BLOCK" ? "#f43f5e"
-    : verdict === "WARN"   ? "#f59e0b"
-    : verdict === "REVIEW" ? "#06b6d4" : "#10b981";
+  const verdictColor = verdict === "BLOCK" ? "#be7468"
+    : verdict === "WARN"   ? "#c2a06a"
+    : verdict === "REVIEW" ? "#aab8c0" : "#6fa98f";
 
   const outcomeColor: Record<string, string> = {
-    TP: "#10b981", FP: "#f43f5e", FN: "#f59e0b", TN: "#10b981",
+    TP: "#6fa98f", FP: "#be7468", FN: "#c2a06a", TN: "#6fa98f",
   };
   const outcomeLabel: Record<string, string> = {
     TP: "True Positive",  FP: "False Positive",
     FN: "False Negative", TN: "True Negative",
   };
   const outcomeBg: Record<string, string> = {
-    TP: "rgba(16,185,129,0.08)", FP: "rgba(244,63,94,0.08)",
-    FN: "rgba(245,158,11,0.08)", TN: "rgba(16,185,129,0.05)",
+    TP: "rgba(111,169,143,0.08)", FP: "rgba(190,116,104,0.08)",
+    FN: "rgba(194,160,106,0.08)", TN: "rgba(111,169,143,0.05)",
   };
 
   const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
   return (
-    <Card style={{ marginBottom: 20, padding: 28 }} highlight="#06B6D4">
+    <Card style={{ marginBottom: 20, padding: 28 }} highlight="#aab8c0">
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
           <SectionLabel>ML Diagnostics</SectionLabel>
-          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.35)", marginTop: -8 }}>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.35)", marginTop: -8 }}>
             Evaluation-scope confusion matrix · {verdict ? <span style={{ color: verdictColor, fontWeight: 600 }}>{verdict}</span> : "No verdict"} as ground truth
           </div>
         </div>
@@ -300,7 +300,7 @@ function MLMetricsPanel({
           <span style={{
             fontFamily: "JetBrains Mono, monospace", fontSize: 9, letterSpacing: "1.5px",
             padding: "3px 8px", borderRadius: 6,
-            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4",
+            background: "rgba(170,184,192,0.1)", border: "1px solid rgba(170,184,192,0.25)", color: "#aab8c0",
           }}>
             {hasHistory ? "HISTORICAL + LIVE" : "EVALUATION-SCOPE"}
           </span>
@@ -312,42 +312,42 @@ function MLMetricsPanel({
 
         {/* Confusion Matrix */}
         <div>
-          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
-            Confusion Matrix <span style={{ color: "rgba(240,242,255,0.15)" }}>· pillar × verdict</span>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)", marginBottom: 12 }}>
+            Confusion Matrix <span style={{ color: "rgba(231,236,239,0.15)" }}>· pillar × verdict</span>
           </div>
 
           {/* Labels header */}
           <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4, marginBottom: 4 }}>
             <div />
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", textAlign: "center" }}>Actual +</div>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", textAlign: "center" }}>Actual −</div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", textAlign: "center" }}>Actual +</div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", textAlign: "center" }}>Actual −</div>
           </div>
           {/* Row: Predicted + */}
           <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4, marginBottom: 4 }}>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", display: "flex", alignItems: "center" }}>Predicted +</div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", display: "flex", alignItems: "center" }}>Predicted +</div>
             {/* TP */}
-            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TP, border: "1px solid rgba(16,185,129,0.2)", textAlign: "center" }}>
-              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#10b981", lineHeight: 1 }}>{tp}</div>
-              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(16,185,129,0.6)", marginTop: 4, letterSpacing: "1px" }}>TP</div>
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TP, border: "1px solid rgba(111,169,143,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#6fa98f", lineHeight: 1 }}>{tp}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(111,169,143,0.6)", marginTop: 4, letterSpacing: "1px" }}>TP</div>
             </div>
             {/* FP */}
-            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FP, border: "1px solid rgba(244,63,94,0.2)", textAlign: "center" }}>
-              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#f43f5e", lineHeight: 1 }}>{fp}</div>
-              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(244,63,94,0.6)", marginTop: 4, letterSpacing: "1px" }}>FP</div>
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FP, border: "1px solid rgba(190,116,104,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#be7468", lineHeight: 1 }}>{fp}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(190,116,104,0.6)", marginTop: 4, letterSpacing: "1px" }}>FP</div>
             </div>
           </div>
           {/* Row: Predicted − */}
           <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 4 }}>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(240,242,255,0.3)", display: "flex", alignItems: "center" }}>Predicted −</div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(231,236,239,0.3)", display: "flex", alignItems: "center" }}>Predicted −</div>
             {/* FN */}
-            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FN, border: "1px solid rgba(245,158,11,0.2)", textAlign: "center" }}>
-              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#f59e0b", lineHeight: 1 }}>{fn}</div>
-              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(245,158,11,0.6)", marginTop: 4, letterSpacing: "1px" }}>FN</div>
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.FN, border: "1px solid rgba(194,160,106,0.2)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#c2a06a", lineHeight: 1 }}>{fn}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(194,160,106,0.6)", marginTop: 4, letterSpacing: "1px" }}>FN</div>
             </div>
             {/* TN */}
-            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TN, border: "1px solid rgba(16,185,129,0.15)", textAlign: "center" }}>
-              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#10b981", lineHeight: 1 }}>{tn}</div>
-              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(16,185,129,0.6)", marginTop: 4, letterSpacing: "1px" }}>TN</div>
+            <div style={{ padding: "14px 10px", borderRadius: 10, background: outcomeBg.TN, border: "1px solid rgba(111,169,143,0.15)", textAlign: "center" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 26, color: "#6fa98f", lineHeight: 1 }}>{tn}</div>
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 9, color: "rgba(111,169,143,0.6)", marginTop: 4, letterSpacing: "1px" }}>TN</div>
             </div>
           </div>
 
@@ -356,7 +356,7 @@ function MLMetricsPanel({
             {(["TP", "FP", "FN", "TN"] as const).map(k => (
               <div key={k} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 6, height: 6, borderRadius: 2, background: outcomeColor[k] }} />
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(240,242,255,0.3)" }}>{outcomeLabel[k]}</span>
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(231,236,239,0.3)" }}>{outcomeLabel[k]}</span>
               </div>
             ))}
           </div>
@@ -364,23 +364,23 @@ function MLMetricsPanel({
 
         {/* Key Metrics */}
         <div>
-          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)", marginBottom: 12 }}>
             Classification Metrics
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { label: "F1 Score",     value: f1,          fmt: fmtPct, color: f1 >= 0.8 ? "#10b981" : f1 >= 0.6 ? "#f59e0b" : "#f43f5e", desc: "Harmonic mean of precision & recall" },
-              { label: "Precision",    value: precision,   fmt: fmtPct, color: precision >= 0.8 ? "#10b981" : "#f59e0b",  desc: "Flagged correctly / all flagged" },
-              { label: "Recall",       value: recall,      fmt: fmtPct, color: recall >= 0.8 ? "#10b981" : "#f59e0b",     desc: "Caught / all actual violations" },
-              { label: "Specificity",  value: specificity, fmt: fmtPct, color: specificity >= 0.8 ? "#10b981" : "#f59e0b",desc: "Correctly cleared / all safe" },
-              { label: "FPR",          value: fpr,         fmt: fmtPct, color: fpr <= 0.1 ? "#10b981" : fpr <= 0.3 ? "#f59e0b" : "#f43f5e", desc: "False alarm rate" },
-              { label: "MCC",          value: mcc,         fmt: (v: number) => v.toFixed(3), color: mcc >= 0.6 ? "#10b981" : mcc >= 0.3 ? "#f59e0b" : "rgba(240,242,255,0.5)", desc: "Matthews correlation coefficient" },
-              { label: "Accuracy",     value: accuracy,    fmt: fmtPct, color: accuracy >= 0.8 ? "#10b981" : "#f59e0b",  desc: "Overall correct decisions" },
+              { label: "F1 Score",     value: f1,          fmt: fmtPct, color: f1 >= 0.8 ? "#6fa98f" : f1 >= 0.6 ? "#c2a06a" : "#be7468", desc: "Harmonic mean of precision & recall" },
+              { label: "Precision",    value: precision,   fmt: fmtPct, color: precision >= 0.8 ? "#6fa98f" : "#c2a06a",  desc: "Flagged correctly / all flagged" },
+              { label: "Recall",       value: recall,      fmt: fmtPct, color: recall >= 0.8 ? "#6fa98f" : "#c2a06a",     desc: "Caught / all actual violations" },
+              { label: "Specificity",  value: specificity, fmt: fmtPct, color: specificity >= 0.8 ? "#6fa98f" : "#c2a06a",desc: "Correctly cleared / all safe" },
+              { label: "FPR",          value: fpr,         fmt: fmtPct, color: fpr <= 0.1 ? "#6fa98f" : fpr <= 0.3 ? "#c2a06a" : "#be7468", desc: "False alarm rate" },
+              { label: "MCC",          value: mcc,         fmt: (v: number) => v.toFixed(3), color: mcc >= 0.6 ? "#6fa98f" : mcc >= 0.3 ? "#c2a06a" : "rgba(231,236,239,0.5)", desc: "Matthews correlation coefficient" },
+              { label: "Accuracy",     value: accuracy,    fmt: fmtPct, color: accuracy >= 0.8 ? "#6fa98f" : "#c2a06a",  desc: "Overall correct decisions" },
             ].map(({ label, value, fmt, color, desc }) => (
               <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.04)" }}>
                 <div>
-                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.7)", fontWeight: 500 }}>{label}</div>
-                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(240,242,255,0.2)", marginTop: 1 }}>{desc}</div>
+                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.7)", fontWeight: 500 }}>{label}</div>
+                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, color: "rgba(231,236,239,0.2)", marginTop: 1 }}>{desc}</div>
                 </div>
                 <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 15, fontWeight: 700, color }}>{fmt(value)}</div>
               </div>
@@ -391,7 +391,7 @@ function MLMetricsPanel({
 
       {/* Per-Pillar Signal Table */}
       <div>
-        <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 12 }}>
+        <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)", marginBottom: 12 }}>
           Per-Pillar Signal
         </div>
         <div style={{ overflowX: "auto" }}>
@@ -399,7 +399,7 @@ function MLMetricsPanel({
             <thead>
               <tr>
                 {["Pillar", "Score", "Confidence", "Prediction", "Outcome", "Historical F1"].map(col => (
-                  <th key={col} style={{ padding: "8px 12px", fontFamily: "DM Sans, sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
+                  <th key={col} style={{ padding: "8px 12px", fontFamily: "DM Sans, sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>
                     {col}
                   </th>
                 ))}
@@ -408,35 +408,35 @@ function MLMetricsPanel({
             <tbody>
               {rows.map(({ p, score, conf, predictedRisky, outcome, histM }) => {
                 const color = _ML_COLORS[p as _MLPillarKey];
-                const outC  = outcome ? outcomeColor[outcome] : "rgba(240,242,255,0.25)";
+                const outC  = outcome ? outcomeColor[outcome] : "rgba(231,236,239,0.25)";
                 return (
                   <tr key={p} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                     <td style={{ padding: "10px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.7)" }}>{_ML_LABELS[p as _MLPillarKey]}</span>
+                        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.7)" }}>{_ML_LABELS[p as _MLPillarKey]}</span>
                       </div>
                     </td>
                     <td style={{ padding: "10px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 40, height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
-                          <div style={{ width: score !== null ? `${score * 100}%` : "0%", height: "100%", background: score !== null && score >= 0.5 ? "#10b981" : "#f43f5e", borderRadius: 2 }} />
+                          <div style={{ width: score !== null ? `${score * 100}%` : "0%", height: "100%", background: score !== null && score >= 0.5 ? "#6fa98f" : "#be7468", borderRadius: 2 }} />
                         </div>
-                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: score !== null && score >= 0.5 ? "#10b981" : "#f43f5e" }}>
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: score !== null && score >= 0.5 ? "#6fa98f" : "#be7468" }}>
                           {score !== null ? `${(score * 100).toFixed(1)}%` : "—"}
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: "10px 12px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.5)" }}>
+                    <td style={{ padding: "10px 12px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(231,236,239,0.5)" }}>
                       {conf !== null ? `${(conf * 100).toFixed(0)}%` : "—"}
                     </td>
                     <td style={{ padding: "10px 12px" }}>
                       <span style={{
                         fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
                         padding: "2px 7px", borderRadius: 5,
-                        background: predictedRisky === null ? "rgba(255,255,255,0.04)" : predictedRisky ? "rgba(244,63,94,0.1)" : "rgba(16,185,129,0.1)",
-                        border: `1px solid ${predictedRisky === null ? "rgba(255,255,255,0.08)" : predictedRisky ? "rgba(244,63,94,0.3)" : "rgba(16,185,129,0.3)"}`,
-                        color: predictedRisky === null ? "rgba(240,242,255,0.3)" : predictedRisky ? "#f43f5e" : "#10b981",
+                        background: predictedRisky === null ? "rgba(255,255,255,0.04)" : predictedRisky ? "rgba(190,116,104,0.1)" : "rgba(111,169,143,0.1)",
+                        border: `1px solid ${predictedRisky === null ? "rgba(255,255,255,0.08)" : predictedRisky ? "rgba(190,116,104,0.3)" : "rgba(111,169,143,0.3)"}`,
+                        color: predictedRisky === null ? "rgba(231,236,239,0.3)" : predictedRisky ? "#be7468" : "#6fa98f",
                       }}>
                         {predictedRisky === null ? "—" : predictedRisky ? "RISKY" : "SAFE"}
                       </span>
@@ -450,15 +450,15 @@ function MLMetricsPanel({
                         }}>
                           {outcome}
                         </span>
-                      ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.2)" }}>—</span>}
+                      ) : <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(231,236,239,0.2)" }}>—</span>}
                     </td>
                     <td style={{ padding: "10px 12px" }}>
                       {histM?.status === "ok" && histM.f1 != null ? (
-                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: histM.f1 >= 0.8 ? "#10b981" : "#f59e0b", fontWeight: 600 }}>
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: histM.f1 >= 0.8 ? "#6fa98f" : "#c2a06a", fontWeight: 600 }}>
                           {histM.f1.toFixed(3)}
                         </span>
                       ) : (
-                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(240,242,255,0.2)" }}>
+                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(231,236,239,0.2)" }}>
                           {histM?.labeled_n != null ? `n=${histM.labeled_n} / ${histM.required_n ?? 30}` : "pending"}
                         </span>
                       )}
@@ -472,13 +472,13 @@ function MLMetricsPanel({
 
         {/* Calibration Status */}
         {!hasHistory && (
-          <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.12)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.6)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(45,74,94,0.04)", border: "1px solid rgba(45,74,94,0.12)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(45,74,94,0.6)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div>
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.5)", fontWeight: 500 }}>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.5)", fontWeight: 500 }}>
                 Historical F1 calibration unlocks at 30+ labeled evaluations per pillar
               </div>
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "rgba(240,242,255,0.25)", marginTop: 2 }}>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "rgba(231,236,239,0.25)", marginTop: 2 }}>
                 Evaluation-scope metrics above are computed from pillar predictions vs {verdict ?? "verdict"} as operational ground truth
               </div>
             </div>
@@ -496,17 +496,17 @@ function RiskThesisSection({ intel, loading, error }: {
 }) {
   const systemPattern = intel?.risk_thesis?.risk_pattern;
   return (
-    <Card style={{ marginBottom: 20, padding: 28 }} highlight="#7C3AED">
+    <Card style={{ marginBottom: 20, padding: 28 }} highlight="#2d4a5e">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <SectionLabel>AI Risk Thesis</SectionLabel>
-        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(124,58,237,0.6)", letterSpacing: "1px" }}>
+        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(45,74,94,0.6)", letterSpacing: "1px" }}>
           {intel?.cached ? "CACHED" : "GROQ-POWERED"}
         </span>
       </div>
 
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "rgba(124,58,237,0.6)", animation: "pulse 1.8s ease-in-out infinite" }}>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "rgba(45,74,94,0.6)", animation: "pulse 1.8s ease-in-out infinite" }}>
             ⬡ Generating forensic intelligence via Groq…
           </div>
           <Skeleton h={18} w="70%" />
@@ -515,7 +515,7 @@ function RiskThesisSection({ intel, loading, error }: {
       )}
 
       {!loading && error && (
-        <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: 10, color: "#F43F5E", fontFamily: "DM Sans, sans-serif", fontSize: 13 }}>
+        <div style={{ padding: "12px 16px", background: "rgba(190,116,104,0.08)", border: "1px solid rgba(190,116,104,0.2)", borderRadius: 10, color: "#be7468", fontFamily: "DM Sans, sans-serif", fontSize: 13 }}>
           {error}
         </div>
       )}
@@ -525,14 +525,14 @@ function RiskThesisSection({ intel, loading, error }: {
         return (
           <div style={{
             padding: "14px 16px",
-            background: isCfg ? "rgba(245,158,11,0.07)" : "rgba(244,63,94,0.07)",
-            border: `1px solid ${isCfg ? "rgba(245,158,11,0.25)" : "rgba(244,63,94,0.2)"}`,
+            background: isCfg ? "rgba(194,160,106,0.07)" : "rgba(190,116,104,0.07)",
+            border: `1px solid ${isCfg ? "rgba(194,160,106,0.25)" : "rgba(190,116,104,0.2)"}`,
             borderRadius: 10,
           }}>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, color: isCfg ? "#f59e0b" : "#F43F5E" }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, color: isCfg ? "#c2a06a" : "#be7468" }}>
               {isCfg ? "AI Analysis Not Configured" : "AI Analysis Unavailable"}
             </div>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.5)", lineHeight: 1.6, marginTop: 4 }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.5)", lineHeight: 1.6, marginTop: 4 }}>
               {isCfg
                 ? "Set a real GROQ_API_KEY in backend/.env (free at console.groq.com) to enable forensic AI analysis."
                 : intel.message || "Intelligence generation failed. Try regenerating."}
@@ -545,7 +545,7 @@ function RiskThesisSection({ intel, loading, error }: {
         <div>
           <div style={{
             fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 20,
-            background: "linear-gradient(135deg, #7C3AED, #06B6D4)",
+            background: "linear-gradient(135deg, #2d4a5e, #aab8c0)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             backgroundClip: "text", marginBottom: 16, lineHeight: 1.3,
           }}>
@@ -555,14 +555,14 @@ function RiskThesisSection({ intel, loading, error }: {
           <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
             <Badge
               label={`Severity: ${intel.risk_thesis.severity_level}`}
-              color={SEVERITY_COLORS[intel.risk_thesis.severity_level] || "#06B6D4"}
+              color={SEVERITY_COLORS[intel.risk_thesis.severity_level] || "#aab8c0"}
             />
             <span style={{
               fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 10,
               letterSpacing: "1.5px", textTransform: "uppercase",
-              color: PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#06B6D4",
-              background: `${PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#06B6D4"}1a`,
-              border: `1px solid ${PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#06B6D4"}40`,
+              color: PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#aab8c0",
+              background: `${PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#aab8c0"}1a`,
+              border: `1px solid ${PATTERN_COLORS[intel.risk_thesis.risk_pattern] || "#aab8c0"}40`,
               borderRadius: 6, padding: "3px 8px", display: "inline-block",
               animation: systemPattern === "SYSTEMIC" ? "systemic-pulse 2s ease-in-out infinite" : "none",
             }}>
@@ -572,15 +572,15 @@ function RiskThesisSection({ intel, loading, error }: {
 
           <div style={{
             fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: 14,
-            lineHeight: 1.8, color: "rgba(240,242,255,0.72)", whiteSpace: "pre-wrap",
+            lineHeight: 1.8, color: "rgba(231,236,239,0.72)", whiteSpace: "pre-wrap",
           }}>
             {intel.risk_thesis.narrative}
           </div>
 
           {intel.confidence_assessment && (
             <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(255,255,255,0.02)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.05)" }}>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.35)" }}>
-                Confidence: <span style={{ color: "rgba(240,242,255,0.6)" }}>{intel.confidence_assessment.evaluation_confidence}</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.35)" }}>
+                Confidence: <span style={{ color: "rgba(231,236,239,0.6)" }}>{intel.confidence_assessment.evaluation_confidence}</span>
                 {intel.confidence_assessment.notes && ` — ${intel.confidence_assessment.notes}`}
               </span>
             </div>
@@ -603,15 +603,15 @@ function PolicyTraceSection({ flags }: { flags: string[] }) {
             alignItems: "center",
             gap:        8,
             padding:    "8px 14px",
-            background: "rgba(244,63,94,0.06)",
-            border:     "1px solid rgba(244,63,94,0.2)",
-            borderLeft: "3px solid #F43F5E",
+            background: "rgba(190,116,104,0.06)",
+            border:     "1px solid rgba(190,116,104,0.2)",
+            borderLeft: "3px solid #be7468",
             borderRadius: "0 10px 10px 0",
           }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F43F5E" }} />
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#be7468" }} />
             <span style={{
               fontFamily: "JetBrains Mono, monospace", fontSize: 11,
-              color: "#F43F5E",
+              color: "#be7468",
             }}>
               {f}
             </span>
@@ -633,7 +633,7 @@ function RecommendationsSection({ recs }: { recs: NonNullable<IntelligenceResult
       <SectionLabel>Recommendations</SectionLabel>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {sorted.map((rec, i) => {
-          const pColor = PRIORITY_COLORS[rec.priority] || "#06B6D4";
+          const pColor = PRIORITY_COLORS[rec.priority] || "#aab8c0";
           return (
             <div key={i} style={{
               padding:    "16px 18px",
@@ -644,14 +644,14 @@ function RecommendationsSection({ recs }: { recs: NonNullable<IntelligenceResult
             }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
                 <Badge label={rec.priority === "SHORT_TERM" ? "SHORT TERM" : rec.priority} color={pColor} />
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "rgba(240,242,255,0.35)", textTransform: "uppercase", letterSpacing: "1px" }}>
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "rgba(231,236,239,0.35)", textTransform: "uppercase", letterSpacing: "1px" }}>
                   {rec.pillar}
                 </span>
               </div>
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 500, fontSize: 14, color: "#f0f2ff", marginBottom: 4 }}>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 500, fontSize: 14, color: "#e7ecef", marginBottom: 4 }}>
                 {rec.action}
               </div>
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: 13, color: "rgba(240,242,255,0.5)", lineHeight: 1.6 }}>
+              <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: 13, color: "rgba(231,236,239,0.5)", lineHeight: 1.6 }}>
                 {rec.rationale}
               </div>
             </div>
@@ -666,7 +666,6 @@ function RecommendationsSection({ recs }: { recs: NonNullable<IntelligenceResult
 
 export default function AuditDetailPage() {
   const params    = useParams();
-  const router    = useRouter();
   const requestId = params?.id as string;
 
   const [detail,       setDetail]       = useState<AuditDetail | null>(null);
@@ -680,8 +679,6 @@ export default function AuditDetailPage() {
   const [metrics,      setMetrics]      = useState<Record<string, PillarMetric>>({});
   const [correlations, setCorrelations] = useState<CorrelationData | null>(null);
 
-  const [confirmDelete,setConfirmDelete]= useState(false);
-  const [deleting,     setDeleting]     = useState(false);
   const [generatingPdf,setGeneratingPdf]= useState(false);
   const [toasts,       setToasts]       = useState<{ id: number; msg: string; type: string }[]>([]);
   const [currentEmail, setCurrentEmail] = useState<string | null>(null);
@@ -780,21 +777,6 @@ export default function AuditDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!detail) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/audit-trails/${detail.id}`, { method: "DELETE" });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || "Delete failed", "error"); return; }
-      setConfirmDelete(false);
-      router.push("/dashboard/audit-trails");
-    } catch {
-      showToast("Delete request failed", "error");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   // Derived data
   const pillarScores:  PillarScores            = detail?.pillar_scores   ?? {};
   const pillarConf:    Record<string, number>   = detail?.pillar_confidence ?? {};
@@ -817,7 +799,7 @@ export default function AuditDetailPage() {
     <>
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        @keyframes systemic-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,0)} 50%{box-shadow:0 0 0 6px rgba(244,63,94,0.25)} }
+        @keyframes systemic-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(190,116,104,0)} 50%{box-shadow:0 0 0 6px rgba(190,116,104,0.25)} }
       `}</style>
 
       <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
@@ -826,7 +808,7 @@ export default function AuditDetailPage() {
         <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <Link href="/dashboard/audit-trails" style={{
             fontFamily: "DM Sans, sans-serif", fontSize: 13,
-            color: "rgba(240,242,255,0.4)", textDecoration: "none",
+            color: "rgba(231,236,239,0.4)", textDecoration: "none",
             display: "flex", alignItems: "center", gap: 6,
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -839,9 +821,9 @@ export default function AuditDetailPage() {
             disabled={generatingPdf || detailLoading}
             style={{
               padding: "10px 18px",
-              background: "rgba(124,58,237,0.12)",
-              border: "1px solid rgba(124,58,237,0.3)",
-              borderRadius: 12, color: "#7C3AED",
+              background: "rgba(45,74,94,0.12)",
+              border: "1px solid rgba(45,74,94,0.3)",
+              borderRadius: 12, color: "#2d4a5e",
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 600, fontSize: 13,
               cursor: generatingPdf ? "wait" : "pointer",
@@ -858,7 +840,7 @@ export default function AuditDetailPage() {
         </div>
 
         {detailError && (
-          <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: 12, color: "#f43f5e", fontFamily: "DM Sans, sans-serif", fontSize: 13, marginBottom: 24 }}>
+          <div style={{ padding: "12px 16px", background: "rgba(190,116,104,0.08)", border: "1px solid rgba(190,116,104,0.2)", borderRadius: 12, color: "#be7468", fontFamily: "DM Sans, sans-serif", fontSize: 13, marginBottom: 24 }}>
             {detailError}
           </div>
         )}
@@ -928,7 +910,7 @@ export default function AuditDetailPage() {
         <Card style={{ marginBottom: 20, padding: 28 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <SectionLabel>Latency Waterfall</SectionLabel>
-            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(240,242,255,0.25)" }}>
+            <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "rgba(231,236,239,0.25)" }}>
               p95 budget = 500ms
             </span>
           </div>
@@ -988,68 +970,39 @@ export default function AuditDetailPage() {
           </div>
         )}
 
-        {/* ── Danger zone ── */}
+        {/* ── Append-only notice (audit records are immutable & tamper-evident) ── */}
         {!detailLoading && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 32 }}>
-            <button
-              onClick={() => setConfirmDelete(true)}
+            <div
               style={{
-                padding:    "10px 18px",
-                background: "rgba(244,63,94,0.06)",
-                border:     "1px solid rgba(244,63,94,0.2)",
-                borderRadius: 12, color: "#F43F5E",
+                padding:    "8px 14px",
+                background: "rgba(170,184,192,0.05)",
+                border:     "1px solid rgba(170,184,192,0.15)",
+                borderRadius: 12, color: "rgba(231,236,239,0.45)",
                 fontFamily: "DM Sans, sans-serif",
-                fontWeight: 600, fontSize: 13, cursor: "pointer",
+                fontWeight: 500, fontSize: 12,
                 display:    "flex", alignItems: "center", gap: 8,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              Delete Record
-            </button>
+              Append-only record — immutable &amp; hash-chained
+            </div>
           </div>
         )}
       </div>
-
-      {/* ── Delete modal ── */}
-      {confirmDelete && (
-        <div
-          style={{ position: "fixed", inset: 0, background: "rgba(5,8,16,0.85)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
-          onClick={() => setConfirmDelete(false)}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ background: "#0d0f1a", border: "1px solid rgba(244,63,94,0.25)", borderRadius: 20, padding: 32, maxWidth: 440, width: "90%" }}
-          >
-            <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20, color: "#f0f2ff", marginBottom: 12 }}>Delete Record?</h3>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 300, fontSize: 14, color: "rgba(240,242,255,0.5)", lineHeight: 1.6, marginBottom: 24 }}>
-              This action cannot be undone. The audit log entry will be permanently removed.
-            </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmDelete(false)} style={{ padding: "10px 18px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, color: "rgba(240,242,255,0.6)", fontFamily: "DM Sans, sans-serif", fontSize: 13, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={handleDelete} disabled={deleting} style={{ padding: "10px 18px", background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 10, color: "#F43F5E", fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-                {deleting ? "Deleting…" : "Confirm Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Toast notifications ── */}
       <div style={{ position: "fixed", bottom: 24, right: 24, display: "flex", flexDirection: "column", gap: 10, zIndex: 9999 }}>
         {toasts.map(t => (
           <div key={t.id} style={{
             padding:    "12px 18px",
-            background: t.type === "error" ? "rgba(244,63,94,0.12)" : "rgba(16,185,129,0.12)",
-            border:     `1px solid ${t.type === "error" ? "rgba(244,63,94,0.3)" : "rgba(16,185,129,0.3)"}`,
+            background: t.type === "error" ? "rgba(190,116,104,0.12)" : "rgba(111,169,143,0.12)",
+            border:     `1px solid ${t.type === "error" ? "rgba(190,116,104,0.3)" : "rgba(111,169,143,0.3)"}`,
             borderRadius: 12,
-            color:      t.type === "error" ? "#F43F5E" : "#10B981",
+            color:      t.type === "error" ? "#be7468" : "#6fa98f",
             fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 500,
             maxWidth:   360, backdropFilter: "blur(8px)",
           }}>

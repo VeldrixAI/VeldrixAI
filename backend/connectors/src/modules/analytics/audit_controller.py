@@ -11,8 +11,9 @@ from typing import Any, Dict, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from uuid import UUID
@@ -21,6 +22,12 @@ import io, csv
 from src.db.base import get_db
 from src.core.middleware.auth import get_current_user
 from src.modules.reports.models import AuditTrail
+from src.modules.analytics.audit_hash import (
+    GENESIS_HASH,
+    SYSTEM_TENANT_ID,
+    compute_record_hash,
+    tenant_key,
+)
 from datetime import datetime
 
 router = APIRouter(prefix="/api/audit-trails", tags=["audit-trails"])
@@ -210,6 +217,56 @@ def _check_rate_limit(org_id: str) -> bool:
     return True
 
 
+# ── Tamper-evident hash chain (Part A) ───────────────────────────────────────
+
+def _insert_with_chain(db: Session, entry: AuditTrail) -> AuditTrail:
+    """Insert one audit row, linking it into its tenant's hash chain.
+
+    The chain is per-tenant (tenant_key == user_id, or the system sentinel for
+    NULL user_id). Writes for a tenant are serialized with a per-tenant Postgres
+    advisory lock so two concurrent inserts cannot read the same head and fork
+    the chain (the fire-and-forget audit POSTs from core make bursts realistic).
+    The lock is transaction-scoped and released on commit/rollback.
+    """
+    # created_at must be fixed *before* hashing so the stored row is reproducible.
+    if entry.created_at is None:
+        entry.created_at = datetime.utcnow()
+
+    tk = tenant_key(entry.user_id)
+    # Serialize writers for this tenant. hashtext() maps the key to int4 (the lock
+    # space); occasional cross-tenant collisions only add harmless serialization.
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": tk})
+
+    head = db.execute(
+        text(
+            "SELECT record_hash, chain_seq FROM audit_trails "
+            "WHERE COALESCE(user_id, CAST(:sys AS uuid)) = CAST(:tenant AS uuid) "
+            "ORDER BY chain_seq DESC NULLS LAST LIMIT 1"
+        ),
+        {"sys": SYSTEM_TENANT_ID, "tenant": tk},
+    ).first()
+
+    prev_hash = head.record_hash if head and head.record_hash else GENESIS_HASH
+    next_seq = (head.chain_seq + 1) if head and head.chain_seq is not None else 0
+
+    entry.prev_hash = prev_hash
+    entry.chain_seq = next_seq
+    entry.record_hash = compute_record_hash(
+        prev_hash=prev_hash,
+        action_type=entry.action_type,
+        entity_type=entry.entity_type,
+        entity_id=entry.entity_id,
+        user_id=entry.user_id,
+        request_id=entry.request_id,
+        created_at=entry.created_at,
+        action_metadata=entry.action_metadata,
+    )
+
+    db.add(entry)
+    db.commit()
+    return entry
+
+
 # ── Internal endpoint (called from core service telemetry) ───────────────────
 
 class InternalAuditRequest(BaseModel):
@@ -254,10 +311,12 @@ def internal_log_audit(body: InternalAuditRequest, db: Session = Depends(get_db)
         if existing:
             logger.info("internal_log_audit: duplicate suppressed request_id=%s", request_id)
             return {"ok": True, "id": str(existing.id), "inserted": False}
-        
+
+        # Chain assignment happens ONLY on the real insert path — after the
+        # dedup short-circuit above — so a retried request never consumes a
+        # chain slot for a row that is never written.
         entry = AuditTrail(**row)
-        db.add(entry)
-        db.commit()
+        _insert_with_chain(db, entry)
         logger.info(
             "internal_log_audit: request_id=%s inserted=True id=%s",
             request_id, str(row["id"]),
@@ -301,8 +360,7 @@ async def log_audit_entry(
         related_request_id=body.related_request_id,
         actor=body.actor or current_user.get("email"),
     )
-    db.add(entry)
-    db.commit()
+    _insert_with_chain(db, entry)
     db.refresh(entry)
     return {"id": str(entry.id)}
 
@@ -522,32 +580,16 @@ async def get_audit_intelligence(
     return result
 
 
-# ── Delete endpoint ───────────────────────────────────────────────────────────
-
-@router.delete("/{log_id}", status_code=204)
-async def delete_audit_log(
-    log_id: str,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Hard-delete a single audit log entry, scoped to the calling user."""
-    uid = UUID(current_user["id"])
-    try:
-        log_uuid = UUID(log_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Audit log not found")
-
-    record = (
-        db.query(AuditTrail)
-        .filter(AuditTrail.id == log_uuid, AuditTrail.user_id == uid)
-        .first()
-    )
-    if record is None:
-        raise HTTPException(status_code=404, detail="Audit log not found")
-
-    db.delete(record)
-    db.commit()
-    return Response(status_code=204)
+# ── Delete endpoint: intentionally removed (Part A) ──────────────────────────
+#
+# The audit trail is append-only and tamper-evident (per-row hash chain, see
+# audit_hash.py). There is deliberately NO delete route: a hard delete would
+# break the chain and is exactly the tampering vector this feature exists to
+# prevent. A DB-level BEFORE UPDATE OR DELETE trigger on audit_trails enforces
+# this even against direct SQL. GDPR-style erasure, if ever required, must be a
+# separate chain-preserving redaction path — tracked as a follow-up, not a
+# casual user-scoped DELETE. ("A missing capability is safe; a tampering vector
+# is not.")
 
 
 # ── CSV export endpoint ───────────────────────────────────────────────────────

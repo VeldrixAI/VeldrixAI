@@ -3,10 +3,10 @@
 import { useState, useRef } from "react";
 
 const VERDICT_COLORS: Record<string, string> = {
-  ALLOW:   "#10B981",
-  WARN:    "#f59e0b",
-  REVIEW:  "#06B6D4",
-  BLOCK:   "#F43F5E",
+  ALLOW:   "#6fa98f",
+  WARN:    "#c2a06a",
+  REVIEW:  "#aab8c0",
+  BLOCK:   "#be7468",
 };
 
 interface EvalResult {
@@ -30,7 +30,7 @@ const MUTATIONS = [
 
 function ScoreDelta({ delta }: { delta: number }) {
   const abs   = Math.abs(delta);
-  const color = delta > 0 ? "#10B981" : delta < 0 ? "#F43F5E" : "#06B6D4";
+  const color = delta > 0 ? "#6fa98f" : delta < 0 ? "#be7468" : "#aab8c0";
   const arrow = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
   return (
     <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 18, fontWeight: 700, color }}>
@@ -93,10 +93,10 @@ export default function CounterfactualPanel({
             onClick={() => setMutatedText(m.transform(mutatedText))}
             style={{
               padding:    "6px 12px",
-              background: "rgba(124,58,237,0.08)",
-              border:     "1px solid rgba(124,58,237,0.2)",
+              background: "rgba(45,74,94,0.08)",
+              border:     "1px solid rgba(45,74,94,0.2)",
               borderRadius: 8,
-              color:      "rgba(124,58,237,0.8)",
+              color:      "rgba(45,74,94,0.8)",
               fontFamily: "DM Sans, sans-serif",
               fontSize:   12,
               cursor:     "pointer",
@@ -122,7 +122,7 @@ export default function CounterfactualPanel({
           padding:      "12px 14px",
           fontFamily:   "JetBrains Mono, monospace",
           fontSize:     12,
-          color:        "rgba(240,242,255,0.7)",
+          color:        "rgba(231,236,239,0.7)",
           lineHeight:   1.6,
           resize:       "vertical",
           boxSizing:    "border-box",
@@ -132,10 +132,10 @@ export default function CounterfactualPanel({
       {error && (
         <div style={{
           padding: "10px 14px",
-          background: "rgba(244,63,94,0.08)",
-          border: "1px solid rgba(244,63,94,0.2)",
+          background: "rgba(190,116,104,0.08)",
+          border: "1px solid rgba(190,116,104,0.2)",
           borderRadius: 10,
-          color: "#F43F5E",
+          color: "#be7468",
           fontFamily: "DM Sans, sans-serif",
           fontSize: 13,
         }}>
@@ -159,16 +159,16 @@ export default function CounterfactualPanel({
         >
           {/* Original */}
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", color: "rgba(240,242,255,0.3)", marginBottom: 6 }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", color: "rgba(231,236,239,0.3)", marginBottom: 6 }}>
               ORIGINAL
             </div>
             <div style={{
               fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20,
-              color: VERDICT_COLORS[originalVerdict ?? ""] ?? "#06B6D4",
+              color: VERDICT_COLORS[originalVerdict ?? ""] ?? "#aab8c0",
             }}>
               {originalVerdict ?? "—"}
             </div>
-            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.4)", marginTop: 4 }}>
+            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(231,236,239,0.4)", marginTop: 4 }}>
               {originalScore != null ? originalScore.toFixed(3) : "—"}
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function CounterfactualPanel({
             {scoreDelta != null && <ScoreDelta delta={scoreDelta} />}
             <div style={{
               fontFamily: "JetBrains Mono, monospace", fontSize: 9,
-              color: "rgba(240,242,255,0.2)", marginTop: 4,
+              color: "rgba(231,236,239,0.2)", marginTop: 4,
             }}>
               TRUST DELTA
             </div>
@@ -186,16 +186,16 @@ export default function CounterfactualPanel({
 
           {/* Counterfactual */}
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", color: "rgba(240,242,255,0.3)", marginBottom: 6 }}>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "2px", color: "rgba(231,236,239,0.3)", marginBottom: 6 }}>
               COUNTERFACTUAL
             </div>
             <div style={{
               fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20,
-              color: VERDICT_COLORS[result.verdict] ?? "#06B6D4",
+              color: VERDICT_COLORS[result.verdict] ?? "#aab8c0",
             }}>
               {result.verdict}
             </div>
-            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.4)", marginTop: 4 }}>
+            <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(231,236,239,0.4)", marginTop: 4 }}>
               {result.overallScore.toFixed(3)}
             </div>
           </div>

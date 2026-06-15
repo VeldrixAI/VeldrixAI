@@ -233,7 +233,7 @@ export function DashboardApp() {
                     padding: '0.25rem 0.75rem', 
                     borderRadius: '6px',
                     fontSize: '0.85rem',
-                    background: key.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    background: key.is_active ? 'rgba(111,169,143, 0.1)' : 'rgba(190,116,104, 0.1)',
                     color: key.is_active ? 'var(--success)' : 'var(--error)'
                   }}>
                     {key.is_active ? "Active" : "Revoked"}
@@ -257,7 +257,7 @@ export function DashboardApp() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
             gap: '1rem',
             padding: '1.5rem',
-            background: 'rgba(139, 92, 246, 0.1)',
+            background: 'rgba(45,74,94, 0.1)',
             borderRadius: '12px',
             marginTop: '1rem',
             marginBottom: '2rem'
@@ -315,7 +315,7 @@ export function DashboardApp() {
                       color: 'var(--warning)',
                       marginTop: '0.5rem',
                       padding: '0.5rem',
-                      background: 'rgba(245, 158, 11, 0.1)',
+                      background: 'rgba(194,160,106, 0.1)',
                       borderRadius: '6px'
                     }}>
                       {result.flags.join(", ")}

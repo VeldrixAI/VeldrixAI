@@ -23,18 +23,18 @@ function FailedInner() {
 
         <div style={{
           background: "var(--vx-card-bg)",
-          border: "1px solid rgba(244,63,94,0.25)",
+          border: "1px solid rgba(190,116,104,0.25)",
           borderRadius: "24px",
           padding: "48px 40px",
           position: "relative",
           overflow: "hidden",
           textAlign: "center",
-          boxShadow: "0 16px 60px rgba(244,63,94,0.08)",
+          boxShadow: "0 16px 60px rgba(190,116,104,0.08)",
         }}>
           {/* Top accent */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-            background: "linear-gradient(90deg, transparent, rgba(244,63,94,0.7), rgba(245,158,11,0.4), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(190,116,104,0.7), rgba(194,160,106,0.4), transparent)",
           }} />
 
           {/* Error icon */}
@@ -42,8 +42,8 @@ function FailedInner() {
             width: "72px",
             height: "72px",
             borderRadius: "50%",
-            background: "rgba(244,63,94,0.10)",
-            border: "1px solid rgba(244,63,94,0.30)",
+            background: "rgba(190,116,104,0.10)",
+            border: "1px solid rgba(190,116,104,0.30)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -59,7 +59,7 @@ function FailedInner() {
             fontSize: "9px",
             letterSpacing: "3px",
             textTransform: "uppercase",
-            color: "rgba(244,63,94,0.7)",
+            color: "rgba(190,116,104,0.7)",
             marginBottom: "10px",
           }}>
             Payment Failed
@@ -77,8 +77,8 @@ function FailedInner() {
           </h1>
 
           <div style={{
-            background: "rgba(244,63,94,0.08)",
-            border: "1px solid rgba(244,63,94,0.20)",
+            background: "rgba(190,116,104,0.08)",
+            border: "1px solid rgba(190,116,104,0.20)",
             borderRadius: "12px",
             padding: "16px 20px",
             marginBottom: "28px",
@@ -87,7 +87,7 @@ function FailedInner() {
               fontFamily: "var(--vx-font-body)",
               fontWeight: 400,
               fontSize: "13px",
-              color: "rgba(244,63,94,0.85)",
+              color: "rgba(190,116,104,0.85)",
               lineHeight: 1.6,
               margin: 0,
             }}>
@@ -138,7 +138,7 @@ function FailedInner() {
                 gap: "8px",
                 padding: "5px 0",
               }}>
-                <span style={{ color: "var(--vx-rose)", fontSize: "12px" }}>•</span>
+                <span style={{ color: "var(--vx-error)", fontSize: "12px" }}>•</span>
                 <span style={{
                   fontFamily: "var(--vx-font-body)",
                   fontSize: "12px",
@@ -156,7 +156,7 @@ function FailedInner() {
               display: "block",
               padding: "14px 24px",
               borderRadius: "12px",
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+              background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
               color: "#fff",
               fontFamily: "var(--vx-font-display)",
               fontWeight: 700,
@@ -165,7 +165,7 @@ function FailedInner() {
               textTransform: "uppercase",
               textDecoration: "none",
               textAlign: "center",
-              boxShadow: "0 8px 24px rgba(124,58,237,0.30)",
+              boxShadow: "0 8px 24px rgba(45,74,94,0.30)",
             }}>
               Try Again →
             </Link>
@@ -197,7 +197,7 @@ function FailedInner() {
             lineHeight: 1.6,
           }}>
             Need help?{" "}
-            <a href="mailto:support@veldrixai.ca" style={{ color: "var(--vx-violet)", textDecoration: "underline", textUnderlineOffset: "2px" }}>
+            <a href="mailto:support@veldrixai.ca" style={{ color: "var(--vx-slate)", textDecoration: "underline", textUnderlineOffset: "2px" }}>
               support@veldrixai.ca
             </a>
           </p>

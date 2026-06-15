@@ -30,17 +30,17 @@ export function VoronoiGuard() {
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case "violation": return "rgba(244,63,94,0.4)";
-      case "warning": return "rgba(245,158,11,0.3)";
-      default: return "rgba(16,185,129,0.2)";
+      case "violation": return "rgba(190,116,104,0.4)";
+      case "warning": return "rgba(194,160,106,0.3)";
+      default: return "rgba(111,169,143,0.2)";
     }
   };
 
   const getRiskStroke = (risk: string) => {
     switch (risk) {
-      case "violation": return "rgba(244,63,94,0.8)";
-      case "warning": return "rgba(245,158,11,0.6)";
-      default: return "rgba(16,185,129,0.4)";
+      case "violation": return "rgba(190,116,104,0.8)";
+      case "warning": return "rgba(194,160,106,0.6)";
+      default: return "rgba(111,169,143,0.4)";
     }
   };
 
@@ -89,7 +89,7 @@ export function VoronoiGuard() {
           </motion.g>
         ))}
         <motion.circle
-          cx="45" cy="40" r="3" fill="#7c3aed" filter="url(#voronoiGlow)"
+          cx="45" cy="40" r="3" fill="#2d4a5e" filter="url(#voronoiGlow)"
           animate={{ cx: [45, 50, 45], cy: [40, 45, 40] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />

@@ -41,8 +41,8 @@ export function BiasHeatmap() {
                 transition={{ delay: 0.2 + i * 0.1, duration: 0.8, ease: "easeOut" }}
                 style={{
                   background: hoveredGroup === i 
-                    ? "linear-gradient(90deg, rgba(124,58,237,0.6), rgba(6,182,212,0.4))"
-                    : "linear-gradient(90deg, rgba(124,58,237,0.4), rgba(6,182,212,0.2))"
+                    ? "linear-gradient(90deg, rgba(45,74,94,0.6), rgba(170,184,192,0.4))"
+                    : "linear-gradient(90deg, rgba(45,74,94,0.4), rgba(170,184,192,0.2))"
                 }}
               />
             </div>

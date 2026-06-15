@@ -25,9 +25,9 @@ export function EntropyMap() {
   }, []);
 
   const getColor = (entropy: number) => {
-    if (entropy > 0.7) return "rgba(244,63,94,0.7)";
-    if (entropy > 0.4) return "rgba(245,158,11,0.5)";
-    return "rgba(16,185,129,0.3)";
+    if (entropy > 0.7) return "rgba(190,116,104,0.7)";
+    if (entropy > 0.4) return "rgba(194,160,106,0.5)";
+    return "rgba(111,169,143,0.3)";
   };
 
   const avgEntropy = entropyValues.length > 0 
@@ -58,9 +58,9 @@ export function EntropyMap() {
         ))}
       </div>
       <div className="vdx-entropy-legend">
-        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(16,185,129,0.5)" }} /><span>LOW</span></div>
-        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(245,158,11,0.5)" }} /><span>MED</span></div>
-        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(244,63,94,0.7)" }} /><span>HIGH</span></div>
+        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(111,169,143,0.5)" }} /><span>LOW</span></div>
+        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(194,160,106,0.5)" }} /><span>MED</span></div>
+        <div className="vdx-legend-item"><div className="vdx-legend-dot" style={{ background: "rgba(190,116,104,0.7)" }} /><span>HIGH</span></div>
       </div>
     </div>
   );

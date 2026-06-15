@@ -7,13 +7,13 @@
  * or a direct analyzeRequest() call.
  *
  * Brand tokens (must not deviate):
- *   bg       #050810   void background
- *   violet   #7C3AED   primary accent
- *   indigo   #4F46E5   secondary accent
- *   cyan     #06B6D4   highlight
- *   emerald  #10B981   success
- *   rose     #F43F5E   critical / error
- *   amber    #F59E0B   warning
+ *   bg       #0a1014   void background
+ *   violet   #2d4a5e   primary accent
+ *   indigo   #243b4c   secondary accent
+ *   cyan     #aab8c0   highlight
+ *   emerald  #6fa98f   success
+ *   rose     #be7468   critical / error
+ *   amber    #c2a06a   warning
  *   Font display: Syne 800  |  Body: DM Sans 300/400/500
  */
 
@@ -30,17 +30,17 @@ const PILLAR_META: Record<string, { label: string; icon: string }> = {
 };
 
 const VERDICT_STYLE: Record<string, { color: string; glow: string }> = {
-  ALLOW:  { color: "#10b981", glow: "rgba(16,185,129,0.35)"  },
-  WARN:   { color: "#f59e0b", glow: "rgba(245,158,11,0.35)"  },
-  REVIEW: { color: "#06b6d4", glow: "rgba(6,182,212,0.35)"   },
-  BLOCK:  { color: "#f43f5e", glow: "rgba(244,63,94,0.40)"   },
+  ALLOW:  { color: "#6fa98f", glow: "rgba(111,169,143,0.35)"  },
+  WARN:   { color: "#c2a06a", glow: "rgba(194,160,106,0.35)"  },
+  REVIEW: { color: "#aab8c0", glow: "rgba(170,184,192,0.35)"   },
+  BLOCK:  { color: "#be7468", glow: "rgba(190,116,104,0.40)"   },
 };
 
 function scoreColor(score: number | null, isError: boolean): string {
-  if (isError || score === null) return "#f43f5e";
-  if (score >= 0.85) return "#10b981";
-  if (score >= 0.60) return "#f59e0b";
-  return "#f43f5e";
+  if (isError || score === null) return "#be7468";
+  if (score >= 0.85) return "#6fa98f";
+  if (score >= 0.60) return "#c2a06a";
+  return "#be7468";
 }
 
 // ── ScoreBar ──────────────────────────────────────────────────────────────────
@@ -91,19 +91,19 @@ function PillarCard({ pillar, result }: { pillar: string; result: PillarResult }
           <span style={{
             fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
             fontSize: 12, letterSpacing: "0.08em",
-            color: "rgba(240,242,255,0.65)",
+            color: "rgba(231,236,239,0.65)",
           }}>
             {meta.label.toUpperCase()}
           </span>
         </div>
         <span style={{
           fontFamily: "'Syne', sans-serif", fontWeight: 800,
-          fontSize: 20, color: isError ? "#f43f5e" : "rgba(240,242,255,0.92)",
+          fontSize: 20, color: isError ? "#be7468" : "rgba(231,236,239,0.92)",
           letterSpacing: "-0.5px",
         }}>
           {isError ? "ERR" : pct}
           {!isError && (
-            <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(240,242,255,0.3)", marginLeft: 2 }}>%</span>
+            <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(231,236,239,0.3)", marginLeft: 2 }}>%</span>
           )}
         </span>
       </div>
@@ -115,17 +115,17 @@ function PillarCard({ pillar, result }: { pillar: string; result: PillarResult }
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{
           fontFamily: "'DM Sans', sans-serif", fontSize: 10,
-          color: "rgba(240,242,255,0.25)", letterSpacing: "0.05em",
+          color: "rgba(231,236,239,0.25)", letterSpacing: "0.05em",
         }}>
           {result.latency_ms != null ? `${result.latency_ms}ms` : "—"}
         </span>
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {(result.flags ?? []).slice(0, 2).map((f) => (
             <span key={f} style={{
-              background: "rgba(244,63,94,0.15)", border: "1px solid rgba(244,63,94,0.3)",
+              background: "rgba(190,116,104,0.15)", border: "1px solid rgba(190,116,104,0.3)",
               borderRadius: 4, padding: "1px 7px",
               fontFamily: "'DM Sans', sans-serif", fontSize: 9, letterSpacing: "0.1em",
-              color: "#f43f5e", textTransform: "uppercase",
+              color: "#be7468", textTransform: "uppercase",
             }}>
               {f.replace(/_/g, " ")}
             </span>
@@ -136,7 +136,7 @@ function PillarCard({ pillar, result }: { pillar: string; result: PillarResult }
       {result.error && (
         <div style={{
           fontFamily: "'DM Sans', sans-serif", fontSize: 10,
-          color: "rgba(244,63,94,0.5)", fontStyle: "italic",
+          color: "rgba(190,116,104,0.5)", fontStyle: "italic",
         }}>
           {result.error.slice(0, 80)}
         </div>
@@ -170,7 +170,7 @@ export function TrustScorePanel({ result, loading }: Props) {
       {/* Top gradient line */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 1,
-        background: "linear-gradient(90deg, transparent, #7c3aed88, #06b6d488, transparent)",
+        background: "linear-gradient(90deg, transparent, #2d4a5e88, #aab8c088, transparent)",
       }} />
 
       {/* Header row */}
@@ -182,13 +182,13 @@ export function TrustScorePanel({ result, loading }: Props) {
           <div style={{
             fontFamily: "'Syne', sans-serif", fontWeight: 800,
             fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-            color: "rgba(240,242,255,0.28)", marginBottom: 4,
+            color: "rgba(231,236,239,0.28)", marginBottom: 4,
           }}>
             Trust Evaluation
           </div>
           <div style={{
             fontFamily: "'Syne', sans-serif", fontWeight: 700,
-            fontSize: 18, color: "rgba(240,242,255,0.9)",
+            fontSize: 18, color: "rgba(231,236,239,0.9)",
           }}>
             Five-Pillar Analysis
           </div>
@@ -201,14 +201,14 @@ export function TrustScorePanel({ result, loading }: Props) {
               <div style={{
                 fontFamily: "'Syne', sans-serif", fontWeight: 800,
                 fontSize: 36, letterSpacing: "-1.5px", lineHeight: 1,
-                color: "rgba(240,242,255,0.95)",
+                color: "rgba(231,236,239,0.95)",
               }}>
                 {pct}
-                <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(240,242,255,0.3)" }}>%</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(231,236,239,0.3)" }}>%</span>
               </div>
               <div style={{
                 fontFamily: "'DM Sans', sans-serif", fontWeight: 300, fontSize: 10,
-                letterSpacing: "0.15em", color: "rgba(240,242,255,0.3)", textTransform: "uppercase",
+                letterSpacing: "0.15em", color: "rgba(231,236,239,0.3)", textTransform: "uppercase",
               }}>
                 Overall Trust
               </div>
@@ -230,9 +230,9 @@ export function TrustScorePanel({ result, loading }: Props) {
         {loading && !ts && (
           <div style={{
             padding: "8px 20px", borderRadius: 100,
-            background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)",
+            background: "rgba(45,74,94,0.1)", border: "1px solid rgba(45,74,94,0.25)",
             fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: "0.2em",
-            color: "rgba(124,58,237,0.7)", textTransform: "uppercase",
+            color: "rgba(45,74,94,0.7)", textTransform: "uppercase",
           }}>
             Analyzing…
           </div>
@@ -263,11 +263,11 @@ export function TrustScorePanel({ result, loading }: Props) {
       {ts && ts.critical_flags.length > 0 && (
         <div style={{
           marginTop: 20, padding: "12px 16px", borderRadius: 12,
-          background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)",
+          background: "rgba(190,116,104,0.08)", border: "1px solid rgba(190,116,104,0.2)",
         }}>
           <span style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 10,
-            letterSpacing: "0.15em", color: "#f43f5e", textTransform: "uppercase",
+            letterSpacing: "0.15em", color: "#be7468", textTransform: "uppercase",
           }}>
             ⚠ Critical — {ts.critical_flags.join(" · ")}
           </span>
@@ -279,7 +279,7 @@ export function TrustScorePanel({ result, loading }: Props) {
         <div style={{ marginTop: 16, textAlign: "right" }}>
           <span style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 10,
-            color: "rgba(240,242,255,0.2)", letterSpacing: "0.05em",
+            color: "rgba(231,236,239,0.2)", letterSpacing: "0.05em",
           }}>
             Analysis completed in {result.total_latency_ms}ms · SDK {result.sdk_version}
           </span>

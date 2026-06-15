@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 
 const FEED_ITEMS = [
-  { type: 'success', icon: '✅', text: 'Response approved · trust score 98/100', color: '#10b981' },
-  { type: 'warning', icon: '⚠️', text: 'Hallucination risk detected · rewriting', color: '#f59e0b' },
-  { type: 'block',   icon: '🚫', text: 'Agent action blocked · policy violation', color: '#f43f5e' },
-  { type: 'success', icon: '✅', text: 'Policy compliance verified', color: '#10b981' },
-  { type: 'info',    icon: '📊', text: '1,247 evaluations in last 60s', color: '#06b6d4' },
-  { type: 'success', icon: '✅', text: 'Bias check passed · fairness 96/100', color: '#10b981' },
+  { type: 'success', icon: '✅', text: 'Response approved · trust score 98/100', color: '#6fa98f' },
+  { type: 'warning', icon: '⚠️', text: 'Hallucination risk detected · rewriting', color: '#c2a06a' },
+  { type: 'block',   icon: '🚫', text: 'Agent action blocked · policy violation', color: '#be7468' },
+  { type: 'success', icon: '✅', text: 'Policy compliance verified', color: '#6fa98f' },
+  { type: 'info',    icon: '📊', text: '1,247 evaluations in last 60s', color: '#aab8c0' },
+  { type: 'success', icon: '✅', text: 'Bias check passed · fairness 96/100', color: '#6fa98f' },
 ];
 
 export default function LiveTrustFeed() {
@@ -26,7 +26,7 @@ export default function LiveTrustFeed() {
 
   return (
     <div style={{
-      background: 'rgba(8,13,26,0.9)',
+      background: 'rgba(14,22,26,0.9)',
       border: '1px solid rgba(255,255,255,0.08)',
       borderRadius: 16,
       padding: 20,
@@ -41,10 +41,10 @@ export default function LiveTrustFeed() {
         gap: 8,
         marginBottom: 16,
       }}>
-        <span style={{ fontSize: 11, color: '#06b6d4', fontFamily: 'var(--font-body)', fontVariant: 'small-caps', letterSpacing: '0.1em', fontWeight: 600 }}>
+        <span style={{ fontSize: 11, color: '#aab8c0', fontFamily: 'var(--font-body)', fontVariant: 'small-caps', letterSpacing: '0.1em', fontWeight: 600 }}>
           ⚡ LIVE GOVERNANCE FEED
         </span>
-        <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
+        <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#6fa98f' }} />
       </div>
 
       {/* Feed items */}
@@ -84,7 +84,7 @@ function FeedItem({
       transition: 'opacity 300ms ease-out, transform 300ms ease-out',
     }}>
       <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
-      <span style={{ fontSize: 12, color: 'rgba(240,242,255,0.7)', fontFamily: 'var(--font-body)', flex: 1, lineHeight: 1.4 }}>{item.text}</span>
+      <span style={{ fontSize: 12, color: 'rgba(231,236,239,0.7)', fontFamily: 'var(--font-body)', flex: 1, lineHeight: 1.4 }}>{item.text}</span>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: item.color, flexShrink: 0, opacity: 0.8 }} />
     </div>
   );

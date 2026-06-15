@@ -14,11 +14,11 @@ const PILLAR_LABELS: Record<PillarKey, string> = {
 };
 
 const PILLAR_COLORS: Record<PillarKey, string> = {
-  safety:          "#F43F5E",
-  hallucination:   "#7C3AED",
-  bias:            "#4F46E5",
-  prompt_security: "#06B6D4",
-  compliance:      "#10B981",
+  safety:          "#be7468",
+  hallucination:   "#2d4a5e",
+  bias:            "#243b4c",
+  prompt_security: "#aab8c0",
+  compliance:      "#6fa98f",
 };
 
 interface NodeData {
@@ -102,10 +102,10 @@ export default function TrustConstellation({
   // trustScore arrives as 0-100 (already converted by backend serializer)
   const displayScore = trustScore != null ? Math.round(trustScore) : null;
   const scoreColor =
-    displayScore == null      ? "#06B6D4"
-    : displayScore >= 85      ? "#10B981"
-    : displayScore >= 60      ? "#f59e0b"
-    : "#F43F5E";
+    displayScore == null      ? "#aab8c0"
+    : displayScore >= 85      ? "#6fa98f"
+    : displayScore >= 60      ? "#c2a06a"
+    : "#be7468";
 
   const hoveredNode = hovered ? nodes.find(n => n.pillar === hovered) : null;
 
@@ -152,7 +152,7 @@ export default function TrustConstellation({
                 <line
                   key={key}
                   x1={ax} y1={ay} x2={bx} y2={by}
-                  stroke={highlighted ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.12)"}
+                  stroke={highlighted ? "rgba(45,74,94,0.5)" : "rgba(255,255,255,0.12)"}
                   strokeWidth={highlighted ? edgeWidth(corr) + 0.5 : edgeWidth(corr)}
                   strokeOpacity={highlighted ? 0.7 : edgeOpacity(corr)}
                 />
@@ -161,13 +161,13 @@ export default function TrustConstellation({
           )}
 
           {/* Central orb */}
-          <circle cx={cx} cy={cy} r={34} fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.25)" strokeWidth={1.5} />
+          <circle cx={cx} cy={cy} r={34} fill="rgba(45,74,94,0.08)" stroke="rgba(45,74,94,0.25)" strokeWidth={1.5} />
           <text x={cx} y={cy - 4} textAnchor="middle" fontFamily="Syne, sans-serif" fontWeight={800} fontSize={22}
             fill={scoreColor}>
             {displayScore ?? "—"}
           </text>
           <text x={cx} y={cy + 12} textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize={9}
-            fill="rgba(240,242,255,0.3)" letterSpacing="1.5">
+            fill="rgba(231,236,239,0.3)" letterSpacing="1.5">
             TRUST
           </text>
 
@@ -215,7 +215,7 @@ export default function TrustConstellation({
                   textAnchor={anchor}
                   fontFamily="DM Sans, sans-serif"
                   fontSize={10}
-                  fill={isHov ? color : "rgba(240,242,255,0.45)"}
+                  fill={isHov ? color : "rgba(231,236,239,0.45)"}
                   fontWeight={isHov ? 600 : 400}
                 >
                   {PILLAR_LABELS[node.pillar]}
@@ -258,7 +258,7 @@ export default function TrustConstellation({
             <StatRow label="Score"      value={hoveredNode.score != null ? hoveredNode.score.toFixed(3) : "—"} />
             <StatRow label="Confidence" value={hoveredNode.confidence != null ? hoveredNode.confidence.toFixed(3) : "—"} />
             <StatRow label="Verdict"    value={hoveredNode.fired ? "FIRED" : "CLEAN"}
-              color={hoveredNode.fired ? "#F43F5E" : "#10B981"} />
+              color={hoveredNode.fired ? "#be7468" : "#6fa98f"} />
 
             {hoveredNode.labeledN != null && hoveredNode.labeledN >= 30 ? (
               <>
@@ -269,17 +269,17 @@ export default function TrustConstellation({
                 <StatRow label="FPR"       value={hoveredNode.fpr != null ? `${(hoveredNode.fpr * 100).toFixed(1)}%` : "—"} />
                 <div style={{
                   fontFamily: "JetBrains Mono, monospace",
-                  fontSize: 9, color: "rgba(240,242,255,0.25)", marginTop: 4,
+                  fontSize: 9, color: "rgba(231,236,239,0.25)", marginTop: 4,
                 }}>
                   n = {hoveredNode.labeledN?.toLocaleString()}
                 </div>
               </>
             ) : (
               <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ color: "rgba(124,58,237,0.45)", fontSize: 9 }}>◎</span>
+                <span style={{ color: "rgba(45,74,94,0.45)", fontSize: 9 }}>◎</span>
                 <span style={{
                   fontFamily: "JetBrains Mono, monospace", fontSize: 9,
-                  color: "rgba(240,242,255,0.2)",
+                  color: "rgba(231,236,239,0.2)",
                 }}>
                   {hoveredNode.labeledN != null
                     ? `Calibration: ${hoveredNode.labeledN}/30`
@@ -299,13 +299,13 @@ function StatRow({ label, value, color }: { label: string; value: string; color?
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <span style={{
         fontFamily: "DM Sans, sans-serif", fontSize: 11,
-        color: "rgba(240,242,255,0.35)", letterSpacing: "0.5px",
+        color: "rgba(231,236,239,0.35)", letterSpacing: "0.5px",
       }}>
         {label}
       </span>
       <span style={{
         fontFamily: "JetBrains Mono, monospace", fontSize: 11,
-        color: color ?? "rgba(240,242,255,0.7)",
+        color: color ?? "rgba(231,236,239,0.7)",
       }}>
         {value}
       </span>

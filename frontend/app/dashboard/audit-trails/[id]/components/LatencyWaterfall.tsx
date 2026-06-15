@@ -20,15 +20,15 @@ interface Props {
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  setup:           "#4F46E5",
-  policy_lookup:   "#7C3AED",
-  safety:          "#F43F5E",
-  hallucination:   "#7C3AED",
-  bias:            "#4F46E5",
-  prompt_security: "#06B6D4",
-  compliance:      "#10B981",
-  enforcement:     "#f59e0b",
-  response:        "#06B6D4",
+  setup:           "#243b4c",
+  policy_lookup:   "#2d4a5e",
+  safety:          "#be7468",
+  hallucination:   "#2d4a5e",
+  bias:            "#243b4c",
+  prompt_security: "#aab8c0",
+  compliance:      "#6fa98f",
+  enforcement:     "#c2a06a",
+  response:        "#aab8c0",
   audit:           "rgba(255,255,255,0.2)",
 };
 
@@ -89,7 +89,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
         label:      PILLAR_LABELS[p] ?? p,
         startMs:    pillarStart,
         durationMs: ms,
-        color:      STAGE_COLORS[p] ?? "#7C3AED",
+        color:      STAGE_COLORS[p] ?? "#2d4a5e",
         track:      i + 1,
       });
     });
@@ -117,7 +117,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
         textAlign: "center",
         fontFamily: "DM Sans, sans-serif",
         fontSize: 12,
-        color: "rgba(240,242,255,0.2)",
+        color: "rgba(231,236,239,0.2)",
       }}>
         Latency waterfall available after first evaluation with debug timing.
       </div>
@@ -145,7 +145,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
         <line
           x1={labelW + budgetX} y1={0}
           x2={labelW + budgetX} y2={H - 30}
-          stroke="#F43F5E"
+          stroke="#be7468"
           strokeWidth={1}
           strokeDasharray="4 3"
           strokeOpacity={0.5}
@@ -154,7 +154,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
           x={labelW + budgetX + 4} y={10}
           fontFamily="JetBrains Mono, monospace"
           fontSize={8}
-          fill="#F43F5E"
+          fill="#be7468"
           fillOpacity={0.6}
         >
           p95 budget
@@ -175,7 +175,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
                 textAnchor="end"
                 fontFamily="DM Sans, sans-serif"
                 fontSize={9}
-                fill="rgba(240,242,255,0.35)"
+                fill="rgba(231,236,239,0.35)"
               >
                 {s.label}
               </text>
@@ -200,7 +200,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
                   textAnchor="middle"
                   fontFamily="JetBrains Mono, monospace"
                   fontSize={8}
-                  fill="rgba(240,242,255,0.7)"
+                  fill="rgba(231,236,239,0.7)"
                 >
                   {s.durationMs}ms
                 </text>
@@ -217,7 +217,7 @@ export default function LatencyWaterfall({ timingsMs, totalLatencyMs, perPillarM
           return (
             <g key={pct}>
               <line x1={x} y1={H - 24} x2={x} y2={H - 18} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-              <text x={x} y={H - 6} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={8} fill="rgba(240,242,255,0.25)">
+              <text x={x} y={H - 6} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={8} fill="rgba(231,236,239,0.25)">
                 {ms}ms
               </text>
             </g>

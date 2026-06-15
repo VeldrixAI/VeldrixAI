@@ -14,11 +14,11 @@ const PILLAR_LABELS: Record<PillarKey, string> = {
 };
 
 const PILLAR_COLORS: Record<PillarKey, string> = {
-  safety:          "#F43F5E",
-  hallucination:   "#7C3AED",
-  bias:            "#4F46E5",
-  prompt_security: "#06B6D4",
-  compliance:      "#10B981",
+  safety:          "#be7468",
+  hallucination:   "#2d4a5e",
+  bias:            "#243b4c",
+  prompt_security: "#aab8c0",
+  compliance:      "#6fa98f",
 };
 
 // SVG pillar icons — 28×28, single-stroke
@@ -76,11 +76,11 @@ interface Props {
 
 function getSeverity(score: number): { label: string; color: string } {
   const risk = 1 - score;
-  if (risk < 0.2) return { label: "CLEAN",    color: "#10B981" };
-  if (risk < 0.4) return { label: "LOW",      color: "#10B981" };
-  if (risk < 0.6) return { label: "MEDIUM",   color: "#f59e0b" };
-  if (risk < 0.8) return { label: "HIGH",     color: "#F43F5E" };
-  return             { label: "CRITICAL",     color: "#F43F5E" };
+  if (risk < 0.2) return { label: "CLEAN",    color: "#6fa98f" };
+  if (risk < 0.4) return { label: "LOW",      color: "#6fa98f" };
+  if (risk < 0.6) return { label: "MEDIUM",   color: "#c2a06a" };
+  if (risk < 0.8) return { label: "HIGH",     color: "#be7468" };
+  return             { label: "CRITICAL",     color: "#be7468" };
 }
 
 function ConfidenceBar({ value, color, delay }: { value: number; color: string; delay: number }) {
@@ -123,10 +123,10 @@ function MetricsFooter({ m, pillar }: { m: PillarMetric | undefined; pillar: str
     return (
       <div style={{
         fontFamily: "JetBrains Mono, monospace", fontSize: 10,
-        color: "rgba(240,242,255,0.2)", marginTop: 6, letterSpacing: "0.3px",
+        color: "rgba(231,236,239,0.2)", marginTop: 6, letterSpacing: "0.3px",
         display: "flex", alignItems: "center", gap: 6,
       }}>
-        <span style={{ color: "rgba(124,58,237,0.45)" }}>◎</span>
+        <span style={{ color: "rgba(45,74,94,0.45)" }}>◎</span>
         <span>Calibration pending — {n}/{req} evaluations</span>
       </div>
     );
@@ -138,12 +138,12 @@ function MetricsFooter({ m, pillar }: { m: PillarMetric | undefined; pillar: str
     return (
       <div style={{
         fontFamily: "JetBrains Mono, monospace", fontSize: 10,
-        color: "rgba(240,242,255,0.3)", marginTop: 6, letterSpacing: "0.3px",
+        color: "rgba(231,236,239,0.3)", marginTop: 6, letterSpacing: "0.3px",
         display: "flex", gap: 8, flexWrap: "wrap",
       }}>
         <span>F1 {m.f1.toFixed(2)}</span>
         {ciLow != null && ciHigh != null && (
-          <span style={{ color: "rgba(240,242,255,0.18)" }}>
+          <span style={{ color: "rgba(231,236,239,0.18)" }}>
             ±{((ciHigh - ciLow) / 2).toFixed(2)}
           </span>
         )}
@@ -154,7 +154,7 @@ function MetricsFooter({ m, pillar }: { m: PillarMetric | undefined; pillar: str
         <span>·</span>
         <span>FPR {m.fpr != null ? `${(m.fpr * 100).toFixed(1)}%` : "—"}</span>
         <span>·</span>
-        <span style={{ color: "rgba(240,242,255,0.2)" }}>
+        <span style={{ color: "rgba(231,236,239,0.2)" }}>
           n={m.labeled_n?.toLocaleString() ?? "—"}
         </span>
       </div>
@@ -185,7 +185,7 @@ export default function PillarEvidenceStrip({
         const metric    = pillarMetrics[pillar];
         const color     = PILLAR_COLORS[pillar];
         // For severity, use the 0-1 scale
-        const sev       = rawScore != null ? getSeverity(rawScore > 1 ? rawScore / 100 : rawScore) : { label: "N/A", color: "rgba(240,242,255,0.25)" };
+        const sev       = rawScore != null ? getSeverity(rawScore > 1 ? rawScore / 100 : rawScore) : { label: "N/A", color: "rgba(231,236,239,0.25)" };
         const isExpanded = expanded === pillar;
         const pillarFlags = flags.filter(f => f.toLowerCase().includes(pillar) || f.toLowerCase().includes("all"));
 
@@ -215,7 +215,7 @@ export default function PillarEvidenceStrip({
                 <div style={{ flex: 1 }}>
                   <div style={{
                     fontFamily: "DM Sans, sans-serif", fontWeight: 600,
-                    fontSize: 13, color: "rgba(240,242,255,0.85)",
+                    fontSize: 13, color: "rgba(231,236,239,0.85)",
                   }}>
                     {PILLAR_LABELS[pillar]}
                   </div>
@@ -236,7 +236,7 @@ export default function PillarEvidenceStrip({
                 {latencyMs != null && (
                   <span style={{
                     fontFamily: "JetBrains Mono, monospace", fontSize: 10,
-                    color: "rgba(240,242,255,0.3)", flexShrink: 0,
+                    color: "rgba(231,236,239,0.3)", flexShrink: 0,
                   }}>
                     {latencyMs}ms
                   </span>
@@ -245,7 +245,7 @@ export default function PillarEvidenceStrip({
                 {/* Expand chevron */}
                 <svg
                   width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="rgba(240,242,255,0.3)" strokeWidth="2"
+                  stroke="rgba(231,236,239,0.3)" strokeWidth="2"
                   style={{ transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
                 >
                   <polyline points="6 9 12 15 18 9"/>
@@ -286,7 +286,7 @@ export default function PillarEvidenceStrip({
                     <div style={{
                       fontFamily: "DM Sans, sans-serif", fontSize: 10,
                       letterSpacing: "2px", textTransform: "uppercase",
-                      color: "rgba(240,242,255,0.25)", marginBottom: 6,
+                      color: "rgba(231,236,239,0.25)", marginBottom: 6,
                     }}>
                       Flags Triggered
                     </div>
@@ -314,7 +314,7 @@ export default function PillarEvidenceStrip({
                 {(!pillarFlags.length) && (
                   <div style={{
                     fontFamily: "DM Sans, sans-serif", fontSize: 12,
-                    color: "rgba(240,242,255,0.25)", marginTop: 8, lineHeight: 1.6,
+                    color: "rgba(231,236,239,0.25)", marginTop: 8, lineHeight: 1.6,
                   }}>
                     This pillar fired on aggregate signals, not specific flagged spans.
                   </div>
@@ -334,13 +334,13 @@ function StatItem({ label, value, color }: { label: string; value: string; color
       <div style={{
         fontFamily: "DM Sans, sans-serif", fontSize: 9,
         letterSpacing: "2px", textTransform: "uppercase",
-        color: "rgba(240,242,255,0.25)", marginBottom: 3,
+        color: "rgba(231,236,239,0.25)", marginBottom: 3,
       }}>
         {label}
       </div>
       <div style={{
         fontFamily: "JetBrains Mono, monospace", fontSize: 12,
-        color: color ?? "rgba(240,242,255,0.65)",
+        color: color ?? "rgba(231,236,239,0.65)",
       }}>
         {value}
       </div>

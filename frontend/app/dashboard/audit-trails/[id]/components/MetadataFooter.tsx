@@ -26,13 +26,13 @@ function MetaRow({ label, value, mono }: { label: string; value: string; mono?: 
       <div style={{
         fontFamily: "DM Sans, sans-serif", fontSize: 9,
         letterSpacing: "2px", textTransform: "uppercase",
-        color: "rgba(240,242,255,0.25)", marginBottom: 3,
+        color: "rgba(231,236,239,0.25)", marginBottom: 3,
       }}>
         {label}
       </div>
       <div style={{
         fontFamily: mono ? "JetBrains Mono, monospace" : "DM Sans, sans-serif",
-        fontSize: 12, color: "rgba(240,242,255,0.55)",
+        fontSize: 12, color: "rgba(231,236,239,0.55)",
         wordBreak: "break-all",
       }}>
         {value}
@@ -93,7 +93,7 @@ export default function MetadataFooter({
           background: "none",
           border:     "none",
           cursor:     "pointer",
-          color:      "rgba(240,242,255,0.35)",
+          color:      "rgba(231,236,239,0.35)",
         }}
       >
         <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, letterSpacing: "3px", textTransform: "uppercase" }}>
@@ -128,10 +128,10 @@ export default function MetadataFooter({
             onClick={handleDownload}
             style={{
               padding:    "8px 16px",
-              background: "rgba(124,58,237,0.08)",
-              border:     "1px solid rgba(124,58,237,0.2)",
+              background: "rgba(45,74,94,0.08)",
+              border:     "1px solid rgba(45,74,94,0.2)",
               borderRadius: 8,
-              color:      "rgba(124,58,237,0.7)",
+              color:      "rgba(45,74,94,0.7)",
               fontFamily: "DM Sans, sans-serif",
               fontSize:   12,
               fontWeight: 600,

@@ -72,7 +72,7 @@ export function PerformanceMatrix() {
           <span>Model Latency</span>
         </div>
         <div className="vdx-perf-legend-item">
-          <div className="vdx-perf-legend-box" style={{ background: "#7c3aed" }} />
+          <div className="vdx-perf-legend-box" style={{ background: "#2d4a5e" }} />
           <span>Veldrix Overhead</span>
         </div>
       </div>

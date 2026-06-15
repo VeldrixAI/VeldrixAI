@@ -9,16 +9,16 @@ export function HeroAnimation() {
       <svg className="hero-anim-svg" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="ha-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#7c5cfc" />
-            <stop offset="100%" stopColor="#9b7dff" />
+            <stop offset="0%" stopColor="#8fa6b5" />
+            <stop offset="100%" stopColor="#c5cfd5" />
           </linearGradient>
           <linearGradient id="ha-grad2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#7c5cfc" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#9b7dff" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#8fa6b5" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#c5cfd5" stopOpacity="0.1" />
           </linearGradient>
           <radialGradient id="ha-center-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#7c5cfc" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#7c5cfc" stopOpacity="0" />
+            <stop offset="0%" stopColor="#8fa6b5" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#8fa6b5" stopOpacity="0" />
           </radialGradient>
           <filter id="ha-blur">
             <feGaussianBlur stdDeviation="2" />
@@ -106,12 +106,12 @@ export function HeroAnimation() {
               <mpath href="#ha-orbit-path-1" />
             </animateMotion>
           </circle>
-          <circle className="ha-orb ha-orb-2" r="3.5" fill="#9b7dff" filter="url(#ha-glow)">
+          <circle className="ha-orb ha-orb-2" r="3.5" fill="#c5cfd5" filter="url(#ha-glow)">
             <animateMotion dur="12s" repeatCount="indefinite">
               <mpath href="#ha-orbit-path-2" />
             </animateMotion>
           </circle>
-          <circle className="ha-orb ha-orb-3" r="3" fill="#7c5cfc" filter="url(#ha-glow)">
+          <circle className="ha-orb ha-orb-3" r="3" fill="#8fa6b5" filter="url(#ha-glow)">
             <animateMotion dur="16s" repeatCount="indefinite">
               <mpath href="#ha-orbit-path-3" />
             </animateMotion>

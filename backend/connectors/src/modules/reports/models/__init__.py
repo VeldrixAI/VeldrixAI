@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, Enum, CheckConstraint, Boolean, Float
+from sqlalchemy import Column, String, Text, Integer, BigInteger, TIMESTAMP, Enum, CheckConstraint, Boolean, Float
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 import uuid
@@ -71,6 +71,14 @@ class AuditTrail(Base):
     request_id = Column(String(100), index=True)
     related_request_id = Column(String(100), index=True)
     actor = Column(String(255))
+    # Tamper-evident hash chain (Part A). prev_hash links to the previous record
+    # in this tenant's chain; record_hash commits to the row's identity + prev_hash;
+    # chain_seq is the per-tenant monotonic position (deterministic verification
+    # order, independent of created_at ties). Nullable for pre-migration rows
+    # until the startup backfill populates them.
+    prev_hash = Column(String(80))
+    record_hash = Column(String(80), index=True)
+    chain_seq = Column(BigInteger)
 
 
 class AuditLogLabel(Base):

@@ -24,10 +24,10 @@ const AUDIT_ENTRIES: AuditEntry[] = [
 ];
 
 const ACTION_COLORS: Record<string, string> = {
-  allow: "#10b981",
-  flag: "#f59e0b",
-  block: "#f43f5e",
-  mask: "#06b6d4",
+  allow: "#6fa98f",
+  flag: "#c2a06a",
+  block: "#be7468",
+  mask: "#aab8c0",
 };
 
 export function TimeSeriesLedger() {

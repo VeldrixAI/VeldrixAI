@@ -58,11 +58,11 @@ function OscilloscopeGraph({ data }: { data: LatencyPoint[] }) {
   return (
     <svg width={width} height={height} className="lp-oscilloscope" aria-hidden="true">
       {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-        <line key={i} x1={padding} y1={padding + ratio * graphHeight} x2={width - padding} y2={padding + ratio * graphHeight} stroke="rgba(124,58,237,0.08)" strokeWidth="0.5" strokeDasharray="2 2" />
+        <line key={i} x1={padding} y1={padding + ratio * graphHeight} x2={width - padding} y2={padding + ratio * graphHeight} stroke="rgba(45,74,94,0.08)" strokeWidth="0.5" strokeDasharray="2 2" />
       ))}
-      <path d={p99Path} fill="none" stroke="rgba(6,182,212,0.4)" strokeWidth="1" />
-      <path d={p50Path} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
-      <text x={padding} y={height - 2} fontSize="6" fill="rgba(240,242,255,0.3)" fontFamily="JetBrains Mono, monospace">p50/p99</text>
+      <path d={p99Path} fill="none" stroke="rgba(170,184,192,0.4)" strokeWidth="1" />
+      <path d={p50Path} fill="none" stroke="#2d4a5e" strokeWidth="1.5" />
+      <text x={padding} y={height - 2} fontSize="6" fill="rgba(231,236,239,0.3)" fontFamily="JetBrains Mono, monospace">p50/p99</text>
     </svg>
   );
 }
@@ -141,8 +141,8 @@ export function TechnicalSchematic({ reduced }: { reduced: boolean }) {
         <svg width="100%" height="200" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet" aria-label="Inference trace schematic">
           <defs>
             <linearGradient id="layerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(124,58,237,0.1)" />
-              <stop offset="100%" stopColor="rgba(6,182,212,0.1)" />
+              <stop offset="0%" stopColor="rgba(45,74,94,0.1)" />
+              <stop offset="100%" stopColor="rgba(170,184,192,0.1)" />
             </linearGradient>
             <filter id="glow"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
@@ -151,9 +151,9 @@ export function TechnicalSchematic({ reduced }: { reduced: boolean }) {
             const isActive = Math.floor(activeLayer) === i;
             return (
               <g key={i}>
-                <rect x={x} y={40} width="40" height="100" rx="4" fill="url(#layerGrad)" stroke={isActive ? "rgba(124,58,237,0.6)" : "rgba(240,242,255,0.08)"} strokeWidth={isActive ? "1" : "0.5"} opacity={isActive ? 1 : 0.6} />
-                <text x={x + 20} y={30} fontSize="7" fill={isActive ? "rgba(167,139,250,0.9)" : "rgba(240,242,255,0.35)"} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontWeight="600">{layer.label}</text>
-                <text x={x + 20} y={155} fontSize="5" fill="rgba(240,242,255,0.25)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{layer.sublabel}</text>
+                <rect x={x} y={40} width="40" height="100" rx="4" fill="url(#layerGrad)" stroke={isActive ? "rgba(45,74,94,0.6)" : "rgba(231,236,239,0.08)"} strokeWidth={isActive ? "1" : "0.5"} opacity={isActive ? 1 : 0.6} />
+                <text x={x + 20} y={30} fontSize="7" fill={isActive ? "rgba(197,207,213,0.9)" : "rgba(231,236,239,0.35)"} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontWeight="600">{layer.label}</text>
+                <text x={x + 20} y={155} fontSize="5" fill="rgba(231,236,239,0.25)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{layer.sublabel}</text>
               </g>
             );
           })}
@@ -161,10 +161,10 @@ export function TechnicalSchematic({ reduced }: { reduced: boolean }) {
             {!reduced && mounted && packets.map((packet) => {
               const x = 30 + (packet.x / 100) * 270;
               const y = 85 + Math.sin(packet.x * 0.1) * 8;
-              return <motion.rect key={packet.id} x={x} y={y} width="8" height="8" rx="2" fill={packet.transform === "signed" ? "#06b6d4" : "#7c3aed"} filter="url(#glow)" initial={{ opacity: 0 }} animate={{ opacity: packet.opacity }} exit={{ opacity: 0 }} />;
+              return <motion.rect key={packet.id} x={x} y={y} width="8" height="8" rx="2" fill={packet.transform === "signed" ? "#aab8c0" : "#2d4a5e"} filter="url(#glow)" initial={{ opacity: 0 }} animate={{ opacity: packet.opacity }} exit={{ opacity: 0 }} />;
             })}
           </AnimatePresence>
-          {[0, 1, 2, 3, 4].map((i) => (<line key={i} x1={60 + i * 50} y1={90} x2={70 + i * 50} y2={90} stroke="rgba(240,242,255,0.1)" strokeWidth="1" strokeDasharray="3 2" />))}
+          {[0, 1, 2, 3, 4].map((i) => (<line key={i} x1={60 + i * 50} y1={90} x2={70 + i * 50} y2={90} stroke="rgba(231,236,239,0.1)" strokeWidth="1" strokeDasharray="3 2" />))}
         </svg>
       </div>
       <div className="lp-schematic-scope"><OscilloscopeGraph data={latencyData} /></div>
@@ -184,13 +184,13 @@ export function CalibrationPlot() {
   return (
     <svg width="100%" height="160" viewBox="0 0 240 160" aria-label="Calibration plot">
       <rect x="30" y="20" width="180" height="110" fill="rgba(255,255,255,0.02)" rx="2" />
-      <line x1="30" y1="130" x2="210" y2="130" stroke="rgba(240,242,255,0.15)" strokeWidth="1" />
-      <line x1="30" y1="20" x2="30" y2="130" stroke="rgba(240,242,255,0.15)" strokeWidth="1" />
-      <line x1="30" y1="130" x2="210" y2="20" stroke="rgba(240,242,255,0.2)" strokeWidth="1" strokeDasharray="4 3" />
-      <path d={pathD} fill="none" stroke="#7c3aed" strokeWidth="2" />
-      {points.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r="4" fill="#7c3aed" />))}
-      <text x="120" y="150" fontSize="8" fill="rgba(240,242,255,0.35)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Model Confidence →</text>
-      <text x="180" y="145" fontSize="7" fill="rgba(6,182,212,0.7)" fontFamily="JetBrains Mono, monospace">ECE = 0.031</text>
+      <line x1="30" y1="130" x2="210" y2="130" stroke="rgba(231,236,239,0.15)" strokeWidth="1" />
+      <line x1="30" y1="20" x2="30" y2="130" stroke="rgba(231,236,239,0.15)" strokeWidth="1" />
+      <line x1="30" y1="130" x2="210" y2="20" stroke="rgba(231,236,239,0.2)" strokeWidth="1" strokeDasharray="4 3" />
+      <path d={pathD} fill="none" stroke="#2d4a5e" strokeWidth="2" />
+      {points.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r="4" fill="#2d4a5e" />))}
+      <text x="120" y="150" fontSize="8" fill="rgba(231,236,239,0.35)" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Model Confidence →</text>
+      <text x="180" y="145" fontSize="7" fill="rgba(170,184,192,0.7)" fontFamily="JetBrains Mono, monospace">ECE = 0.031</text>
     </svg>
   );
 }
@@ -210,16 +210,16 @@ export function VectorFieldHeatmap() {
   for (let i = 0; i < 6; i++) {
     for (let j = 0; j < 6; j++) {
       const intensity = STATIC_HEATMAP_CELLS[j][i];
-      cells.push(<rect key={`${i}-${j}`} x={30 + i * 32} y={30 + j * 20} width="30" height="18" rx="2" fill={intensity > 0.7 ? "rgba(244,63,94,0.4)" : intensity > 0.4 ? "rgba(245,158,11,0.3)" : "rgba(16,185,129,0.2)"} />);
+      cells.push(<rect key={`${i}-${j}`} x={30 + i * 32} y={30 + j * 20} width="30" height="18" rx="2" fill={intensity > 0.7 ? "rgba(190,116,104,0.4)" : intensity > 0.4 ? "rgba(194,160,106,0.3)" : "rgba(111,169,143,0.2)"} />);
     }
   }
   return (
     <svg width="100%" height="160" viewBox="0 0 240 160" aria-label="Token toxicity heatmap">
-      <text x="30" y="18" fontSize="8" fill="rgba(240,242,255,0.35)" fontFamily="JetBrains Mono, monospace">TOXICITY PROBABILITY DENSITY</text>
+      <text x="30" y="18" fontSize="8" fill="rgba(231,236,239,0.35)" fontFamily="JetBrains Mono, monospace">TOXICITY PROBABILITY DENSITY</text>
       {cells}
-      <rect x="30" y="145" width="12" height="8" rx="1" fill="rgba(16,185,129,0.4)" /><text x="46" y="152" fontSize="6" fill="rgba(240,242,255,0.3)" fontFamily="JetBrains Mono, monospace">LOW</text>
-      <rect x="80" y="145" width="12" height="8" rx="1" fill="rgba(245,158,11,0.4)" /><text x="96" y="152" fontSize="6" fill="rgba(240,242,255,0.3)" fontFamily="JetBrains Mono, monospace">MED</text>
-      <rect x="130" y="145" width="12" height="8" rx="1" fill="rgba(244,63,94,0.4)" /><text x="146" y="152" fontSize="6" fill="rgba(240,242,255,0.3)" fontFamily="JetBrains Mono, monospace">HIGH</text>
+      <rect x="30" y="145" width="12" height="8" rx="1" fill="rgba(111,169,143,0.4)" /><text x="46" y="152" fontSize="6" fill="rgba(231,236,239,0.3)" fontFamily="JetBrains Mono, monospace">LOW</text>
+      <rect x="80" y="145" width="12" height="8" rx="1" fill="rgba(194,160,106,0.4)" /><text x="96" y="152" fontSize="6" fill="rgba(231,236,239,0.3)" fontFamily="JetBrains Mono, monospace">MED</text>
+      <rect x="130" y="145" width="12" height="8" rx="1" fill="rgba(190,116,104,0.4)" /><text x="146" y="152" fontSize="6" fill="rgba(231,236,239,0.3)" fontFamily="JetBrains Mono, monospace">HIGH</text>
     </svg>
   );
 }
@@ -228,17 +228,17 @@ export function VectorFieldHeatmap() {
 export function RegExTokenStream() {
   return (
     <svg width="100%" height="160" viewBox="0 0 240 160" aria-label="PII token detection">
-      <text x="12" y="18" fontSize="8" fill="rgba(240,242,255,0.35)" fontFamily="JetBrains Mono, monospace">REGEX TOKEN STREAM</text>
-      <rect x="12" y="26" width="216" height="80" rx="4" fill="rgba(255,255,255,0.02)" stroke="rgba(240,242,255,0.06)" strokeWidth="1" />
-      <text x="20" y="50" fontSize="9" fill="rgba(240,242,255,0.5)" fontFamily="JetBrains Mono, monospace">Patient </text>
-      <rect x="66" y="40" width="24" height="14" rx="2" fill="rgba(244,63,94,0.2)" stroke="rgba(244,63,94,0.3)" strokeWidth="0.5" />
-      <text x="68" y="50" fontSize="9" fill="#f43f5e" fontFamily="JetBrains Mono, monospace">███</text>
-      <text x="92" y="50" fontSize="9" fill="rgba(240,242,255,0.5)" fontFamily="JetBrains Mono, monospace">: </text>
-      <rect x="102" y="40" width="72" height="14" rx="2" fill="rgba(244,63,94,0.2)" stroke="rgba(244,63,94,0.3)" strokeWidth="0.5" />
-      <text x="104" y="50" fontSize="9" fill="#f43f5e" fontFamily="JetBrains Mono, monospace">███-██-████</text>
-      <text x="12" y="125" fontSize="7" fill="rgba(240,242,255,0.3)" fontFamily="JetBrains Mono, monospace">PII_ENTITIES: 3 | REGEX_RULES: 47 | LATENCY: 12ms</text>
-      <rect x="12" y="135" width="60" height="16" rx="3" fill="rgba(244,63,94,0.15)" stroke="rgba(244,63,94,0.3)" strokeWidth="0.5" />
-      <text x="42" y="146" fontSize="7" fill="#f43f5e" textAnchor="middle" fontFamily="JetBrains Mono, monospace">REDACTED</text>
+      <text x="12" y="18" fontSize="8" fill="rgba(231,236,239,0.35)" fontFamily="JetBrains Mono, monospace">REGEX TOKEN STREAM</text>
+      <rect x="12" y="26" width="216" height="80" rx="4" fill="rgba(255,255,255,0.02)" stroke="rgba(231,236,239,0.06)" strokeWidth="1" />
+      <text x="20" y="50" fontSize="9" fill="rgba(231,236,239,0.5)" fontFamily="JetBrains Mono, monospace">Patient </text>
+      <rect x="66" y="40" width="24" height="14" rx="2" fill="rgba(190,116,104,0.2)" stroke="rgba(190,116,104,0.3)" strokeWidth="0.5" />
+      <text x="68" y="50" fontSize="9" fill="#be7468" fontFamily="JetBrains Mono, monospace">███</text>
+      <text x="92" y="50" fontSize="9" fill="rgba(231,236,239,0.5)" fontFamily="JetBrains Mono, monospace">: </text>
+      <rect x="102" y="40" width="72" height="14" rx="2" fill="rgba(190,116,104,0.2)" stroke="rgba(190,116,104,0.3)" strokeWidth="0.5" />
+      <text x="104" y="50" fontSize="9" fill="#be7468" fontFamily="JetBrains Mono, monospace">███-██-████</text>
+      <text x="12" y="125" fontSize="7" fill="rgba(231,236,239,0.3)" fontFamily="JetBrains Mono, monospace">PII_ENTITIES: 3 | REGEX_RULES: 47 | LATENCY: 12ms</text>
+      <rect x="12" y="135" width="60" height="16" rx="3" fill="rgba(190,116,104,0.15)" stroke="rgba(190,116,104,0.3)" strokeWidth="0.5" />
+      <text x="42" y="146" fontSize="7" fill="#be7468" textAnchor="middle" fontFamily="JetBrains Mono, monospace">REDACTED</text>
     </svg>
   );
 }

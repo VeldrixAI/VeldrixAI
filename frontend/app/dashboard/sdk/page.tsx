@@ -27,18 +27,18 @@ function CodeBlock({
   maxH?: number;
 }) {
   return (
-    <div style={{ background: "#11131f", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+    <div style={{ background: "#121d23", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, color: "rgba(240,242,255,0.4)", textTransform: "uppercase", letterSpacing: "1.5px" }}>{lang}</span>
+        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 600, color: "rgba(231,236,239,0.4)", textTransform: "uppercase", letterSpacing: "1.5px" }}>{lang}</span>
         <button
           onClick={() => onCopy(code, id)}
-          style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)", color: copiedId === id ? "#10B981" : "rgba(167,139,250,0.8)", padding: "3px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", fontFamily: "DM Sans, sans-serif", fontWeight: 600, transition: "all 0.15s" }}
+          style={{ background: "rgba(45,74,94,0.12)", border: "1px solid rgba(45,74,94,0.2)", color: copiedId === id ? "#6fa98f" : "rgba(197,207,213,0.8)", padding: "3px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", fontFamily: "DM Sans, sans-serif", fontWeight: 600, transition: "all 0.15s" }}
         >
           {copiedId === id ? "✓ Copied" : "Copy"}
         </button>
       </div>
       <div style={{ padding: "16px 18px", overflowX: "auto", ...(maxH ? { maxHeight: maxH, overflowY: "auto" } : {}) }}>
-        <pre style={{ margin: 0, fontFamily: "JetBrains Mono, monospace", fontSize: 12.5, lineHeight: 1.7, color: "#cdd6f4", whiteSpace: "pre" }}>
+        <pre style={{ margin: 0, fontFamily: "JetBrains Mono, monospace", fontSize: 12.5, lineHeight: 1.7, color: "#c5cfd5", whiteSpace: "pre" }}>
           <code>{code}</code>
         </pre>
       </div>
@@ -49,7 +49,7 @@ function CodeBlock({
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
     <section id={id} style={{ marginBottom: "2.5rem" }}>
-      <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "1.2rem", color: "#f0f2ff", marginBottom: "1rem", paddingBottom: "0.5rem", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <h2 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "1.2rem", color: "#e7ecef", marginBottom: "1rem", paddingBottom: "0.5rem", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         {title}
       </h2>
       {children}
@@ -60,8 +60,8 @@ function Section({ title, children, id }: { title: string; children: React.React
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: "1.5rem" }}>
-      <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "0.95rem", color: "rgba(167,139,250,0.9)", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
-        <span style={{ width: 3, height: 14, background: "rgba(124,58,237,0.7)", borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
+      <h3 style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: "0.95rem", color: "rgba(197,207,213,0.9)", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ width: 3, height: 14, background: "rgba(45,74,94,0.7)", borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
         {title}
       </h3>
       {children}
@@ -71,15 +71,15 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 
 function InfoBox({ type, children }: { type: "tip" | "warn" | "info"; children: React.ReactNode }) {
   const styles = {
-    tip:  { bg: "rgba(16,185,129,0.06)",  border: "rgba(16,185,129,0.2)",  icon: "✓",  color: "#10B981" },
-    warn: { bg: "rgba(245,158,11,0.06)",  border: "rgba(245,158,11,0.2)",  icon: "⚠",  color: "#f59e0b" },
-    info: { bg: "rgba(6,182,212,0.06)",   border: "rgba(6,182,212,0.2)",   icon: "ℹ",  color: "#06b6d4" },
+    tip:  { bg: "rgba(111,169,143,0.06)",  border: "rgba(111,169,143,0.2)",  icon: "✓",  color: "#6fa98f" },
+    warn: { bg: "rgba(194,160,106,0.06)",  border: "rgba(194,160,106,0.2)",  icon: "⚠",  color: "#c2a06a" },
+    info: { bg: "rgba(170,184,192,0.06)",   border: "rgba(170,184,192,0.2)",   icon: "ℹ",  color: "#aab8c0" },
   };
   const s = styles[type];
   return (
     <div style={{ background: s.bg, border: `1px solid ${s.border}`, borderLeft: `3px solid ${s.color}`, borderRadius: "0 10px 10px 0", padding: "12px 16px", marginBottom: "1rem", display: "flex", gap: 10, alignItems: "flex-start" }}>
       <span style={{ color: s.color, fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{s.icon}</span>
-      <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "rgba(240,242,255,0.65)", lineHeight: 1.6 }}>{children}</div>
+      <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "rgba(231,236,239,0.65)", lineHeight: 1.6 }}>{children}</div>
     </div>
   );
 }
@@ -87,11 +87,11 @@ function InfoBox({ type, children }: { type: "tip" | "warn" | "info"; children: 
 function PropRow({ name, type, dflt, desc }: { name: string; type: string; dflt?: string; desc: string }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "180px 160px 1fr", gap: "12px", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
-      <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "#a78bfa" }}>{name}</code>
-      <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#67e8f9" }}>{type}</code>
+      <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "#c5cfd5" }}>{name}</code>
+      <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#abc8bd" }}>{type}</code>
       <div>
-        {dflt && <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(240,242,255,0.35)", marginRight: 8 }}>{dflt}</code>}
-        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(240,242,255,0.5)" }}>{desc}</span>
+        {dflt && <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "rgba(231,236,239,0.35)", marginRight: 8 }}>{dflt}</code>}
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(231,236,239,0.5)" }}>{desc}</span>
       </div>
     </div>
   );
@@ -632,18 +632,18 @@ export default function SDKPage() {
     <div className="vx-content" style={{ maxWidth: 920 }}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.05))", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 20, padding: "2.5rem", marginBottom: "2rem" }}>
+      <div style={{ background: "linear-gradient(135deg, rgba(45,74,94,0.12), rgba(170,184,192,0.05))", border: "1px solid rgba(45,74,94,0.2)", borderRadius: 20, padding: "2.5rem", marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "0.75rem" }}>
-              <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "1.9rem", color: "#f0f2ff", margin: 0 }}>
+              <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "1.9rem", color: "#e7ecef", margin: 0 }}>
                 VeldrixAI Python SDK
               </h1>
-              <span style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", color: "#10B981", fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              <span style={{ background: "rgba(111,169,143,0.12)", border: "1px solid rgba(111,169,143,0.25)", color: "#6fa98f", fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
                 v{VERSION}
               </span>
             </div>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "1rem", color: "rgba(240,242,255,0.5)", maxWidth: 560, lineHeight: 1.65, margin: "0 0 1.25rem" }}>
+            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "1rem", color: "rgba(231,236,239,0.5)", maxWidth: 560, lineHeight: 1.65, margin: "0 0 1.25rem" }}>
               Five-pillar trust evaluation — safety, hallucination, bias, prompt security, compliance — wired around your AI agent with a single decorator. Production-ready, zero-latency, strongly typed.
             </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -664,8 +664,8 @@ export default function SDKPage() {
               { k: "License",  v: "MIT"          },
             ].map(({ k, v }) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.35)" }}>{k}</span>
-                <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "rgba(240,242,255,0.65)" }}>{v}</span>
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.35)" }}>{k}</span>
+                <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "rgba(231,236,239,0.65)" }}>{v}</span>
               </div>
             ))}
           </div>
@@ -676,14 +676,14 @@ export default function SDKPage() {
       <Section title="Installation" id="installation">
         <CodeBlock lang="shell" code={CODE_INSTALL} {...cb("install")} />
         <InfoBox type="info">
-          Provider extras are optional. The core SDK only needs <code style={{ color: "#67e8f9" }}>httpx</code> and <code style={{ color: "#67e8f9" }}>pydantic</code>. Install extras only for the providers you use.
+          Provider extras are optional. The core SDK only needs <code style={{ color: "#abc8bd" }}>httpx</code> and <code style={{ color: "#abc8bd" }}>pydantic</code>. Install extras only for the providers you use.
         </InfoBox>
       </Section>
 
       {/* ── Authentication ────────────────────────────────────────────────── */}
       <Section title="Authentication" id="authentication">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          API keys are tied to your account and must start with <code style={{ color: "#a78bfa" }}>vx-live-</code> (production) or <code style={{ color: "#a78bfa" }}>vx-test-</code> (testing). Generate keys from the <a href="/dashboard/api-keys" style={{ color: "#7c3aed" }}>API Keys</a> page.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          API keys are tied to your account and must start with <code style={{ color: "#c5cfd5" }}>vx-live-</code> (production) or <code style={{ color: "#c5cfd5" }}>vx-test-</code> (testing). Generate keys from the <a href="/dashboard/api-keys" style={{ color: "#2d4a5e" }}>API Keys</a> page.
         </p>
         <SubSection title="Environment variable (recommended)">
           <CodeBlock lang="shell" code={CODE_ENV} {...cb("env")} />
@@ -698,8 +698,8 @@ export default function SDKPage() {
 
       {/* ── @guard Decorator ─────────────────────────────────────────────── */}
       <Section title="@veldrix.guard — Decorator Pattern" id="guard">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          The recommended integration. Wrap your LLM call function with <code style={{ color: "#a78bfa" }}>@veldrix.guard</code> — every call is automatically evaluated in the background. Fully transparent: your existing response-handling code needs zero changes.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          The recommended integration. Wrap your LLM call function with <code style={{ color: "#c5cfd5" }}>@veldrix.guard</code> — every call is automatically evaluated in the background. Fully transparent: your existing response-handling code needs zero changes.
         </p>
 
         {/* Tab bar */}
@@ -716,8 +716,8 @@ export default function SDKPage() {
                 fontSize: 13,
                 fontWeight: 600,
                 cursor: "pointer",
-                background: guardTab === t.key ? "rgba(124,58,237,0.2)" : "transparent",
-                color: guardTab === t.key ? "#a78bfa" : "rgba(240,242,255,0.4)",
+                background: guardTab === t.key ? "rgba(45,74,94,0.2)" : "transparent",
+                color: guardTab === t.key ? "#c5cfd5" : "rgba(231,236,239,0.4)",
                 transition: "all 0.15s",
               }}
             >
@@ -733,7 +733,7 @@ export default function SDKPage() {
         <div style={{ marginTop: "1.5rem" }}>
           <SubSection title="With blocking enforcement">
             <InfoBox type="info">
-              Set <code style={{ color: "#a78bfa" }}>background=False</code> when you need to block the response before returning it to the caller. In the default <code>background=True</code> mode, evaluation runs after the LLM returns so it adds zero latency.
+              Set <code style={{ color: "#c5cfd5" }}>background=False</code> when you need to block the response before returning it to the caller. In the default <code>background=True</code> mode, evaluation runs after the LLM returns so it adds zero latency.
             </InfoBox>
             <CodeBlock lang="python" code={CODE_BLOCKING} {...cb("blocking")} />
           </SubSection>
@@ -742,27 +742,27 @@ export default function SDKPage() {
 
       {/* ── Trust Result ─────────────────────────────────────────────────── */}
       <Section title="Reading the Trust Result" id="trust-result">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          Every guarded response has a <code style={{ color: "#a78bfa" }}>.trust</code> property of type <code style={{ color: "#a78bfa" }}>TrustResult</code>. All original response attributes are fully preserved — Veldrix is additive only.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          Every guarded response has a <code style={{ color: "#c5cfd5" }}>.trust</code> property of type <code style={{ color: "#c5cfd5" }}>TrustResult</code>. All original response attributes are fully preserved — Veldrix is additive only.
         </p>
         <CodeBlock lang="python" code={CODE_TRUST_RESULT} {...cb("trust-result")} maxH={420} />
 
         <div style={{ marginTop: "1.25rem" }}>
-          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)", marginBottom: 8 }}>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)", marginBottom: 8 }}>
             VERDICT REFERENCE
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
             {[
-              { v: "ALLOW",   c: "#10B981", desc: "All pillars passed — safe to use"                     },
-              { v: "WARN",    c: "#f59e0b", desc: "Borderline scores — consider review"                  },
-              { v: "REVIEW",  c: "#06b6d4", desc: "One or more pillars borderline — escalate"            },
-              { v: "BLOCK",   c: "#F43F5E", desc: "High-risk content — must not be used"                 },
-              { v: "PENDING", c: "#7c3aed", desc: "Background eval in-flight (background=True mode)"     },
-              { v: "UNKNOWN", c: "rgba(240,242,255,0.25)", desc: "Evaluation failed silently (degraded)" },
+              { v: "ALLOW",   c: "#6fa98f", desc: "All pillars passed — safe to use"                     },
+              { v: "WARN",    c: "#c2a06a", desc: "Borderline scores — consider review"                  },
+              { v: "REVIEW",  c: "#aab8c0", desc: "One or more pillars borderline — escalate"            },
+              { v: "BLOCK",   c: "#be7468", desc: "High-risk content — must not be used"                 },
+              { v: "PENDING", c: "#2d4a5e", desc: "Background eval in-flight (background=True mode)"     },
+              { v: "UNKNOWN", c: "rgba(231,236,239,0.25)", desc: "Evaluation failed silently (degraded)" },
             ].map(({ v, c, desc }) => (
               <div key={v} style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${c}25`, borderLeft: `3px solid ${c}`, borderRadius: "0 10px 10px 0", padding: "10px 14px" }}>
                 <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, fontWeight: 700, color: c, marginBottom: 4 }}>{v}</div>
-                <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(240,242,255,0.4)" }}>{desc}</div>
+                <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "rgba(231,236,239,0.4)" }}>{desc}</div>
               </div>
             ))}
           </div>
@@ -771,16 +771,16 @@ export default function SDKPage() {
 
       {/* ── Global Intercept ─────────────────────────────────────────────── */}
       <Section title="Global HTTP Intercept — Zero Code Changes" id="global-intercept">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          Call <code style={{ color: "#a78bfa" }}>enable_global_intercept(veldrix)</code> once at startup. The SDK patches <code>httpx</code> and <code>requests</code> globally so every request to any known AI endpoint — OpenAI, Anthropic, Google, Mistral, Cohere, AWS Bedrock, Ollama, HuggingFace, and more — is automatically captured without touching any LLM call site.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          Call <code style={{ color: "#c5cfd5" }}>enable_global_intercept(veldrix)</code> once at startup. The SDK patches <code>httpx</code> and <code>requests</code> globally so every request to any known AI endpoint — OpenAI, Anthropic, Google, Mistral, Cohere, AWS Bedrock, Ollama, HuggingFace, and more — is automatically captured without touching any LLM call site.
         </p>
         <CodeBlock lang="python" code={CODE_GLOBAL_INTERCEPT} {...cb("global-intercept")} />
       </Section>
 
       {/* ── FastAPI Middleware ────────────────────────────────────────────── */}
       <Section title="FastAPI / ASGI Middleware" id="fastapi">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          For services where you own the API server. <code style={{ color: "#a78bfa" }}>VeldrixMiddleware</code> intercepts request and response bodies, extracts prompt+response pairs, and evaluates them in the background — completely transparent to your endpoints.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          For services where you own the API server. <code style={{ color: "#c5cfd5" }}>VeldrixMiddleware</code> intercepts request and response bodies, extracts prompt+response pairs, and evaluates them in the background — completely transparent to your endpoints.
         </p>
         <CodeBlock lang="python" code={CODE_FASTAPI} {...cb("fastapi")} />
       </Section>
@@ -795,7 +795,7 @@ export default function SDKPage() {
 
       {/* ── Manual Evaluation ────────────────────────────────────────────── */}
       <Section title="Manual Evaluation" id="manual">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
           Use when you already have both the prompt and response — for re-evaluating stored content, batch processing, testing, or frameworks where the decorator doesn&apos;t fit.
         </p>
         <SubSection title="Synchronous">
@@ -811,15 +811,15 @@ export default function SDKPage() {
 
       {/* ── Audit Callbacks ──────────────────────────────────────────────── */}
       <Section title="Audit Callbacks — on_result" id="callbacks">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
-          Every integration point accepts an <code style={{ color: "#a78bfa" }}>on_result</code> callback that fires after every evaluation — ideal for writing to your own audit store, triggering alerts, or emitting metrics. Runs in the background. Exceptions inside the callback are caught and logged, never propagated.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+          Every integration point accepts an <code style={{ color: "#c5cfd5" }}>on_result</code> callback that fires after every evaluation — ideal for writing to your own audit store, triggering alerts, or emitting metrics. Runs in the background. Exceptions inside the callback are caught and logged, never propagated.
         </p>
         <CodeBlock lang="python" code={CODE_ON_RESULT} {...cb("on-result")} />
       </Section>
 
       {/* ── Metadata Tagging ─────────────────────────────────────────────── */}
       <Section title="Metadata Tagging" id="metadata">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1rem", lineHeight: 1.6 }}>
           Tag every evaluation with tenant IDs, user IDs, session context, or any key-value pair. Metadata is stored with the evaluation and visible in the Audit Logs dashboard for filtering and attribution. Per-call metadata overrides client-level defaults.
         </p>
         <CodeBlock lang="python" code={CODE_METADATA} {...cb("metadata")} />
@@ -835,9 +835,9 @@ export default function SDKPage() {
         <SubSection title="GuardConfig reference">
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "12px 16px", marginBottom: "1rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "180px 160px 1fr", gap: 12, paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>FIELD</span>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>TYPE</span>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>DEFAULT / DESCRIPTION</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>FIELD</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>TYPE</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DEFAULT / DESCRIPTION</span>
             </div>
             <PropRow name="background"       type="bool"      dflt="True"       desc="Evaluate after LLM returns — no added latency. Set False to block on result." />
             <PropRow name="block_on_verdict" type="list[str]" dflt="[]"         desc='Verdicts that raise VeldrixBlockError. Requires background=False. e.g. ["BLOCK"]' />
@@ -851,9 +851,9 @@ export default function SDKPage() {
         <SubSection title="Veldrix() constructor — advanced options">
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "12px 16px", marginBottom: "1rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "200px 140px 1fr", gap: 12, paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>PARAM</span>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>DEFAULT</span>
-              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(240,242,255,0.25)" }}>DESCRIPTION</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>PARAM</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DEFAULT</span>
+              <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DESCRIPTION</span>
             </div>
             {[
               { n: "api_key",                        d: "required",     desc: "API key. Must start with vx-live- or vx-test-." },
@@ -868,9 +868,9 @@ export default function SDKPage() {
               { n: "client_breaker_recovery_seconds",d: "30.0",         desc: "Seconds before breaker moves from OPEN to HALF_OPEN." },
             ].map(r => (
               <div key={r.n} style={{ display: "grid", gridTemplateColumns: "200px 140px 1fr", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
-                <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11.5, color: "#a78bfa" }}>{r.n}</code>
-                <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#67e8f9" }}>{r.d}</code>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(240,242,255,0.45)" }}>{r.desc}</span>
+                <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11.5, color: "#c5cfd5" }}>{r.n}</code>
+                <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#abc8bd" }}>{r.d}</code>
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(231,236,239,0.45)" }}>{r.desc}</span>
               </div>
             ))}
           </div>
@@ -887,8 +887,8 @@ export default function SDKPage() {
 
       {/* ── Supported Providers ──────────────────────────────────────────── */}
       <Section title="Supported Providers" id="providers">
-        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(240,242,255,0.5)", marginBottom: "1.25rem", lineHeight: 1.6 }}>
-          The SDK auto-detects provider from the LLM response shape. All providers below work out of the box with <code style={{ color: "#a78bfa" }}>@veldrix.guard</code> and <code style={{ color: "#a78bfa" }}>enable_global_intercept()</code>.
+        <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "rgba(231,236,239,0.5)", marginBottom: "1.25rem", lineHeight: 1.6 }}>
+          The SDK auto-detects provider from the LLM response shape. All providers below work out of the box with <code style={{ color: "#c5cfd5" }}>@veldrix.guard</code> and <code style={{ color: "#c5cfd5" }}>enable_global_intercept()</code>.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
           {[
@@ -897,8 +897,8 @@ export default function SDKPage() {
             "Mistral",      "Cohere",             "DeepSeek",        "Qwen",
             "Together AI",  "Fireworks AI",       "Groq",            "Any httpx/requests",
           ].map(p => (
-            <div key={p} style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(240,242,255,0.55)", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
+            <div key={p} style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(231,236,239,0.55)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fa98f", flexShrink: 0 }} />
               {p}
             </div>
           ))}
@@ -911,17 +911,17 @@ export default function SDKPage() {
           <div key={idx} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, marginBottom: "0.5rem", overflow: "hidden" }}>
             <button
               onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", background: "rgba(255,255,255,0.025)", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, fontFamily: "DM Sans, sans-serif", color: "rgba(240,242,255,0.75)", border: "none", width: "100%", textAlign: "left", borderBottom: openFaq === idx ? "1px solid rgba(255,255,255,0.07)" : "none" }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", background: "rgba(255,255,255,0.025)", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, fontFamily: "DM Sans, sans-serif", color: "rgba(231,236,239,0.75)", border: "none", width: "100%", textAlign: "left", borderBottom: openFaq === idx ? "1px solid rgba(255,255,255,0.07)" : "none" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.025)")}
             >
               <span>{faq.q}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: openFaq === idx ? "rotate(180deg)" : "none", transition: "transform 200ms", flexShrink: 0, color: "rgba(240,242,255,0.3)" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: openFaq === idx ? "rotate(180deg)" : "none", transition: "transform 200ms", flexShrink: 0, color: "rgba(231,236,239,0.3)" }}>
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
             {openFaq === idx && (
-              <div style={{ padding: "1rem 1.25rem", fontFamily: "DM Sans, sans-serif", fontSize: "0.85rem", color: "rgba(240,242,255,0.5)", lineHeight: 1.7, background: "rgba(255,255,255,0.015)" }}>
+              <div style={{ padding: "1rem 1.25rem", fontFamily: "DM Sans, sans-serif", fontSize: "0.85rem", color: "rgba(231,236,239,0.5)", lineHeight: 1.7, background: "rgba(255,255,255,0.015)" }}>
                 {faq.a}
               </div>
             )}
