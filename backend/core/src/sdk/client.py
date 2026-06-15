@@ -186,10 +186,19 @@ async def _dispatch_pillars(
         slots.prompt_security_ms, slots.compliance_ms,
     )
 
-    # Build per-pillar coroutines
+    # Build per-pillar coroutines.
+    # Clamp each per-pillar slot to the total budget: a single pillar must never
+    # be allowed to run longer than the whole request is allowed to take. This
+    # makes each pillar's own asyncio.wait_for() fire *first* and return a clean
+    # PillarResult, instead of relying on the expensive total-budget cancel path.
     coros = {
         n: asyncio.ensure_future(
-            _run_pillar_with_slot(n, getattr(_pillars, f"run_{n}")(request, http), getattr(slots, f"{n}_ms"), collector)
+            _run_pillar_with_slot(
+                n,
+                getattr(_pillars, f"run_{n}")(request, http),
+                min(getattr(slots, f"{n}_ms"), total_budget_ms),
+                collector,
+            )
         )
         for n in _PILLAR_NAMES
     }
@@ -198,16 +207,18 @@ async def _dispatch_pillars(
 
     # ─── HARD TOTAL-BUDGET TIMEOUT ──────────────────────────────────────────
     # asyncio.wait() with timeout enforces the absolute maximum wall-clock time.
-    # Any task still running after the timeout is cancelled explicitly.
+    # Wait for ALL pillars to settle within the budget. The pillar runner never
+    # raises (it converts every failure into a PillarResult), so FIRST_EXCEPTION
+    # would be misleading here — ALL_COMPLETED is the honest intent.
     done_tasks, pending_tasks = await asyncio.wait(
         list(coros.values()),
         timeout=total_budget_s,
-        return_when=asyncio.FIRST_EXCEPTION,
+        return_when=asyncio.ALL_COMPLETED,
     )
 
     dispatch_ms = round((time.monotonic() - _t["dispatch_start"]) * 1000)
 
-    # Cancel pending (timed-out) tasks immediately
+    # Cancel pending (timed-out) tasks immediately.
     if pending_tasks:
         logger.warning(
             "VELDRIX_TOTAL_BUDGET_TIMEOUT timeout_ms=%d elapsed_ms=%d pending=%d",
@@ -215,8 +226,10 @@ async def _dispatch_pillars(
         )
         for task in pending_tasks:
             task.cancel()
-        # Give cancelled tasks a brief window to settle
-        await asyncio.wait(pending_tasks, timeout=0.5)
+        # Cancelled tasks settle almost instantly — the runner catches
+        # CancelledError and returns. A 50ms ceiling is ample; the old 500ms
+        # ceiling doubled total latency on every timed-out request.
+        await asyncio.wait(pending_tasks, timeout=0.05)
     else:
         logger.info(
             "VELDRIX_DISPATCH_OK timeout_ms=%d elapsed_ms=%d",
@@ -315,12 +328,24 @@ async def _sync_record_latency(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# Flags that signal the pillar did NOT run (timeout, cancellation, internal
+# error) — i.e. an operational/degraded condition, NOT a content violation.
+# These must never be treated as critical: a pillar that failed to execute is
+# not evidence of harmful content and must never, on its own, force a BLOCK.
+_OPERATIONAL_FLAGS = frozenset({
+    "EVALUATION_TIMEOUT",
+    "EVALUATION_CANCELLED",
+    "EVALUATION_ERROR",
+})
+
+
 def _aggregate_trust_score(pillars: dict[str, PillarResult]) -> TrustScore:
     """Weighted aggregation of pillar scores into a single TrustScore."""
     weighted_sum = 0.0
     total_weight = 0.0
     critical_flags: list[str] = []
     all_flags: list[str] = []
+    degraded_critical = False  # a high-severity pillar failed to run
 
     for name, result in pillars.items():
         if result.status == PillarStatus.OK and result.score is not None:
@@ -330,16 +355,24 @@ def _aggregate_trust_score(pillars: dict[str, PillarResult]) -> TrustScore:
         if result.flags:
             all_flags.extend(result.flags)
             if name in ("safety", "prompt_security"):
-                critical_flags.extend(result.flags)
+                # Only genuine CONTENT flags from high-severity pillars are
+                # critical. Operational failures are tracked as degradation.
+                content_flags = [f for f in result.flags if f not in _OPERATIONAL_FLAGS]
+                critical_flags.extend(content_flags)
+                if any(f in _OPERATIONAL_FLAGS for f in result.flags):
+                    degraded_critical = True
 
     overall = round(weighted_sum / total_weight, 4) if total_weight > 0 else 0.0
 
-    if overall >= 0.85 and not critical_flags:
-        verdict = "ALLOW"
-    elif overall >= 0.60 and not critical_flags:
-        verdict = "WARN"
-    elif critical_flags:
+    if critical_flags:
         verdict = "BLOCK"
+    elif overall >= 0.85:
+        # A clean high score is only a full ALLOW when every high-severity
+        # pillar actually ran. If safety/prompt_security was degraded, surface
+        # it for review rather than silently passing — fail-safe, not fail-block.
+        verdict = "REVIEW" if degraded_critical else "ALLOW"
+    elif overall >= 0.60:
+        verdict = "WARN"
     else:
         verdict = "REVIEW"
 
