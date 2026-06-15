@@ -3,15 +3,15 @@
 import { useState } from "react";
 
 const VERDICT_COLORS: Record<string, string> = {
-  ALLOW:      "#10B981",
-  WARN:       "#f59e0b",
-  REVIEW:     "#06B6D4",
-  BLOCK:      "#F43F5E",
-  REWRITE:    "#7C3AED",
-  MASK:       "#4F46E5",
-  DISCLAIMER: "#06B6D4",
-  ESCALATE:   "#f59e0b",
-  REGENERATE: "#4F46E5",
+  ALLOW:      "#6fa98f",
+  WARN:       "#c2a06a",
+  REVIEW:     "#aab8c0",
+  BLOCK:      "#be7468",
+  REWRITE:    "#2d4a5e",
+  MASK:       "#243b4c",
+  DISCLAIMER: "#aab8c0",
+  ESCALATE:   "#c2a06a",
+  REGENERATE: "#243b4c",
 };
 
 function fmtTs(ts: string | null) {
@@ -57,7 +57,7 @@ export default function EvaluationHeader({
 }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const verdictColor = verdict ? VERDICT_COLORS[verdict] ?? "#06B6D4" : "#06B6D4";
+  const verdictColor = verdict ? VERDICT_COLORS[verdict] ?? "#aab8c0" : "#aab8c0";
 
   function handleCopy() {
     if (!requestId) return;
@@ -73,12 +73,12 @@ export default function EvaluationHeader({
     : null;
   const latencyColor =
     totalLatencyMs == null
-      ? "#06B6D4"
+      ? "#aab8c0"
       : totalLatencyMs < 300
-      ? "#10B981"
+      ? "#6fa98f"
       : totalLatencyMs < 600
-      ? "#f59e0b"
-      : "#F43F5E";
+      ? "#c2a06a"
+      : "#be7468";
 
   return (
     <div
@@ -111,7 +111,7 @@ export default function EvaluationHeader({
           gap:           8,
           fontFamily:    "JetBrains Mono, monospace",
           fontSize:      13,
-          color:         copied ? "#06B6D4" : "rgba(240,242,255,0.75)",
+          color:         copied ? "#aab8c0" : "rgba(231,236,239,0.75)",
           transition:    "color 0.2s",
           letterSpacing: "0.5px",
         }}
@@ -122,7 +122,7 @@ export default function EvaluationHeader({
         </svg>
         {requestId ? `REQ-${requestId.slice(0, 12).toUpperCase()}` : "—"}
         {copied && (
-          <span style={{ fontSize: 10, color: "#06B6D4", letterSpacing: "1px" }}>COPIED</span>
+          <span style={{ fontSize: 10, color: "#aab8c0", letterSpacing: "1px" }}>COPIED</span>
         )}
       </button>
 
@@ -132,7 +132,7 @@ export default function EvaluationHeader({
         style={{
           fontFamily: "DM Sans, sans-serif",
           fontSize:   12,
-          color:      "rgba(240,242,255,0.4)",
+          color:      "rgba(231,236,239,0.4)",
           cursor:     "default",
         }}
       >
@@ -200,7 +200,7 @@ export default function EvaluationHeader({
                 style={{
                   fontFamily: "JetBrains Mono, monospace",
                   fontSize:   9,
-                  color:      "rgba(240,242,255,0.2)",
+                  color:      "rgba(231,236,239,0.2)",
                   letterSpacing: "0.5px",
                 }}
               >
@@ -217,7 +217,7 @@ export default function EvaluationHeader({
           style={{
             fontFamily: "JetBrains Mono, monospace",
             fontSize:   10,
-            color:      "rgba(240,242,255,0.3)",
+            color:      "rgba(231,236,239,0.3)",
             background: "rgba(255,255,255,0.03)",
             border:     "1px solid rgba(255,255,255,0.06)",
             borderRadius: 6,

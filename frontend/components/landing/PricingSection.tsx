@@ -9,7 +9,7 @@ function CheckIcon() {
   return (
     <svg
       width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+      stroke="#6fa98f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
       aria-hidden="true"
     >
       <polyline points="20 6 9 17 4 12" />
@@ -21,7 +21,7 @@ function CrossIcon() {
   return (
     <svg
       width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="rgba(244,63,94,0.5)" strokeWidth="2" strokeLinecap="round"
+      stroke="rgba(190,116,104,0.5)" strokeWidth="2" strokeLinecap="round"
       aria-hidden="true"
     >
       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -32,7 +32,7 @@ function CrossIcon() {
 function FeatureCell({ value }: { value: string | boolean | null }) {
   if (value === true) return <CheckIcon />;
   if (value === false || value === null) return <CrossIcon />;
-  return <span style={{ fontSize: "12px", color: "rgba(240,242,255,0.7)" }}>{value}</span>;
+  return <span style={{ fontSize: "12px", color: "rgba(231,236,239,0.7)" }}>{value}</span>;
 }
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           background: "none",
           border: "none",
           cursor: "pointer",
-          color: "rgba(240,242,255,0.9)",
+          color: "rgba(231,236,239,0.9)",
           fontSize: "15px",
           fontWeight: 500,
           textAlign: "left",
@@ -72,7 +72,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
             flexShrink: 0,
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
             transition: "transform 0.2s",
-            color: "#7c3aed",
+            color: "#2d4a5e",
           }}
           aria-hidden="true"
         >
@@ -85,7 +85,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
             margin: "12px 0 0",
             fontSize: "14px",
             lineHeight: "1.65",
-            color: "rgba(240,242,255,0.6)",
+            color: "rgba(231,236,239,0.6)",
           }}
         >
           {a}
@@ -149,8 +149,8 @@ export default function PricingSection() {
                   fontSize: "13px",
                   fontWeight: 500,
                   transition: "color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s",
-                  background: activeCycle === interval ? "#7c3aed" : "transparent",
-                  color: activeCycle === interval ? "#fff" : "rgba(240,242,255,0.55)",
+                  background: activeCycle === interval ? "#2d4a5e" : "transparent",
+                  color: activeCycle === interval ? "#fff" : "rgba(231,236,239,0.55)",
 
                 }}
               >
@@ -159,8 +159,8 @@ export default function PricingSection() {
                   <span
                     style={{
                       marginLeft: "6px",
-                      background: "rgba(16,185,129,0.2)",
-                      color: "#10b981",
+                      background: "rgba(111,169,143,0.2)",
+                      color: "#6fa98f",
                       fontSize: "10px",
                       padding: "2px 6px",
                       borderRadius: "100px",
@@ -203,12 +203,12 @@ export default function PricingSection() {
                 style={{
                   position: "relative",
                   background: plan.highlight
-                    ? "linear-gradient(135deg, rgba(124,58,237,0.10) 0%, rgba(6,182,212,0.05) 100%)"
+                    ? "linear-gradient(135deg, rgba(45,74,94,0.10) 0%, rgba(170,184,192,0.05) 100%)"
                     : "rgba(255,255,255,0.03)",
                   border: plan.highlight
-                    ? "1px solid rgba(124,58,237,0.5)"
+                    ? "1px solid rgba(45,74,94,0.5)"
                     : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: plan.highlight ? "0 0 40px rgba(124,58,237,0.15)" : "none",
+                  boxShadow: plan.highlight ? "0 0 40px rgba(45,74,94,0.15)" : "none",
                   borderRadius: "20px",
                   padding: "32px 28px",
                   display: "flex",
@@ -225,13 +225,13 @@ export default function PricingSection() {
                       fontFamily: "var(--font-display)",
                       fontWeight: 800,
                       fontSize: "18px",
-                      color: "rgba(240,242,255,0.95)",
+                      color: "rgba(231,236,239,0.95)",
                       marginBottom: "4px",
                     }}
                   >
                     {plan.name}
                   </div>
-                  <div style={{ fontSize: "13px", color: "rgba(240,242,255,0.45)" }}>
+                  <div style={{ fontSize: "13px", color: "rgba(231,236,239,0.45)" }}>
                     {plan.tagline}
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function PricingSection() {
                         fontFamily: "var(--font-display)",
                         fontWeight: 800,
                         fontSize: "42px",
-                        color: "#f0f2ff",
+                        color: "#e7ecef",
                         lineHeight: 1,
                       }}
                     >
@@ -253,28 +253,28 @@ export default function PricingSection() {
                   ) : (
                     <>
                       <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                        <span style={{ fontSize: "18px", color: "rgba(240,242,255,0.5)", fontWeight: 400 }}>$</span>
+                        <span style={{ fontSize: "18px", color: "rgba(231,236,239,0.5)", fontWeight: 400 }}>$</span>
                         <span
                           style={{
                             fontFamily: "var(--font-display)",
                             fontWeight: 800,
                             fontSize: "48px",
                             lineHeight: 1,
-                            color: "#f0f2ff",
+                            color: "#e7ecef",
                           }}
                         >
                           {price}
                         </span>
-                        <span style={{ fontSize: "13px", color: "rgba(240,242,255,0.4)" }}>/mo</span>
+                        <span style={{ fontSize: "13px", color: "rgba(231,236,239,0.4)" }}>/mo</span>
                       </div>
                       {activeCycle === "annual" && (
-                        <div style={{ fontSize: "12px", color: "#10b981", marginTop: "4px" }}>
+                        <div style={{ fontSize: "12px", color: "#6fa98f", marginTop: "4px" }}>
                           Billed annually — save ~20%
                         </div>
                       )}
                     </>
                   )}
-                  <div style={{ fontSize: "12px", color: "rgba(240,242,255,0.4)", marginTop: "8px" }}>
+                  <div style={{ fontSize: "12px", color: "rgba(231,236,239,0.4)", marginTop: "8px" }}>
                     {plan.evaluationsPerMonth} evals/month · {plan.overageRate} overage
                   </div>
                 </div>
@@ -285,10 +285,10 @@ export default function PricingSection() {
                     const val = feat[plan.id];
                     if (val === false || val === null) return null;
                     return (
-                      <li key={feat.label} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "rgba(240,242,255,0.75)" }}>
+                      <li key={feat.label} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "rgba(231,236,239,0.75)" }}>
                         <CheckIcon />
                         <span>
-                          <strong style={{ color: "rgba(240,242,255,0.9)" }}>{feat.label}:</strong>{" "}
+                          <strong style={{ color: "rgba(231,236,239,0.9)" }}>{feat.label}:</strong>{" "}
                           {val === true ? "Included" : val}
                         </span>
                       </li>
@@ -311,12 +311,12 @@ export default function PricingSection() {
                     fontSize: "14px",
                     fontWeight: 600,
                     transition: "opacity 0.2s, transform 0.15s",
-                    border: plan.highlight ? "none" : "1px solid rgba(124,58,237,0.35)",
+                    border: plan.highlight ? "none" : "1px solid rgba(45,74,94,0.35)",
                     background: plan.highlight
-                      ? "linear-gradient(135deg, #7c3aed, #06b6d4)"
+                      ? "linear-gradient(135deg, #2d4a5e, #aab8c0)"
                       : plan.id === "enterprise"
                       ? "rgba(255,255,255,0.06)"
-                      : "rgba(124,58,237,0.15)",
+                      : "rgba(45,74,94,0.15)",
                     color: "#fff",
                   }}
                 >
@@ -339,7 +339,7 @@ export default function PricingSection() {
           >
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: "12px 16px", color: "rgba(240,242,255,0.4)", fontWeight: 500, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <th style={{ textAlign: "left", padding: "12px 16px", color: "rgba(231,236,239,0.4)", fontWeight: 500, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   Feature
                 </th>
                 {PLANS.map((p) => (
@@ -351,7 +351,7 @@ export default function PricingSection() {
                       fontFamily: "var(--font-display)",
                       fontWeight: 800,
                       fontSize: "14px",
-                      color: p.highlight ? "#a78bfa" : "rgba(240,242,255,0.8)",
+                      color: p.highlight ? "#c5cfd5" : "rgba(231,236,239,0.8)",
                       borderBottom: "1px solid rgba(255,255,255,0.07)",
                     }}
                   >
@@ -369,13 +369,13 @@ export default function PricingSection() {
                     transition: "background 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLTableRowElement).style.background = "rgba(124,58,237,0.06)";
+                    (e.currentTarget as HTMLTableRowElement).style.background = "rgba(45,74,94,0.06)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLTableRowElement).style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)";
                   }}
                 >
-                  <td style={{ padding: "12px 16px", color: "rgba(240,242,255,0.65)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding: "12px 16px", color: "rgba(231,236,239,0.65)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                     {feat.label}
                   </td>
                   {PLANS.map((p) => (
@@ -392,7 +392,7 @@ export default function PricingSection() {
         {/* Add-ons */}
         <div style={{ marginTop: "64px", marginBottom: "64px" }}>
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "0" }}>
+            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(231,236,239,0.95)", margin: "0" }}>
               Extend Your Plan
             </h3>
           </div>
@@ -414,10 +414,10 @@ export default function PricingSection() {
                   padding: "22px 20px",
                 }}
               >
-                <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "15px", color: "rgba(240,242,255,0.9)", marginBottom: "6px" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "15px", color: "rgba(231,236,239,0.9)", marginBottom: "6px" }}>
                   {addon.name}
                 </div>
-                <div style={{ fontSize: "13px", color: "rgba(240,242,255,0.5)", marginBottom: "10px" }}>
+                <div style={{ fontSize: "13px", color: "rgba(231,236,239,0.5)", marginBottom: "10px" }}>
                   {addon.description}
                 </div>
                 <div
@@ -426,8 +426,8 @@ export default function PricingSection() {
                     fontSize: "11px",
                     padding: "3px 10px",
                     borderRadius: "100px",
-                    background: "rgba(124,58,237,0.12)",
-                    color: "#a78bfa",
+                    background: "rgba(45,74,94,0.12)",
+                    color: "#c5cfd5",
                     fontWeight: 600,
                   }}
                 >
@@ -441,20 +441,20 @@ export default function PricingSection() {
         {/* FAQ */}
         <div style={{ maxWidth: "680px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(240,242,255,0.95)", margin: "0" }}>
+            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "24px", color: "rgba(231,236,239,0.95)", margin: "0" }}>
               Frequently Asked Questions
             </h3>
           </div>
           {PRICING_FAQ.map((item) => (
             <FAQItem key={item.q} q={item.q} a={item.a} />
           ))}
-          <p style={{ marginTop: "28px", textAlign: "center", fontSize: "13px", color: "rgba(240,242,255,0.4)" }}>
+          <p style={{ marginTop: "28px", textAlign: "center", fontSize: "13px", color: "rgba(231,236,239,0.4)" }}>
             More questions?{" "}
-            <a href="mailto:support@veldrixai.ca" style={{ color: "#a78bfa", textDecoration: "none" }}>
+            <a href="mailto:support@veldrixai.ca" style={{ color: "#c5cfd5", textDecoration: "none" }}>
               Contact support
             </a>
             {" "}or{" "}
-            <Link href="/docs/billing-plans" style={{ color: "#a78bfa", textDecoration: "none" }}>
+            <Link href="/docs/billing-plans" style={{ color: "#c5cfd5", textDecoration: "none" }}>
               read the billing docs
             </Link>
             .

@@ -32,18 +32,18 @@ function SuccessInner() {
 
         <div style={{
           background: "var(--vx-card-bg)",
-          border: "1px solid rgba(16,185,129,0.25)",
+          border: "1px solid rgba(111,169,143,0.25)",
           borderRadius: "24px",
           padding: "48px 40px",
           position: "relative",
           overflow: "hidden",
           textAlign: "center",
-          boxShadow: "0 16px 60px rgba(16,185,129,0.10)",
+          boxShadow: "0 16px 60px rgba(111,169,143,0.10)",
         }}>
           {/* Top accent */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-            background: "linear-gradient(90deg, transparent, rgba(16,185,129,0.7), rgba(6,182,212,0.5), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(111,169,143,0.7), rgba(170,184,192,0.5), transparent)",
           }} />
 
           {/* Animated check mark */}
@@ -51,8 +51,8 @@ function SuccessInner() {
             width: "72px",
             height: "72px",
             borderRadius: "50%",
-            background: "rgba(16,185,129,0.12)",
-            border: "1px solid rgba(16,185,129,0.35)",
+            background: "rgba(111,169,143,0.12)",
+            border: "1px solid rgba(111,169,143,0.35)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -68,7 +68,7 @@ function SuccessInner() {
             fontSize: "9px",
             letterSpacing: "3px",
             textTransform: "uppercase",
-            color: "rgba(16,185,129,0.7)",
+            color: "rgba(111,169,143,0.7)",
             marginBottom: "10px",
           }}>
             Transaction Verified
@@ -101,7 +101,7 @@ function SuccessInner() {
             fontWeight: 800,
             fontSize: "40px",
             letterSpacing: "-1.5px",
-            color: "var(--vx-emerald)",
+            color: "var(--vx-success)",
             margin: "20px 0 4px",
           }}>
             {amountFmt}
@@ -136,7 +136,7 @@ function SuccessInner() {
                   fontFamily: label === "Transaction ID" ? "'JetBrains Mono', monospace" : "var(--vx-font-body)",
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: green ? "var(--vx-emerald)" : "var(--vx-text-primary)",
+                  color: green ? "var(--vx-success)" : "var(--vx-text-primary)",
                 }}>
                   {value}
                 </span>
@@ -150,7 +150,7 @@ function SuccessInner() {
               display: "block",
               padding: "14px 24px",
               borderRadius: "12px",
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+              background: "linear-gradient(135deg, #2d4a5e, #243b4c)",
               color: "#fff",
               fontFamily: "var(--vx-font-display)",
               fontWeight: 700,
@@ -159,7 +159,7 @@ function SuccessInner() {
               textTransform: "uppercase",
               textDecoration: "none",
               textAlign: "center",
-              boxShadow: "0 8px 24px rgba(124,58,237,0.35)",
+              boxShadow: "0 8px 24px rgba(45,74,94,0.35)",
             }}>
               → Go to Dashboard
             </Link>

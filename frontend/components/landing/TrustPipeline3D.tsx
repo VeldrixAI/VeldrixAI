@@ -74,8 +74,8 @@ export function TrustPipeline3D({ reduced = false }: { reduced?: boolean }) {
         <svg width="100%" height="280" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="stageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(124,58,237,0.15)" />
-              <stop offset="100%" stopColor="rgba(6,182,212,0.15)" />
+              <stop offset="0%" stopColor="rgba(45,74,94,0.15)" />
+              <stop offset="100%" stopColor="rgba(170,184,192,0.15)" />
             </linearGradient>
             <filter id="pipelineGlow">
               <feGaussianBlur stdDeviation="4" result="blur" />
@@ -93,7 +93,7 @@ export function TrustPipeline3D({ reduced = false }: { reduced?: boolean }) {
               y1={140}
               x2={50 + (i + 1) * 60 - 5}
               y2={140}
-              stroke="rgba(124,58,237,0.3)"
+              stroke="rgba(45,74,94,0.3)"
               strokeWidth="2"
               strokeDasharray="4 4"
               className="vdx-flow-line"
@@ -109,14 +109,14 @@ export function TrustPipeline3D({ reduced = false }: { reduced?: boolean }) {
                 height="80"
                 rx="6"
                 fill="url(#stageGrad)"
-                stroke={activeStage === i ? "rgba(124,58,237,0.8)" : "rgba(255,255,255,0.08)"}
+                stroke={activeStage === i ? "rgba(45,74,94,0.8)" : "rgba(255,255,255,0.08)"}
                 strokeWidth={activeStage === i ? "1.5" : "0.5"}
               />
               <text
                 x={50 + i * 60 + 25}
                 y={85}
                 fontSize="8"
-                fill={activeStage === i ? "rgba(167,139,250,0.9)" : "rgba(255,255,255,0.35)"}
+                fill={activeStage === i ? "rgba(197,207,213,0.9)" : "rgba(255,255,255,0.35)"}
                 textAnchor="middle"
                 fontFamily="JetBrains Mono, monospace"
                 fontWeight="600"
@@ -145,7 +145,7 @@ export function TrustPipeline3D({ reduced = false }: { reduced?: boolean }) {
                 width="12"
                 height="12"
                 rx="3"
-                fill={packet.stage >= 5 ? "#06b6d4" : "#7c3aed"}
+                fill={packet.stage >= 5 ? "#aab8c0" : "#2d4a5e"}
                 filter="url(#pipelineGlow)"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -40,7 +40,7 @@ export default function RadarChart({ pillarScores }: Props) {
         alignItems: "center",
         justifyContent: "center",
         gap: 10,
-        color: "rgba(240,242,255,0.2)",
+        color: "rgba(231,236,239,0.2)",
       }}>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <polygon points="12 2 22 20 2 20" />
@@ -64,7 +64,7 @@ export default function RadarChart({ pillarScores }: Props) {
         <PolarAngleAxis
           dataKey="subject"
           tick={{
-            fill: "rgba(240,242,255,0.45)",
+            fill: "rgba(231,236,239,0.45)",
             fontSize: 11,
             fontFamily: "DM Sans, sans-serif",
           }}
@@ -72,11 +72,11 @@ export default function RadarChart({ pillarScores }: Props) {
         <Radar
           name="Risk"
           dataKey="score"
-          stroke="#7C3AED"
-          fill="#7C3AED"
+          stroke="#2d4a5e"
+          fill="#2d4a5e"
           fillOpacity={0.15}
           strokeWidth={2}
-          dot={{ r: 3, fill: "#06B6D4", stroke: "#fff", strokeWidth: 1 }}
+          dot={{ r: 3, fill: "#aab8c0", stroke: "#fff", strokeWidth: 1 }}
         />
       </RechartsRadarChart>
     </ResponsiveContainer>

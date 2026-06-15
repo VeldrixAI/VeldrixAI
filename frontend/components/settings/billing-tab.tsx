@@ -31,7 +31,7 @@ export default function BillingTab({ searchQuery }: BillingTabProps) {
             gap: "6px",
             padding: "8px 16px",
             borderRadius: "8px",
-            background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
+            background: "linear-gradient(135deg, #2d4a5e, #aab8c0)",
             color: "#fff",
             fontSize: "13px",
             fontWeight: 500,

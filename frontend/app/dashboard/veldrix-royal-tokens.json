@@ -1,0 +1,110 @@
+{
+  "$schema": "https://design-tokens.org/format",
+  "name": "VeldrixAI — Royal Governance",
+  "version": "3.0.0",
+  "description": "Cold, desaturated metallic palette derived from the VeldrixAI shield mark (image_0.png). Replaces the v2 violet/cyan scheme.",
+  "source": "frontend/public/image_0.png",
+
+  "color": {
+    "core": {
+      "slate-governance": {
+        "value": "#2D4A5E",
+        "type": "color",
+        "description": "Primary 1 — authoritative cold blue-grey. Primary CTAs, nav headers. Sampled from shield facets rgb(48,74,94).",
+        "ramp": {
+          "900": "#16252F",
+          "800": "#1E3442",
+          "700": "#243B4C",
+          "500": "#2D4A5E",
+          "400": "#38596E",
+          "300": "#748895",
+          "100": "#BBC5CC"
+        }
+      },
+      "burnished-platinum": {
+        "value": "#AAB8C0",
+        "type": "color",
+        "description": "Primary 2 — cool polished silver. Accent borders, interactive icons, secondary text on dark. Sampled from the 'X' highlight rgb(170,184,192).",
+        "ramp": {
+          "900": "#5A656C",
+          "700": "#7C8993",
+          "500": "#AAB8C0",
+          "300": "#C5CFD5",
+          "100": "#E1E6E9"
+        }
+      },
+      "deep-audit": {
+        "value": "#0E161A",
+        "type": "color",
+        "description": "Primary 3 — dark-mode interface background. Sampled from image background rgb(14,22,26).",
+        "ramp": {
+          "void": "#0A1014",
+          "surface": "#0E161A",
+          "raised": "#121D23",
+          "elevated": "#15222A",
+          "high": "#1A2A33"
+        }
+      },
+      "icy-silver-green": {
+        "value": "#9FC4B5",
+        "type": "color",
+        "description": "Reflection accent — pale, icy, desaturated silver-green from the far-left shield curve / the 'R' in Rivenpath. Defined variant used for success.",
+        "ramp": {
+          "reflection": "#ABC8BD",
+          "defined": "#6FA98F",
+          "tint": "#9BC4B2"
+        }
+      }
+    },
+
+    "gradient": {
+      "metal": {
+        "type": "gradient",
+        "description": "Phase 2 — cool silver-blue → icy silver-green. Light raking across polished metal.",
+        "angle": "135deg",
+        "stops": [
+          { "position": "0%",   "color": "#8FA6B5", "name": "silver-blue start" },
+          { "position": "52%",  "color": "#A9BAC0", "name": "platinum crest" },
+          { "position": "100%", "color": "#ABC8BD", "name": "icy silver-green end" }
+        ],
+        "css": "linear-gradient(135deg, #8FA6B5 0%, #A9BAC0 52%, #ABC8BD 100%)"
+      },
+      "metal-hero": {
+        "type": "gradient",
+        "description": "4-stop hero/feature variant with a specular glint.",
+        "css": "linear-gradient(135deg, #7E97A8 0%, #9FB3BE 38%, #C0CDCF 60%, #A6C6B9 100%)"
+      },
+      "metal-soft": {
+        "type": "gradient",
+        "description": "Ambient translucent version for callout panels and card top-accents.",
+        "css": "linear-gradient(90deg, rgba(143,166,181,0.85) 0%, rgba(171,200,189,0.85) 100%)"
+      }
+    },
+
+    "semantic": {
+      "success":       { "value": "#6FA98F", "description": "Defined icy silver-green." },
+      "warning":       { "value": "#C2A06A", "description": "Desaturated cold amber." },
+      "error":         { "value": "#BE7468", "description": "Desaturated brick red." },
+      "info":          { "value": "#8FA6B5", "description": "Silver-blue (gradient start)." },
+      "border-strong": { "value": "#2A3A44", "description": "Dark silver-grey divider." },
+      "border":        { "value": "rgba(170,184,192,0.14)", "description": "Standard hairline." },
+      "syntax-primary":{ "value": "#AAB8C0", "description": "Burnished Platinum replaces bright blue syntax." },
+      "syntax-keyword":{ "value": "#8FA6B5" },
+      "syntax-string": { "value": "#9FC4B5" },
+      "syntax-comment":{ "value": "#5A656C" }
+    }
+  },
+
+  "component": {
+    "surface-background":        { "value": "#0E161A", "ref": "color.core.deep-audit.surface" },
+    "surface-raised":            { "value": "#121D23", "ref": "color.core.deep-audit.raised" },
+    "text-primary":              { "value": "rgba(231,236,239,0.96)", "description": "Cool light on dark." },
+    "text-secondary":            { "value": "rgba(197,207,213,0.72)", "ref": "color.core.burnished-platinum" },
+    "border-standard":           { "value": "rgba(170,184,192,0.14)", "ref": "color.semantic.border" },
+    "gradient-button-background": { "value": "linear-gradient(135deg, #8FA6B5 0%, #A9BAC0 52%, #ABC8BD 100%)", "ref": "color.gradient.metal" },
+    "gradient-button-text":      { "value": "#0E161A", "description": "Dark engraved text on metal." },
+    "syntax-highlight-primary":  { "value": "#AAB8C0", "ref": "color.core.burnished-platinum" },
+    "cta-primary-background":    { "value": "#2D4A5E", "ref": "color.core.slate-governance" },
+    "nav-header-background":     { "value": "#1E3442", "ref": "color.core.slate-governance.800" }
+  }
+}

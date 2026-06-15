@@ -46,7 +46,7 @@ function ParticleCanvas() {
           vx: (Math.random() - 0.5) * 0.3,
           vy: (Math.random() - 0.5) * 0.3,
           r: Math.random() * 1.2 + 0.4,
-          color: Math.random() > 0.5 ? '124,58,237' : '6,182,212',
+          color: Math.random() > 0.5 ? '45,74,94' : '170,184,192',
           alpha: Math.random() * 0.35 + 0.1,
         });
       }
@@ -113,7 +113,7 @@ export default function AuthLayout({ children, leftContent }: AuthLayoutProps) {
     <div style={{
       minHeight: '100vh',
       display: 'flex',
-      background: '#050810',
+      background: '#0a1014',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -127,7 +127,7 @@ export default function AuthLayout({ children, leftContent }: AuthLayoutProps) {
           width: 600,
           height: 600,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(45,74,94,0.15) 0%, transparent 70%)',
         }} />
         {/* Orb 2 - bottom right */}
         <div style={{
@@ -137,7 +137,7 @@ export default function AuthLayout({ children, leftContent }: AuthLayoutProps) {
           width: 500,
           height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(170,184,192,0.1) 0%, transparent 70%)',
         }} />
         {/* Orb 3 - center */}
         <div style={{
@@ -148,7 +148,7 @@ export default function AuthLayout({ children, leftContent }: AuthLayoutProps) {
           width: 400,
           height: 400,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(36,59,76,0.08) 0%, transparent 70%)',
         }} />
       </div>
 

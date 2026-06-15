@@ -103,10 +103,10 @@ export default function PricingCard({
     <div
       style={{
         background: plan.highlighted
-          ? "linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(6,182,212,0.06) 100%)"
+          ? "linear-gradient(135deg, rgba(45,74,94,0.12) 0%, rgba(170,184,192,0.06) 100%)"
           : "rgba(255,255,255,0.03)",
         border: plan.highlighted
-          ? "1px solid rgba(124,58,237,0.5)"
+          ? "1px solid rgba(45,74,94,0.5)"
           : "1px solid rgba(255,255,255,0.08)",
         borderRadius: "16px",
         padding: "28px 24px",
@@ -123,7 +123,7 @@ export default function PricingCard({
             top: "-12px",
             left: "50%",
             transform: "translateX(-50%)",
-            background: "linear-gradient(90deg, #7c3aed, #06b6d4)",
+            background: "linear-gradient(90deg, #2d4a5e, #aab8c0)",
             borderRadius: "20px",
             padding: "3px 14px",
             fontSize: "11px",
@@ -155,7 +155,7 @@ export default function PricingCard({
           )}
         </div>
         {cycle === "annual" && price !== null && price > 0 && (
-          <div style={{ fontSize: "11px", color: "#06b6d4", marginTop: "4px" }}>
+          <div style={{ fontSize: "11px", color: "#aab8c0", marginTop: "4px" }}>
             Billed annually — save 20%
           </div>
         )}
@@ -167,7 +167,7 @@ export default function PricingCard({
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
         {plan.features.map((feat) => (
           <li key={feat} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "rgba(255,255,255,0.75)" }}>
-            <Check size={14} style={{ color: "#7c3aed", marginTop: "2px", flexShrink: 0 }} />
+            <Check size={14} style={{ color: "#2d4a5e", marginTop: "2px", flexShrink: 0 }} />
             {feat}
           </li>
         ))}
@@ -184,10 +184,10 @@ export default function PricingCard({
           background: isCurrentPlan
             ? "transparent"
             : plan.highlighted
-            ? "linear-gradient(135deg, #7c3aed, #06b6d4)"
+            ? "linear-gradient(135deg, #2d4a5e, #aab8c0)"
             : isFree || isEnterprise
             ? "rgba(255,255,255,0.08)"
-            : "rgba(124,58,237,0.6)",
+            : "rgba(45,74,94,0.6)",
           color: isCurrentPlan ? "rgba(255,255,255,0.4)" : "#fff",
           fontSize: "14px",
           fontWeight: 500,
