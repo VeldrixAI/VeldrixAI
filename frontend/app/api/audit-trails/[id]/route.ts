@@ -28,20 +28,6 @@ export async function GET(
   return NextResponse.json(payload);
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const t = await token();
-  if (!t) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const res = await fetch(`${CONNECTORS_API_URL}/api/audit-trails/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${t}` },
-  });
-
-  if (res.status === 204) return new NextResponse(null, { status: 204 });
-  const payload = await res.json().catch(() => ({}));
-  return NextResponse.json({ error: payload.detail || "Delete failed" }, { status: res.status });
-}
+// No DELETE handler: audit trails are append-only and tamper-evident (per-row
+// hash chain enforced by a DB trigger). Deleting a record would break the chain
+// and is exactly the tampering vector the audit substrate exists to prevent.
