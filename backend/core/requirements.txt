@@ -27,6 +27,14 @@ uvloop>=0.21.0; sys_platform != "win32"
 # NOT aioredis (deprecated since redis-py 4.x absorbed it).
 redis[hiredis]>=5.0.0
 
+# ── Observability (Policy Engine runtime metrics → /metrics) ─────────────────
+# prometheus_client exposes the Policy Engine runtime metrics (latency, decisions
+# by verb/mode, fail-mode activations, evaluated:false rate, fallback counts, shed
+# events) on GET /metrics, scraped by the existing observability/prometheus.yml.
+# Optional at import time: src/telemetry/policy_metrics.py degrades to no-ops when
+# absent so dev/test run without it — but production deploys MUST install it.
+prometheus_client>=0.20.0
+
 # ── Testing ────────────────────────────────────────────────────────────────────
 # pytest-asyncio: async coroutine test runner
 # respx:          httpx request mock/intercept (no live NIM API calls in tests)

@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import text
 from src.db.base import Base, engine, get_db
 
@@ -15,6 +15,7 @@ import src.modules.reports.models  # noqa: F401
 import src.modules.analytics.models  # noqa: F401
 import src.modules.prompts.models  # noqa: F401
 import src.modules.support.models  # noqa: F401
+import src.modules.policy.models  # noqa: F401  (Part B / B.3 — policy_active_bindings)
 
 # Create all tables on startup (idempotent — safe to run every boot)
 Base.metadata.create_all(bind=engine)
@@ -107,7 +108,9 @@ except Exception as _mig_exc:  # pragma: no cover - boot-time best effort
 from src.modules.reports.controllers.report_controller import router as reports_router
 from src.modules.analytics.controller import router as analytics_router
 from src.modules.analytics.audit_controller import router as audit_trails_router
+from src.modules.analytics.chain_health_controller import router as chain_health_router
 from src.modules.analytics.latency_controller import router as latency_router
+from src.modules.policy.policy_controller import router as policy_rollout_router
 from src.modules.analytics.metrics_controller import router as metrics_router
 from src.modules.prompts.controller import router as prompts_router
 from src.modules.models.controller import router as models_router
@@ -158,11 +161,27 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(reports_router)
 app.include_router(analytics_router)
 app.include_router(audit_trails_router)
+app.include_router(chain_health_router)
 app.include_router(latency_router)
+app.include_router(policy_rollout_router)
 app.include_router(metrics_router)
 app.include_router(prompts_router)
 app.include_router(models_router)
 app.include_router(support_router)
+
+
+@app.get("/metrics")
+def metrics():
+    """Prometheus scrape target (Part B / B.2) — per-tenant audit chain-health gauges.
+
+    Renders the gauges set by the chain-health verification endpoints. Text exposition
+    only (tenant key + intact/length/timestamp); never audit record payload content.
+    Scraped by observability/prometheus.yml at ``veldrix-connectors:8002/metrics``.
+    """
+    from src.modules.analytics.chain_metrics import render
+
+    body, content_type = render()
+    return Response(content=body, media_type=content_type)
 
 
 @app.get("/health")

@@ -1,0 +1,138 @@
+{
+  "dashboard": {
+    "title": "VeldrixAI Policy Engine — Decision Records",
+    "tags": ["veldrix", "policy", "governance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Decisions by verb (rate)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (action) (rate(veldrix_policy_decisions_total[5m]))",
+            "legendFormat": "{{action}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Decisions by mode (shadow vs enforce)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (mode) (rate(veldrix_policy_decisions_total[5m]))",
+            "legendFormat": "{{mode}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Blast radius — decided vs enforced=false (shadow counterfactual)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "description": "What enforce mode WOULD have gated: gating verbs reached vs actually enforced. The gap is the shadow-mode blast radius shown to a design partner before they flip to enforce.",
+        "targets": [
+          {
+            "expr": "sum(rate(veldrix_policy_decisions_total{action=~\"block|escalate\"}[5m]))",
+            "legendFormat": "gating decisions reached",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(veldrix_policy_enforced_total{enforced=\"true\"}[5m]))",
+            "legendFormat": "actually enforced",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "title": "Per-pillar evaluated:false rate (fast-path / skip frequency)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "description": "Surfaces the bias score=92 demographic fast-path and degraded/timeout skips per pillar — exposed, not hidden.",
+        "targets": [
+          {
+            "expr": "sum by (pillar) (rate(veldrix_policy_pillar_unevaluated_total[5m]))",
+            "legendFormat": "{{pillar}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Fail-mode activations by type",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (type) (rate(veldrix_policy_fail_mode_activations_total[5m]))",
+            "legendFormat": "{{type}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Evaluation latency p50 / p95 / p99",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum by (le) (rate(veldrix_policy_eval_latency_seconds_bucket[5m])))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(veldrix_policy_eval_latency_seconds_bucket[5m])))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum by (le) (rate(veldrix_policy_eval_latency_seconds_bucket[5m])))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "title": "Provider-tier fallback (breaker not CLOSED)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 24, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (tier) (rate(veldrix_policy_provider_fallback_total[5m]))",
+            "legendFormat": "{{tier}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Engine errors (failed closed)",
+        "type": "timeseries",
+        "gridPos": {"x": 8, "y": 24, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(veldrix_policy_engine_errors_total[5m]))",
+            "legendFormat": "engine errors",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Backpressure shed events",
+        "type": "timeseries",
+        "gridPos": {"x": 16, "y": 24, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(veldrix_policy_shed_total[5m]))",
+            "legendFormat": "shed",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s"
+  },
+  "overwrite": true
+}

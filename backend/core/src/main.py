@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load .env before any module reads os.getenv — must happen before all local imports
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect  # noqa: E402
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect  # noqa: E402
 from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
@@ -145,6 +145,22 @@ app.include_router(internal_router)     # GET  /internal/latency-stats, /interna
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus scrape target (Part B / B.2).
+
+    Exposes the Policy Engine runtime metrics defined in
+    ``src.telemetry.policy_metrics``. The body is text exposition only — counts,
+    latencies, verbs, modes, pillar ids, provider tiers — and NEVER governed
+    content/PII (asserted by tests/test_policy_metrics.py). Scraped by
+    ``observability/prometheus.yml`` at ``veldrix-core:8001/metrics``.
+    """
+    from src.telemetry.policy_metrics import render
+
+    body, content_type = render()
+    return Response(content=body, media_type=content_type)
 
 
 # ── WebSocket: real-time notification stream ──────────────────────────────────
