@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "VeldrixAI Audit Chain — Health",
+    "tags": ["veldrix", "audit", "compliance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Chains intact (all tenants)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 6},
+        "description": "1 = every verified tenant chain is intact. Any 0 means a tamper/break was detected.",
+        "targets": [
+          {
+            "expr": "min(veldrix_audit_chain_intact)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Tenant chains with a detected break",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "count(veldrix_audit_chain_intact == 0) or vector(0)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Per-tenant chain intact (1 = intact, 0 = broken)",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "veldrix_audit_chain_intact",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Per-tenant time since last verification (s)",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "description": "Large values mean a tenant's chain has not been verified recently — schedule the chain-health refresh.",
+        "targets": [
+          {
+            "expr": "time() - veldrix_audit_chain_last_verified_timestamp",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Per-tenant chain length (records)",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "veldrix_audit_chain_length",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Verification passes by result (rate)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (result) (rate(veldrix_audit_chain_verifications_total[15m]))",
+            "legendFormat": "{{result}}",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m"
+  },
+  "overwrite": true
+}
