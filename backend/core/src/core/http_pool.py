@@ -7,6 +7,8 @@ warmup() to pre-warm the pool before the first real request.
 """
 from __future__ import annotations
 
+import os
+
 import httpx
 
 # Aggressive pooling for sub-500ms SLA:
@@ -23,11 +25,23 @@ _TIMEOUT = httpx.Timeout(connect=0.2, read=1.0, write=0.5, pool=0.2)
 _client: httpx.AsyncClient | None = None
 
 
+def _internal_headers() -> dict[str, str]:
+    """Default headers for service-to-service calls.
+
+    Connectors' ``internal/*`` routes (audit-write, chain-health, enforcement-mode,
+    preflight) require the shared ``INTERNAL_SERVICE_TOKEN`` in ``X-Internal-Token``
+    (F-UNAUTH-1). Every internal call goes through this pool, so we attach the token
+    once here. Unset → empty header → connectors fails safe (503/401); production
+    sets the same token on both services. Endpoints that don't check it ignore it.
+    """
+    return {"X-Internal-Token": os.getenv("INTERNAL_SERVICE_TOKEN", "")}
+
+
 def get_internal_client() -> httpx.AsyncClient:
     """Return the shared pool client, initialising it lazily if needed."""
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(limits=_LIMITS, timeout=_TIMEOUT)
+        _client = httpx.AsyncClient(limits=_LIMITS, timeout=_TIMEOUT, headers=_internal_headers())
     return _client
 
 
@@ -35,7 +49,7 @@ async def init_internal_pool() -> None:
     """Pre-create the pool at startup (preferred over lazy init in production)."""
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(limits=_LIMITS, timeout=_TIMEOUT)
+        _client = httpx.AsyncClient(limits=_LIMITS, timeout=_TIMEOUT, headers=_internal_headers())
 
 
 async def close_internal_pool() -> None:

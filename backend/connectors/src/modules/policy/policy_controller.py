@@ -1,42 +1,31 @@
 """Internal enforcement-mode rollout endpoints (Part B / B.3).
 
 Surface for the rollout tooling: read the current mode, change it (audited), roll
-back to shadow (audited), and compute the pre-flight blast-radius report. Mutations
-are authorized with a shared internal service token (``INTERNAL_SERVICE_TOKEN``) and
-each writes its own tamper-evident audit record. The GET read is unauthenticated
-service-to-service (it only reveals the mode) and is what core's ``mode_client`` calls.
+back to shadow (audited), and compute the pre-flight blast-radius report. Every route
+— including the GET reads (mode + preflight) — is authorized with the shared internal
+service token (``INTERNAL_SERVICE_TOKEN``); the reads leak cross-tenant mode/blast
+intelligence, so they are no longer unauthenticated (F-UNAUTH-1). Core's ``mode_client``
+presents the token via the shared internal HTTP pool. Mutations additionally write
+their own tamper-evident audit record.
 """
 
 from __future__ import annotations
 
-import os
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.db.base import get_db
+from src.core.middleware.internal_auth import require_internal_token
 from src.modules.policy import mode_service
 from src.modules.policy.mode_service import ModeChangeError
 
 router = APIRouter(prefix="/api/policy/internal", tags=["policy-rollout"])
 
-
-def require_internal_token(x_internal_token: Optional[str] = Header(default=None)) -> None:
-    """Authorize a mode-changing operation with the shared internal service token.
-
-    Fail-safe: if no token is configured, mode changes are *disabled* (503) rather
-    than open — enforcement gating can never be flipped by an unauthenticated caller.
-    """
-    expected = os.getenv("INTERNAL_SERVICE_TOKEN")
-    if not expected:
-        raise HTTPException(
-            status_code=503,
-            detail="enforcement-mode changes are disabled: INTERNAL_SERVICE_TOKEN not configured",
-        )
-    if not x_internal_token or x_internal_token != expected:
-        raise HTTPException(status_code=401, detail="invalid or missing internal service token")
+# Re-exported for callers/tests that import it from this module.
+__all__ = ["router", "require_internal_token"]
 
 
 class ModeChangeRequest(BaseModel):
@@ -59,6 +48,7 @@ def read_mode(
     tenant_id: str = Query(...),
     policy_id: str = Query(...),
     db: Session = Depends(get_db),
+    _: None = Depends(require_internal_token),
 ):
     """Return the tenant's current enforcement mode (default shadow). Read by core."""
     return {
@@ -110,6 +100,7 @@ def preflight(
     policy_id: Optional[str] = Query(default=None),
     days: int = Query(default=7, ge=1, le=90),
     db: Session = Depends(get_db),
+    _: None = Depends(require_internal_token),
 ):
     """Blast-radius the customer sees before flipping shadow→enforce."""
     return mode_service.preflight_report(db, tenant_id=tenant_id, policy_id=policy_id, days=days)

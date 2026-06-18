@@ -21,6 +21,7 @@ import io, csv
 
 from src.db.base import get_db
 from src.core.middleware.auth import get_current_user
+from src.core.middleware.internal_auth import require_internal_token
 from src.modules.reports.models import AuditTrail
 from src.modules.analytics.audit_hash import (
     GENESIS_HASH,
@@ -279,8 +280,17 @@ class InternalAuditRequest(BaseModel):
 
 
 @router.post("/internal/audit-trail", status_code=201, include_in_schema=False)
-def internal_log_audit(body: InternalAuditRequest, db: Session = Depends(get_db)):
-    """Internal service-to-service audit logging. Called from core service."""
+def internal_log_audit(
+    body: InternalAuditRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_internal_token),
+):
+    """Internal service-to-service audit logging. Called from core service.
+
+    Authorized with the shared ``INTERNAL_SERVICE_TOKEN`` (F-UNAUTH-1): an
+    unauthenticated caller can no longer inject forged/poisoning audit rows into a
+    tenant's hash chain. Fail-safe — unconfigured token disables the route (503).
+    """
     import uuid as _uuid
     meta = body.metadata or {}
     request_id = meta.get("request_id")
@@ -476,28 +486,10 @@ async def get_audit_detail(
             logger.error("get_audit_detail: JSONB fallback FAILED: %s", exc)
 
     if not record:
-        # Debug: check if record exists under any user to detect user_id mismatch vs missing record
-        try:
-            from sqlalchemy import or_ as _or
-            any_r = (
-                db.query(AuditTrail)
-                .filter(
-                    _or(
-                        AuditTrail.request_id == request_id,
-                        AuditTrail.action_metadata["request_id"].astext == request_id,
-                    )
-                )
-                .first()
-            )
-            if any_r:
-                logger.warning(
-                    "get_audit_detail: record EXISTS but user_id MISMATCH — stored=%s caller=%s — returning it",
-                    any_r.user_id, uid,
-                )
-                return _serialize(any_r)
-        except Exception as exc:
-            logger.error("get_audit_detail: unscoped fallback error: %s", exc)
-        logger.warning("get_audit_detail: NOT FOUND in DB at all for request_id=%s uid=%s", request_id, uid)
+        # Tenant-scoped: a record that exists but belongs to another tenant is
+        # indistinguishable from "not found" to this caller. We MUST NOT fall back
+        # to an unscoped lookup — that was a cross-tenant disclosure (F-BOLA-1).
+        logger.warning("get_audit_detail: NOT FOUND for request_id=%s uid=%s", request_id, uid)
         raise HTTPException(status_code=404, detail="Audit record not found")
     return _serialize(record)
 

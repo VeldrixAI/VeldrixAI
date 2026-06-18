@@ -14,7 +14,7 @@ Two rules are sacred (§2.4):
     actually assessing its risk dimension (the bias ``score=92`` demographic
     fast-path, or any degraded/PARTIAL result), its ``*_score``/``*_risk`` fields
     are ``None`` (missing) and ``*_evaluated`` is ``False``. A policy author can
-    write a rule on ``bias_evaluated == false``; a rule that references the missing
+    write a rule on ``bias_evaluated == False``; a rule that references the missing
     ``bias_score`` will *error* and respect its ``fail_mode`` — it can never read 92
     as a passing score.
   * **A field that exists but is absent is missing, not false.** Referencing a
@@ -28,6 +28,7 @@ not at request time.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional
 
@@ -69,6 +70,12 @@ SIGNAL_FIELDS["blast_radius"] = (int,)                 # scope/affected count (n
 _NEVER_NULL = frozenset(f"{p}_evaluated" for p in _PILLAR_NAMES)
 
 
+def _is_nonfinite(value: Any) -> bool:
+    """True for a float NaN/±Inf. ``bool`` is excluded (it is not a real numeric
+    score here) and ints cannot be non-finite, so only genuine floats are checked."""
+    return isinstance(value, float) and not math.isfinite(value)
+
+
 @dataclass(frozen=True)
 class SignalContext:
     """An immutable snapshot of the inputs to a single policy decision.
@@ -86,8 +93,25 @@ class SignalContext:
                 f"SignalContext contains undeclared fields: {sorted(unknown)}. "
                 f"Declared fields are: {sorted(SIGNAL_FIELDS)}"
             )
-        # Normalize: every *_evaluated field must be present and a real bool.
         normalized = dict(self.values)
+
+        # Reject non-finite numeric signals (NaN / ±Inf). A non-finite score is NOT a
+        # value the engine can reason about: `NaN < 40` is False, so a non-finite
+        # score would silently slip a `score < X` floor — a fail-open (F-FAILOPEN-NAN-1).
+        # Treat any non-finite pillar score/risk as a MISSING signal (None) and force
+        # that pillar's *_evaluated False, routing it through the existing "a skipped
+        # evaluation is never a pass" machinery (a referencing rule raises
+        # MissingSignalError → its fail_mode). This holds whether the context was built
+        # from pillar results or constructed directly.
+        for _p in _PILLAR_NAMES:
+            if _is_nonfinite(normalized.get(f"{_p}_score")) or _is_nonfinite(normalized.get(f"{_p}_risk")):
+                normalized[f"{_p}_score"] = None
+                normalized[f"{_p}_risk"] = None
+                normalized[f"{_p}_evaluated"] = False
+        if _is_nonfinite(normalized.get("composite_score")):
+            normalized["composite_score"] = None
+
+        # Normalize: every *_evaluated field must be present and a real bool.
         for name in _NEVER_NULL:
             normalized.setdefault(name, False)
             if not isinstance(normalized[name], bool):

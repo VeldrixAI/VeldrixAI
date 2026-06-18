@@ -46,7 +46,9 @@ def test_intact_chain_reports_intact(monkeypatch):
     assert result["length"] == 3
     assert result["error"] is None
     if chain_metrics.PROMETHEUS_AVAILABLE:
-        assert chain_metrics.CHAIN_INTACT.labels(tenant=TENANT)._value.get() == 1
+        # The gauge is labeled with the opaque hashed tenant label, never the raw
+        # UUID (F-UNAUTH-1 — no per-tenant UUID in the unauthenticated /metrics).
+        assert chain_metrics.CHAIN_INTACT.labels(tenant=chain_metrics._tenant_label(TENANT))._value.get() == 1
 
 
 def test_tampered_chain_is_detected(monkeypatch):
@@ -58,7 +60,7 @@ def test_tampered_chain_is_detected(monkeypatch):
     assert result["intact"] is False
     assert "tampered" in result["error"] or "chain break" in result["error"]
     if chain_metrics.PROMETHEUS_AVAILABLE:
-        assert chain_metrics.CHAIN_INTACT.labels(tenant=TENANT)._value.get() == 0
+        assert chain_metrics.CHAIN_INTACT.labels(tenant=chain_metrics._tenant_label(TENANT))._value.get() == 0
 
 
 def test_metrics_render_is_payload_free(monkeypatch):
@@ -71,5 +73,9 @@ def test_metrics_render_is_payload_free(monkeypatch):
     assert "text/plain" in content_type
     if chain_metrics.PROMETHEUS_AVAILABLE:
         assert "veldrix_audit_chain_intact" in text
-        # The tenant key labels the gauge, but no record payload content leaks.
+        # No record payload content leaks…
         assert "policy_decision" not in text and "req-" not in text
+        # …and the raw per-tenant UUID is NOT emitted — only the opaque hashed label
+        # (F-UNAUTH-1).
+        assert TENANT not in text
+        assert chain_metrics._tenant_label(TENANT) in text

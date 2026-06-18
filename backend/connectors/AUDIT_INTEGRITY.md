@@ -42,6 +42,14 @@ separate deployables and do not import each other, so the recipe is deliberately
 duplicated; `tests/test_audit_hash.py` asserts parity and pins a known vector so
 neither side can silently drift.
 
+Parity is **complete**, including non-JSON-native inputs: neither recipe carries a
+`default=` fallback, so a non-serializable value (e.g. `Decimal`) **raises
+`TypeError`** on *both* sides rather than being silently stringified. A previous
+connectors-only `default=str` (F-CANON-1) let two distinct payloads collide to one
+canonical form and broke this parity for non-JSON inputs; it has been removed.
+`tests/adversarial/test_audit_canonical_collision.py` asserts both services now
+raise (agree) on such inputs.
+
 The hash commits to the **whole row identity**, not just `action_metadata` — so
 editing any field (verdict, actor, timestamp, the honesty markers `enforced` /
 `mode` / `*_evaluated` / `engine_error` that live inside `action_metadata`)

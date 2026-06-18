@@ -42,8 +42,14 @@ SYSTEM_TENANT_ID = "00000000-0000-0000-0000-000000000000"
 # ── Canonical serializer (duplicated from core; see module docstring) ────────
 
 def canonical_json(obj: Any) -> str:
-    """Ordering-stable, whitespace-free JSON. Identical recipe to core."""
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
+    """Ordering-stable, whitespace-free JSON. Byte-for-byte identical recipe to core.
+
+    No ``default=`` fallback: a non-JSON-native value (e.g. ``Decimal``) RAISES
+    ``TypeError`` rather than being silently stringified. Stringifying let two
+    distinct payloads collide to the same canonical form and broke parity with core
+    (which also raises) — see F-CANON-1.
+    """
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"))
 
 
 def _sha256_prefixed(blob: str) -> str:

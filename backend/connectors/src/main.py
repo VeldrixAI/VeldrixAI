@@ -197,7 +197,10 @@ def readiness_check():
         db.execute(text("SELECT 1"))
         return {"status": "ready", "service": "veldrix-connectors", "db": "connected"}
     except Exception as exc:
-        return JSONResponse(status_code=503, content={"status": "not_ready", "db": str(exc)})
+        # Do NOT echo the raw exception (DB error string / DSN fragment) to an
+        # unauthenticated readiness caller — log it server-side, return a generic status.
+        logger.error("readiness_check: DB connectivity failed: %s", exc, exc_info=True)
+        return JSONResponse(status_code=503, content={"status": "not_ready", "db": "unavailable"})
     finally:
         try:
             next(db_gen)

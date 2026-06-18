@@ -19,6 +19,7 @@ tests run without the dependency; production installs it (see requirements.txt).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 from typing import Any, Dict, Optional
@@ -29,6 +30,21 @@ from sqlalchemy.orm import Session
 from src.modules.analytics.audit_hash import SYSTEM_TENANT_ID, verify_chain
 
 logger = logging.getLogger("veldrix.audit.chain_metrics")
+
+
+def _tenant_label(tenant_key: str) -> str:
+    """Non-identifying, stable label for a tenant chain in /metrics.
+
+    /metrics is a Prometheus scrape target with no auth gate, so it must NOT emit
+    raw per-tenant UUIDs (cross-tenant existence/volume disclosure — F-UNAUTH-1).
+    We hash the tenant key to an opaque, stable token: per-tenant gauges stay
+    distinguishable for dashboards, but the identifier is not recoverable from the
+    exposition. The reserved system-tenant sentinel keeps a readable label (it is
+    not a customer identifier).
+    """
+    if tenant_key == SYSTEM_TENANT_ID:
+        return "system"
+    return "t-" + hashlib.sha256(tenant_key.encode("utf-8")).hexdigest()[:16]
 
 PROMETHEUS_AVAILABLE = True
 try:  # pragma: no cover - both branches exercised across environments
@@ -98,9 +114,10 @@ def verify_tenant(db: Session, tenant_key: str) -> Dict[str, Any]:
     error = verify_chain(rows)
     intact = error is None
     now = time.time()
-    CHAIN_INTACT.labels(tenant=tenant_key).set(1 if intact else 0)
-    CHAIN_LAST_VERIFIED.labels(tenant=tenant_key).set(now)
-    CHAIN_LENGTH.labels(tenant=tenant_key).set(len(rows))
+    label = _tenant_label(tenant_key)  # opaque — never the raw tenant UUID (F-UNAUTH-1)
+    CHAIN_INTACT.labels(tenant=label).set(1 if intact else 0)
+    CHAIN_LAST_VERIFIED.labels(tenant=label).set(now)
+    CHAIN_LENGTH.labels(tenant=label).set(len(rows))
     CHAIN_VERIFICATIONS.labels(result="intact" if intact else "broken").inc()
     if not intact:
         logger.error("chain_metrics.tenant_chain_broken tenant=%s: %s", tenant_key, error)

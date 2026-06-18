@@ -86,6 +86,16 @@ _ALLOWED_NODES: tuple = (
 # Constant value types we accept as literals.
 _ALLOWED_CONST_TYPES: tuple = (str, int, float, bool, type(None))
 
+# Resource bounds (F-EVAL-DOS-1). A condition is authored data; an oversized or
+# pathologically-nested one must be rejected with a controlled ConditionCompileError
+# at load time, never crash policy load with RecursionError/MemoryError.
+#   * length: generous enough for legitimately wide flat conditions (a 2000-way `or`
+#     is a few tens of KB) but caps absurd megabyte inputs.
+#   * depth: legitimate conditions nest only a handful deep; deep `not not …` chains
+#     (the DoS vector) blow past this long before the interpreter's recursion limit.
+_MAX_CONDITION_SOURCE_LEN = 100_000
+_MAX_AST_DEPTH = 100
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  COMPILED CONDITION
@@ -141,18 +151,41 @@ def compile_condition(
     if not isinstance(source, str) or not source.strip():
         raise ConditionCompileError("Condition must be a non-empty string")
 
+    if len(source) > _MAX_CONDITION_SOURCE_LEN:
+        raise ConditionCompileError(
+            f"Condition too long: {len(source)} chars exceeds limit "
+            f"{_MAX_CONDITION_SOURCE_LEN}"
+        )
+
+    # Parsing a pathologically nested source can itself exhaust the C stack/heap;
+    # convert that into the same controlled rejection as every other escape.
     try:
         tree = ast.parse(source, mode="eval")
     except SyntaxError as exc:
         raise ConditionCompileError(f"Condition syntax error: {exc}") from exc
+    except (RecursionError, MemoryError) as exc:
+        raise ConditionCompileError(
+            f"Condition too complex to parse ({type(exc).__name__}); rejected at load"
+        ) from exc
 
     referenced: Set[str] = set()
-    _validate(tree, fields, referenced)
+    try:
+        _validate(tree, fields, referenced, depth=0)
+    except (RecursionError, MemoryError) as exc:
+        raise ConditionCompileError(
+            f"Condition too deeply nested ({type(exc).__name__}); rejected at load"
+        ) from exc
     return CompiledCondition(source=source, tree=tree, referenced_fields=referenced)
 
 
-def _validate(node: ast.AST, fields: Set[str], referenced: Set[str]) -> None:
-    """Walk the tree; reject any disallowed node, name, or literal."""
+def _validate(node: ast.AST, fields: Set[str], referenced: Set[str], depth: int = 0) -> None:
+    """Walk the tree; reject any disallowed node, name, literal, or excessive depth."""
+    if depth > _MAX_AST_DEPTH:
+        raise ConditionCompileError(
+            f"Condition nesting too deep (> {_MAX_AST_DEPTH}); rejected at load "
+            f"to avoid resource exhaustion"
+        )
+
     if not isinstance(node, _ALLOWED_NODES):
         raise ConditionCompileError(
             f"Disallowed expression element: {type(node).__name__} "
@@ -178,7 +211,7 @@ def _validate(node: ast.AST, fields: Set[str], referenced: Set[str]) -> None:
         return
 
     for child in ast.iter_child_nodes(node):
-        _validate(child, fields, referenced)
+        _validate(child, fields, referenced, depth + 1)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -201,7 +234,7 @@ def _eval_node(node: ast.AST, ctx: Mapping[str, Any]) -> Any:
     if isinstance(node, ast.BoolOp):
         # Short-circuit, matching ordinary boolean semantics. An operand that is
         # short-circuited away is never evaluated, so a guarded missing-signal
-        # reference (e.g. `bias_evaluated == false or bias_score < 40`) does not
+        # reference (e.g. `bias_evaluated == False or bias_score < 40`) does not
         # raise. A reached missing reference still raises → fail_mode.
         if isinstance(node.op, ast.And):
             for operand in node.values:
