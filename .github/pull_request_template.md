@@ -28,6 +28,6 @@
 
 - [ ] My code follows the existing style (`make lint` passes)
 - [ ] I have added / updated tests where appropriate
-- [ ] I have updated documentation or `CHANGELOG.md` if needed
+- [ ] I have updated documentation or `docs/CHANGELOG.md` if needed
 - [ ] I have not committed any secrets or API keys
-- [ ] Breaking changes are documented in `CHANGELOG.md`
+- [ ] Breaking changes are documented in `docs/CHANGELOG.md`

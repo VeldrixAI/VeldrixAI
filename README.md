@@ -339,7 +339,7 @@ See [STRIPE_SETUP.md](./STRIPE_SETUP.md) for Stripe Dashboard configuration.
 - [SDK Quickstart](aegisai-sdk/SDK_DESIGN.md)
 - [Architecture](aegisai-sdk/KAN19_IMPLEMENTATION.md)
 - [Stripe Setup](STRIPE_SETUP.md)
-- [Contributing](CONTRIBUTING.md)
+- [Contributing](docs/CONTRIBUTING.md)
 
 ---
 
