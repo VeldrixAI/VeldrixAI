@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Run from project root: python test_resend.py"""
+"""Run from project root: python tests/test_resend.py"""
 import os, sys
 from pathlib import Path
 
-# Load backend/.env
+# Load backend/.env (this script lives in tests/, so go up one level to repo root)
 from dotenv import load_dotenv
-env_path = Path(__file__).parent / "backend" / ".env"
+env_path = Path(__file__).resolve().parent.parent / "backend" / ".env"
 load_dotenv(env_path)
 print(f"[1] .env path:         {env_path}")
 print(f"[1] .env exists:       {env_path.exists()}")

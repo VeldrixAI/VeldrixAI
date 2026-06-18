@@ -13,7 +13,7 @@ Public surface::
         Decision,
     )
 
-Design guarantees (see POLICY_ENGINE.md for the auditor-facing spec):
+Design guarantees (see docs/POLICY_ENGINE.md for the auditor-facing spec):
   * Same signal context + same policy version → byte-identical decision, forever.
   * No ``eval``/``exec``/``pickle`` — conditions run in a sandboxed allowlisted AST.
   * Fail closed for ``high``/``critical`` rules when a signal is missing.
