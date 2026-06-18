@@ -12,18 +12,26 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.db.base import get_db
+from src.core.middleware.internal_auth import require_internal_token
 from src.modules.analytics import chain_metrics
 
 router = APIRouter(prefix="/api/audit-trails/internal/chain-health", tags=["chain-health"])
 
 
 @router.get("", include_in_schema=False)
-def verify_one(tenant_id: str = Query(...), db: Session = Depends(get_db)):
+def verify_one(
+    tenant_id: str = Query(...),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_internal_token),
+):
     """Verify a single tenant's chain and refresh its gauges."""
     return chain_metrics.verify_tenant(db, tenant_id)
 
 
 @router.post("/refresh", include_in_schema=False)
-def refresh_all(db: Session = Depends(get_db)):
+def refresh_all(
+    db: Session = Depends(get_db),
+    _: None = Depends(require_internal_token),
+):
     """Verify every tenant's chain and refresh all gauges (ops/cron entry point)."""
     return chain_metrics.verify_all(db)
