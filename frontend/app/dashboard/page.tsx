@@ -333,7 +333,7 @@ export default function DashboardPage() {
         )}
 
         {/* ── 4 Metric cards ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "28px" }}>
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="glass-panel" style={{ padding: "22px", borderRadius: "20px", background: "rgba(14,22,26,0.65)" }}>

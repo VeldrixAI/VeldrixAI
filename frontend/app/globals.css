@@ -1221,6 +1221,16 @@ textarea {
   }
 }
 
+/* Auth header (login): keep nav on one line on small phones */
+.auth-topnav a { white-space: nowrap; }
+@media (max-width: 600px) {
+  .auth-topbar { padding: 16px 18px !important; }
+  .auth-topnav { gap: 18px !important; }
+}
+@media (max-width: 420px) {
+  .auth-topnav-back { display: none; } /* logo already links home */
+}
+
 /* ══════════════════════════════════════════
    VeldrixAI App Shell Styles — Dashboard
    ══════════════════════════════════════════ */

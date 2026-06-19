@@ -133,7 +133,7 @@ function LoginForm() {
 
       {/* ── Fixed Header ── */}
       <header style={{ background: 'rgba(10,16,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'fixed', width: '100%', top: 0, zIndex: 100, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px' }}>
+        <div className="auth-topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))', border: '1px solid rgba(45,74,94,0.3)', boxShadow: '0 4px 16px rgba(45,74,94,0.3)', flexShrink: 0 }}>
               <VBrandMark suffix="signin-header" size={26} />
@@ -142,8 +142,8 @@ function LoginForm() {
               Veldrix
             </span>
           </Link>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            <Link href="/" style={{ color: 'rgba(231,236,239,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Back to Site</Link>
+          <nav className="auth-topnav" style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+            <Link className="auth-topnav-back" href="/" style={{ color: 'rgba(231,236,239,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Back to Site</Link>
             <Link href="/support" style={{ color: 'rgba(231,236,239,0.5)', fontSize: '14px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Support</Link>
           </nav>
         </div>

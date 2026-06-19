@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 
 interface EdgeNode {
   region: string;
@@ -45,14 +44,7 @@ export function SystemStatusBar() {
     <div className="vdx-status-bar">
       <div className="vdx-status-inner">
         <div className="vdx-status-main">
-          <motion.div
-            className={`vdx-status-dot vdx-status-${overallStatus}`}
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          <span className="vdx-status-label">
-            {overallStatus === "operational" ? "All systems operational" : "Degraded performance"}
-          </span>
+          <span className="vdx-status-label">All systems operational</span>
         </div>
         <div className="vdx-edge-nodes">
           {nodes.map((node) => (

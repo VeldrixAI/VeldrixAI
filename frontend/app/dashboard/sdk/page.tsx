@@ -86,7 +86,7 @@ function InfoBox({ type, children }: { type: "tip" | "warn" | "info"; children: 
 
 function PropRow({ name, type, dflt, desc }: { name: string; type: string; dflt?: string; desc: string }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "180px 160px 1fr", gap: "12px", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
+    <div className="vx-doc-row vx-doc-row-a" style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
       <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12, color: "#c5cfd5" }}>{name}</code>
       <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#abc8bd" }}>{type}</code>
       <div>
@@ -834,7 +834,7 @@ export default function SDKPage() {
       <Section title="Production Configuration" id="config">
         <SubSection title="GuardConfig reference">
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "12px 16px", marginBottom: "1rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "180px 160px 1fr", gap: 12, paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="vx-doc-row vx-doc-row-a vx-doc-head" style={{ paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>FIELD</span>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>TYPE</span>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DEFAULT / DESCRIPTION</span>
@@ -850,7 +850,7 @@ export default function SDKPage() {
 
         <SubSection title="Veldrix() constructor — advanced options">
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "12px 16px", marginBottom: "1rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "200px 140px 1fr", gap: 12, paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="vx-doc-row vx-doc-row-b vx-doc-head" style={{ paddingBottom: 8, marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>PARAM</span>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DEFAULT</span>
               <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(231,236,239,0.25)" }}>DESCRIPTION</span>
@@ -867,7 +867,7 @@ export default function SDKPage() {
               { n: "client_breaker_threshold",       d: "10",           desc: "Consecutive failures before circuit breaker opens." },
               { n: "client_breaker_recovery_seconds",d: "30.0",         desc: "Seconds before breaker moves from OPEN to HALF_OPEN." },
             ].map(r => (
-              <div key={r.n} style={{ display: "grid", gridTemplateColumns: "200px 140px 1fr", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "start" }}>
+              <div key={r.n} className="vx-doc-row vx-doc-row-b" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                 <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11.5, color: "#c5cfd5" }}>{r.n}</code>
                 <code style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#abc8bd" }}>{r.d}</code>
                 <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "rgba(231,236,239,0.45)" }}>{r.desc}</span>

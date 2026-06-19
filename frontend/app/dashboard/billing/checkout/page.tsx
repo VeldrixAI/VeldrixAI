@@ -284,7 +284,7 @@ function CheckoutInner() {
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: "28px" }}>
+          <div className="vx-checkout-grid" style={{ display: "grid", gap: "28px" }}>
 
             {/* ── Left: Stripe Elements ── */}
             <div style={{

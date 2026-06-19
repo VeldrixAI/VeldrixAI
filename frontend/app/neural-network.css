@@ -1,0 +1,422 @@
+/* ── Hero Nexus — full-bleed, native animated SVG trust composition ───────────
+   No raster art ships. A full-section background (deep-void, faded honeycomb
+   circuit field, drifting wave particles) fills the hero edge-to-edge; the
+   living trust composition floats centered on top, bleeding into the section. */
+
+/* Guard the whole landing against horizontal layout expansion on mobile. */
+html { overflow-x: clip; }
+
+/* Section override: let the hero go full-bleed (no container clamp). */
+.nexus-hero-section {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.nexus-hero {
+  position: relative;
+  width: 100%;
+  min-height: clamp(680px, 94vh, 1060px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* top clearance for the fixed nav (64px) + sticky status bar */
+  padding: 132px 16px 84px;
+  overflow: hidden;
+  isolation: isolate;
+  /* contain repaints so page scroll doesn't re-rasterise the whole hero */
+  contain: layout paint;
+  background:
+    radial-gradient(ellipse 60% 52% at 50% 46%, rgba(45, 74, 94, 0.22), transparent 68%),
+    radial-gradient(circle at 50% 50%, #0e1a22 0%, #0a1014 54%, #05080b 100%);
+}
+
+/* Pulsing central bloom behind the core. */
+.nexus-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle 32% at 50% 47%, rgba(95, 180, 228, 0.14), transparent 70%);
+  animation: nexusAmbient 6s ease-in-out infinite;
+}
+@keyframes nexusAmbient {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+/* ── Full-bleed honeycomb field (faded at edges so it bleeds into the page) ── */
+.nexus-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.nexus-bg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(ellipse 72% 66% at 50% 50%, #000 42%, transparent 90%);
+  mask-image: radial-gradient(ellipse 72% 66% at 50% 50%, #000 42%, transparent 90%);
+}
+
+/* ── Drifting wave particles ─────────────────────────────────────────────── */
+.nexus-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nexus-particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(0.4px);
+  animation-name: nexusDrift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+@keyframes nexusDrift {
+  0%   { transform: translate(0, 26px) scale(0.8); opacity: 0; }
+  12%  { opacity: var(--op, 0.5); }
+  86%  { opacity: var(--op, 0.5); }
+  100% { transform: translate(var(--dx, 0px), -150px) scale(1.06); opacity: 0; }
+}
+
+/* ── Panoramic trust composition (no card chrome) ────────────────────────── */
+.nexus-composition {
+  position: relative;
+  z-index: 2;
+  width: min(1500px, 96vw, 152vh);
+  aspect-ratio: 1600 / 1000;
+  /* keep the animated SVG on its own compositor layer for smooth scrolling */
+  will-change: transform;
+  /* one-time ignition zoom on load */
+  animation: nexusZoom 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+/* Ultrawide: let the composition stretch wider. */
+@media (min-width: 2000px) {
+  .nexus-composition { width: min(1720px, 88vw, 168vh); }
+}
+@media (min-width: 2600px) {
+  .nexus-composition { width: min(1920px, 80vw, 176vh); }
+}
+@keyframes nexusZoom {
+  from { transform: scale(0.93); }
+  to   { transform: scale(1); }
+}
+
+/* ══ Cinematic one-time ignition intro ════════════════════════════════════
+   0.1s  core fades in
+   0.25s core FLASH burst + expanding shockwave ring
+   0.9s+ currents race out to each pillar, one-by-one (tracer)
+   ~1.4s+ each pillar bursts + pops into place as its current lands          */
+@keyframes nexusFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.nexus-core-layer { animation: nexusFadeIn 0.6s ease-out 0.1s both; }
+
+/* Core flash burst — a brilliant bloom of light at ignition. */
+.nexus-flash {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusFlash 1s ease-out 0.25s both;
+}
+@keyframes nexusFlash {
+  0%   { opacity: 0;    transform: scale(0.15); }
+  18%  { opacity: 1; }
+  100% { opacity: 0;    transform: scale(2.6); }
+}
+
+/* One-shot shockwave ring expanding from the core. */
+.nexus-bigshock {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusBigShock 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.4s both;
+}
+@keyframes nexusBigShock {
+  0%   { opacity: 0;    transform: scale(0.2); }
+  16%  { opacity: 0.9; }
+  100% { opacity: 0;    transform: scale(3.4); }
+}
+
+/* Tracer: a bright pulse racing core → pillar exactly once. */
+.nx-tracer {
+  stroke-dasharray: 16 240;        /* pathLength=100 → a single travelling crest */
+  opacity: 0;
+  animation: nexusRace 0.9s cubic-bezier(0.5, 0, 0.5, 1) var(--rdelay, 1s) both;
+}
+@keyframes nexusRace {
+  0%   { stroke-dashoffset: 0;    opacity: 0; }
+  12%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { stroke-dashoffset: -130; opacity: 0; }
+}
+
+/* Perpetual currents reveal as the tracer lands. */
+.nx-current { animation: nexusFadeIn 0.5s ease-out var(--cdelay, 1.4s) both; }
+
+/* Each pillar bursts with colour as its current arrives. */
+.nexus-pillar-burst {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusBurst 1s ease-out var(--idelay, 1.4s) both;
+}
+@keyframes nexusBurst {
+  0%   { opacity: 0;    transform: scale(0.2); }
+  30%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: scale(2.3); }
+}
+
+/* Each pillar rises and pops into place (overshoot bounce) as it ignites. */
+.nexus-ignite {
+  transform-box: fill-box;
+  transform-origin: 50% 92%;
+  animation: nexusPillarIgnite 0.85s cubic-bezier(0.34, 1.4, 0.5, 1) var(--idelay, 1.4s) both;
+}
+@keyframes nexusPillarIgnite {
+  0%   { opacity: 0; transform: scale(0.55) translateY(34px); }
+  45%  { opacity: 1; }
+  68%  { transform: scale(1.07) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.nexus-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;            /* clip to viewBox so labels can't expand layout */
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────────── */
+.nexus-text {
+  font-family: var(--font-display, "Syne", sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  paint-order: stroke;
+}
+.nexus-text-pillar { font-size: 34px; }
+.nexus-text-core { font-size: 54px; letter-spacing: 0.12em; }
+
+/* ── Parallax depth layers ───────────────────────────────────────────────── */
+.nexus-layer {
+  transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
+}
+
+/* Whole scene breathes — a slow scale + drift so it never sits still. */
+.nexus-scene {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusBreathe 9s ease-in-out infinite;
+}
+@keyframes nexusBreathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.014) translateY(-4px); }
+}
+
+/* Per-monument idle float — desynced via inline delay for a layered 3D bob. */
+.nexus-float {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusFloat 6s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes nexusFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-8px) scale(1.014); }
+}
+
+/* ── Energy currents ─────────────────────────────────────────────────────── */
+.nexus-ribbons { mix-blend-mode: screen; }
+
+.nx-flow {
+  stroke-dasharray: 4 16;
+  animation-name: nexusFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.nx-filament {
+  stroke-dasharray: 1 19;
+  opacity: 0.9;
+  animation-name: nexusFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.nx-flow-halo {
+  stroke-dasharray: 6 14;
+  opacity: 0.55;
+  animation-name: nexusFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.nx-strand {
+  stroke-dasharray: 3 17;
+  opacity: 0.5;
+  animation-name: nexusFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: reverse;
+}
+.nx-strand-rev { animation-delay: -0.6s; opacity: 0.4; }
+
+@keyframes nexusFlow {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -20; }
+}
+
+/* ── DNA double-helix currents ───────────────────────────────────────────── */
+.nx-helix {
+  stroke-dasharray: 12 8;       /* pathLength=100 → flowing ribbon */
+  opacity: 0.75;
+  animation-name: nexusFlow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.nx-helix-rev {                  /* opposite strand flows the other way → twist */
+  opacity: 0.6;
+  animation-direction: reverse;
+}
+.nx-rung {
+  stroke-linecap: round;
+  animation: nexusRung 2.6s ease-in-out infinite;
+}
+@keyframes nexusRung {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.6; }
+}
+
+/* ── Monument base flares ────────────────────────────────────────────────── */
+.nx-base {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusBreath 3s ease-in-out infinite;
+}
+@keyframes nexusBreath {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
+}
+
+/* Ornament sparkles (gem apexes, finials, bookmark) twinkle. */
+.nx-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusSpark 2.8s ease-in-out infinite;
+}
+@keyframes nexusSpark {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50%      { opacity: 1; transform: scale(1.18); }
+}
+
+/* ── Living core ─────────────────────────────────────────────────────────── */
+.nexus-core-aura {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusCorePulse 3.4s ease-in-out infinite;
+}
+@keyframes nexusCorePulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50%      { opacity: 1;   transform: scale(1.12); }
+}
+.nexus-core-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusSpin 26s linear infinite;
+}
+@keyframes nexusSpin { to { transform: rotate(360deg); } }
+.nexus-shock {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusShock 3.4s ease-out infinite;
+}
+@keyframes nexusShock {
+  0%   { opacity: 0.55; transform: scale(0.9); }
+  70%  { opacity: 0; }
+  100% { opacity: 0; transform: scale(3); }
+}
+/* Core shield HEARTBEAT — a cardiac lub-dub pumping in rhythm with the currents. */
+.nexus-shield {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusHeartbeat 2.4s ease-in-out infinite;
+}
+@keyframes nexusHeartbeat {
+  0%   { transform: scale(1); }
+  7%   { transform: scale(1.13); }  /* lub */
+  14%  { transform: scale(1.02); }
+  21%  { transform: scale(1.09); }  /* dub */
+  30%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+/* Glow that brightens over the orb on each beat. */
+.nexus-heart-glow {
+  mix-blend-mode: screen;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusHeartGlow 2.4s ease-in-out infinite;
+}
+@keyframes nexusHeartGlow {
+  0%, 100% { opacity: 0.22; transform: scale(0.9); }
+  7%       { opacity: 0.75; transform: scale(1.08); }
+  21%      { opacity: 0.6;  transform: scale(1.04); }
+  30%      { opacity: 0.3;  transform: scale(0.95); }
+}
+/* Energy pulse emitted from the core toward the currents on each beat. */
+.nexus-pulse-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nexusPulseRing 2.4s ease-out infinite;
+}
+@keyframes nexusPulseRing {
+  0%   { opacity: 0;    transform: scale(0.55); }
+  9%   { opacity: 0.7; }
+  60%  { opacity: 0; }
+  100% { opacity: 0;    transform: scale(2.5); }
+}
+
+/* Glassy specular — soft white highlight gliding on the orb. */
+.nexus-specular {
+  mix-blend-mode: screen;
+  transition: transform 0.28s ease-out;
+  will-change: transform;
+}
+
+/* ── Mobile (Android + iOS) alignment ────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Hero: compact band, composition full-width, labels enlarged so they stay
+     legible once the wide viewBox is scaled down to a phone. */
+  .nexus-hero { padding: 104px 0 44px; min-height: 58vh; }
+  .nexus-composition { width: 94vw; }
+  .nexus-text-pillar { font-size: 40px; }
+
+  /* Global landing alignment: tighten the oversized desktop gutters. */
+  .lp-container { padding: 0 1.25rem; }
+  .lp-footer-inner { padding: 48px 1.25rem; gap: 2rem; }
+  .lp-footer-bottom { padding: 16px 1.25rem; }
+
+  /* Status bar: drop the cramped edge-node row, tighten gutters. */
+  .vdx-status-inner { padding: 0 1.25rem; gap: 1rem; }
+  .vdx-edge-nodes { display: none; }
+}
+
+@media (max-width: 430px) {
+  .nexus-composition { width: 92vw; }
+  .nexus-text-pillar { font-size: 34px; }
+}
+
+/* Reduced motion: the full vector scene stands, no animation. */
+@media (prefers-reduced-motion: reduce) {
+  .nexus-hero::after, .nexus-particle, .nx-flow, .nx-flow-halo, .nx-filament,
+  .nx-strand, .nx-helix, .nx-rung, .nx-base, .nexus-core-aura, .nexus-core-ring,
+  .nexus-shield, .nexus-heart-glow, .nexus-pulse-ring, .nx-spark, .nexus-scene,
+  .nexus-float, .nexus-composition, .nexus-core-layer, .nexus-ribbons,
+  .nexus-ignite, .nexus-flash, .nexus-bigshock, .nx-tracer, .nx-current,
+  .nexus-pillar-burst {
+    animation: none !important;
+  }
+  .nexus-layer, .nexus-specular { transition: none !important; }
+}

@@ -1925,6 +1925,28 @@
   }
 }
 
+/* ── Checkout: payment form + order summary; stack on tablet/phone ── */
+.vx-checkout-grid { grid-template-columns: 1fr 400px; }
+@media (max-width: 900px) {
+  .vx-checkout-grid { grid-template-columns: 1fr; }
+}
+
+/* ── SDK reference tables (field / type / description) ──
+   Desktop keeps fixed columns; on phones each row stacks to one column so the
+   fixed-width columns can't overflow the viewport. */
+.vx-doc-row {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+.vx-doc-row-a { grid-template-columns: 180px 160px 1fr; }
+.vx-doc-row-b { grid-template-columns: 200px 140px 1fr; }
+@media (max-width: 640px) {
+  .vx-doc-row-a,
+  .vx-doc-row-b { grid-template-columns: 1fr; gap: 3px; }
+  .vx-doc-head { display: none; } /* column labels are redundant once stacked */
+}
+
 /* ── Billing page animations ── */
 @keyframes vx-fadeUp {
   from { opacity: 0; transform: translateY(16px); }

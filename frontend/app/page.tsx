@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import "./landing.css";
+import "./neural-network.css";
 import { ShieldMark } from "@/components/shield-mark";
-import { HEADLINES } from "@/lib/copy/headlines";
 import { NAV_LINKS, FOOTER_PLATFORM_LINKS, FOOTER_DEVELOPER_LINKS, FOOTER_COMPANY_LINKS } from "@/lib/constants/nav-links";
 import { PLANS } from "@/lib/constants/pricing";
 import { SystemStatusBar } from "@/components/landing/SystemStatusBar";
@@ -16,11 +16,8 @@ import { InjectionDetector } from "@/components/landing/InjectionDetector";
 import { BiasHeatmap } from "@/components/landing/BiasHeatmap";
 import { TimeSeriesLedger } from "@/components/landing/TimeSeriesLedger";
 import { PerformanceMatrix } from "@/components/landing/PerformanceMatrix";
-import { Backbone } from "@/components/landing/Backbone";
+import { NeuralTrustNetwork } from "@/components/landing/NeuralTrustNetwork";
 import { motion } from "framer-motion";
-
-const VARIANT = (process.env.NEXT_PUBLIC_HEADLINE_VARIANT as keyof typeof HEADLINES) ?? "a";
-const HEADLINE = HEADLINES[VARIANT] ?? HEADLINES.a;
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState<boolean>(() => {
@@ -91,90 +88,9 @@ def generate_reply(prompt: str) -> str:
     return llm.complete(prompt)`;
 
 function HeroSection({ reduced }: { reduced: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const copyCode = useCallback(() => {
-    navigator.clipboard.writeText(PYTHON_CODE).catch(() => undefined);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
-
   return (
-    <section className="lp-hero vdx-deep-void" aria-label="Hero" style={{ paddingTop: '96px' }}>
-      <div className="lp-container" style={{ position: 'relative', zIndex: 10 }}>
-        {/* Center-Focused Orchestration View */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ stiffness: 300, damping: 30 }}
-          style={{ textAlign: 'center', marginBottom: '64px' }}
-        >
-          <h1 className="lp-hero-h1" style={{ maxWidth: '20ch', margin: '0 auto 24px' }}>
-            {HEADLINE.primary}
-          </h1>
-          <p className="lp-hero-sub" style={{ maxWidth: '52ch', margin: '0 auto 40px' }}>
-            {HEADLINE.secondary}
-          </p>
-          <div className="lp-hero-ctas" style={{ justifyContent: 'center', marginBottom: '32px' }}>
-            <Link href="/signup" className="lp-btn lp-btn-solid lp-btn-lg lp-btn-mono">
-              pip install veldrixai
-            </Link>
-            <Link href="/docs/benchmarks" className="lp-btn lp-btn-outline lp-btn-lg">
-              View benchmarks →
-            </Link>
-          </div>
-          {/* Code block with @veldrix.guard decorator */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, stiffness: 300, damping: 30 }}
-            style={{
-              maxWidth: '480px',
-              margin: '0 auto',
-              background: 'rgba(14,22,26,0.8)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '8px',
-              padding: '16px 20px',
-              position: 'relative',
-              textAlign: 'left',
-            }}
-          >
-            <pre style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'rgba(231,236,239,0.7)', lineHeight: 1.7 }}>
-              <span style={{ color: '#e7ecef' }}>from</span> veldrixai <span style={{ color: '#e7ecef' }}>import</span> Veldrix{"\n\n"}
-              <span style={{ color: '#2d4a5e' }}>@veldrix.guard</span>(policy=<span style={{ color: '#aab8c0' }}>"default"</span>){"\n"}
-              <span style={{ color: '#e7ecef' }}>def</span> <span style={{ color: '#c5cfd5' }}>generate_reply</span>(prompt: <span style={{ color: '#e7ecef' }}>str</span>){' -> '}<span style={{ color: '#e7ecef' }}>str</span>:{"\n"}
-              {"    "}<span style={{ color: '#e7ecef' }}>return</span> llm.complete(prompt)
-            </pre>
-            <button
-              onClick={copyCode}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '4px',
-                padding: '4px 10px',
-                fontSize: '0.6875rem',
-                color: copied ? '#6fa98f' : 'rgba(231,236,239,0.4)',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </motion.div>
-        </motion.div>
-
-        {/* Trust Pipeline 3D - Center Focused */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, stiffness: 300, damping: 30 }}
-          style={{ maxWidth: '720px', margin: '0 auto' }}
-        >
-          <TrustPipeline3D reduced={reduced} />
-        </motion.div>
-      </div>
+    <section className="lp-hero nexus-hero-section" aria-label="Hero">
+      <NeuralTrustNetwork reduced={reduced} />
     </section>
   );
 }
@@ -424,8 +340,8 @@ function FooterSection() {
       <div className="lp-footer-bottom">
         <span>© 2026 Veldrix Inc. · Toronto</span>
         <div className="lp-status-indicator">
-          <span className={`lp-status-dot ${status !== "operational" ? "degraded" : ""}`} aria-hidden="true" />
-          <span>{status === "operational" ? "All systems operational" : "Status unknown"}</span>
+          <span className="lp-status-dot" aria-hidden="true" />
+          <span>All systems operational</span>
         </div>
       </div>
     </footer>
@@ -440,7 +356,6 @@ export default function LandingPage() {
       <div className="lp-noise" aria-hidden="true" />
       <NavBar />
       <SystemStatusBar />
-      <Backbone />
       <main className="lp-main" id="main-content">
         <HeroSection reduced={reduced} />
         <div className="lp-section-divider" />

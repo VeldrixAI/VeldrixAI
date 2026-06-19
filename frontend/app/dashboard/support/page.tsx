@@ -550,7 +550,7 @@ export default function SupportPage() {
                   }}>
                     Priority
                   </div>
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"10px" }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(76px, 1fr))", gap:"10px" }}>
                     {PRIORITIES.map((pri) => {
                       const active = priority === pri.id;
                       return (
