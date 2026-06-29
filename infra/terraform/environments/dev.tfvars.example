@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DEV environment values. Copy to dev.tfvars (gitignored) and plan with:
+#   terraform plan -var-file=environments/dev.tfvars
+#
+# This is the ENTIRE dev-vs-prod difference: same .tf, different tfvars.
+# ─────────────────────────────────────────────────────────────────────────────
+
+environment = "dev"
+
+# Hosts — mirrored subdomain scheme (locked decision #1). The Host()-pinned
+# Traefik routers stay structurally identical to prod; only the strings change.
+root_domain = "veldrixai.ca"
+app_host    = "dev.veldrixai.ca"
+api_host    = "api.dev.veldrixai.ca"
+
+# Same region/size class as prod for representative parity (RECON Finding 3).
+droplet_region = "nyc1"
+droplet_size   = "s-4vcpu-8gb"
+
+# ACME — Let's Encrypt STAGING for dev (locked decision #2): avoids burning the
+# prod LE rate limit. Certs are untrusted-by-browsers but verify-dev.sh accepts
+# the staging chain. The cert store is a SEPARATE acme.json volume (see compose).
+acme_email     = "dev-admin@veldrixai.ca"
+acme_ca_server = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# Dev branch image tag (built by CI off the dev branch, not main).
+image_tag       = "dev"
+docker_registry = "ghcr.io/veldrixai/veldrixai"
+
+# CORS — dev hosts ONLY (never prod origins).
+cors_origins = "https://dev.veldrixai.ca,https://api.dev.veldrixai.ca"
+
+# Vercel — separate dev project tracking the dev branch.
+vercel_project_name      = "veldrixai-dev"
+vercel_git_repo          = "VeldrixAI/VeldrixAI"
+vercel_production_branch = "dev"

@@ -1,0 +1,4 @@
+# Rendered gateway config is an environment-specific build artifact — never commit.
+# Regenerate with: ENVIRONMENT=dev ../render-gateway.sh
+*
+!.gitignore

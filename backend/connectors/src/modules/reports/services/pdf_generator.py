@@ -101,10 +101,11 @@ class VX:
         "#243B4C", "#9FC4B5", "#5E8294", "#C5CFD5", "#748895",
     ]
 
-    # Resolved shield-logo asset path (alpha PNG, lives in the reports module).
+    # Resolved brand-logo asset path (transparent swirl mark, lives in the reports
+    # module). Var name kept for compatibility; the shield art was replaced project-wide.
     SHIELD_PATH = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "assets", "veldrix-shield.png",
+        "assets", "veldrix-logo.png",
     )
 
 

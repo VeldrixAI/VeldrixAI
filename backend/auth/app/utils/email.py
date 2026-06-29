@@ -50,7 +50,7 @@ def _header(frontend_url: str) -> str:
   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td valign="middle" style="padding-right:13px;">
-        <img src="{frontend_url}/veldrix-shield.png" width="40" height="40" alt="Veldrix"
+        <img src="{frontend_url}/veldrix-logo.png" width="40" height="40" alt="Veldrix"
              style="display:block;width:40px;height:40px;border:0;">
       </td>
       <td valign="middle">

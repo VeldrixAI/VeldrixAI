@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PROD environment values (reference — proves ONE definition emits both envs).
+#
+# Phase 5 does NOT apply this and does NOT migrate prod onto this IaC. It exists
+# so the dev/prod diff is auditable: same .tf, this is the only delta vs dev.
+# Do NOT run this against prod without a separate, deliberate migration plan
+# (prod currently deploys via Jenkins, RECON Finding 3).
+# ─────────────────────────────────────────────────────────────────────────────
+
+environment = "prod"
+
+root_domain = "veldrixai.ca"
+app_host    = "app.veldrixai.ca"
+api_host    = "api.veldrixai.ca"
+
+droplet_region = "nyc1"
+droplet_size   = "s-4vcpu-8gb"
+
+# ACME — production Let's Encrypt directory (trusted certs).
+acme_email     = "admin@veldrixai.ca"
+acme_ca_server = "https://acme-v02.api.letsencrypt.org/directory"
+
+image_tag       = "latest"
+docker_registry = "ghcr.io/veldrixai/veldrixai"
+
+cors_origins = "https://veldrixai.ca,https://www.veldrixai.ca,https://app.veldrixai.ca,https://api.veldrixai.ca"
+
+vercel_project_name      = "veldrixai"
+vercel_git_repo          = "VeldrixAI/VeldrixAI"
+vercel_production_branch = "main"

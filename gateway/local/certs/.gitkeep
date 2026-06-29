@@ -1,0 +1,2 @@
+# mkcert-generated certs land here (dev-cert.pem / dev-key.pem) and are gitignored
+# (*.pem / *.key). This .gitkeep preserves the mount target. Run: make dev-certs

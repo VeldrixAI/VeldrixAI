@@ -1,0 +1,80 @@
+# Traefik STATIC config TEMPLATE — rendered per-environment by render-gateway.sh.
+# Identical to prod's gateway/traefik.yml EXCEPT the ACME contact + caServer are
+# parameterized (LE-staging in dev, prod-LE in prod — locked decision #2).
+# Render placeholders: ${ACME_EMAIL} ${ACME_CA_SERVER}
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+# File-only provider (Docker label discovery intentionally disabled — same as prod).
+providers:
+  file:
+    filename: /etc/traefik/dynamic/routes.yml
+    watch: true
+
+# Let's Encrypt — resolver name stays `letsencrypt` (router contract identical to
+# prod); only the contact + ACME directory differ per environment.
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ${ACME_EMAIL}
+      storage: /letsencrypt/acme.json
+      caServer: ${ACME_CA_SERVER}
+      httpChallenge:
+        entryPoint: web
+
+metrics:
+  prometheus:
+    entryPoint: traefik
+    buckets: [0.1,0.3,1.2,5.0]
+
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: json
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: drop
+      names:
+        X-Request-ID: keep
+        X-Forwarded-For: keep
+        Authorization: redact
+
+ping:
+  entryPoint: traefik
+
+http:
+  middlewares:
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customRequestHeaders:
+          X-Content-Type-Options: nosniff
+          X-Frame-Options: DENY
+          X-XSS-Protection: 1; mode=block

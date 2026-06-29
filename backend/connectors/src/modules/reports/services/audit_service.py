@@ -14,11 +14,14 @@ class AuditService:
         entity_id: Optional[UUID] = None,
         metadata: Optional[Dict[str, Any]] = None,
         ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
+        log_type: Optional[str] = None,
+        related_request_id: Optional[str] = None,
+        actor: Optional[str] = None,
     ) -> AuditTrail:
         """
         Log an action to the audit trail
-        
+
         Args:
             db: Database session
             user_id: User performing the action
@@ -28,7 +31,9 @@ class AuditService:
             metadata: Additional metadata
             ip_address: Client IP address
             user_agent: Client user agent
-            
+            log_type: UI log category (e.g. REPORT_CREATED). Defaults to the model default.
+            related_request_id: Source evaluation request_id this action descends from.
+
         Returns:
             Created AuditTrail record
         """
@@ -39,8 +44,12 @@ class AuditService:
             entity_id=entity_id,
             action_metadata=metadata,
             ip_address=ip_address,
-            user_agent=user_agent
+            user_agent=user_agent,
+            related_request_id=related_request_id,
+            actor=actor,
         )
+        if log_type is not None:
+            audit_entry.log_type = log_type
         
         db.add(audit_entry)
         db.commit()

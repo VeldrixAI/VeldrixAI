@@ -28,13 +28,10 @@ export const FOOTER_COMPLIANCE_LINKS = [
 export const FOOTER_DEVELOPER_LINKS = [
   { label: "API Reference", href: "/docs/integrations-rest" },
   { label: "SDK Docs",      href: "/docs/integrations-python" },
-  { label: "Changelog",     href: "#" },
-  { label: "Status",        href: "#" },
 ] as const;
 
+// Dead placeholder links (About/Blog/Careers pointed at "#" — no destination) were
+// removed; only real destinations remain. Add them back here once the pages exist.
 export const FOOTER_COMPANY_LINKS = [
-  { label: "About",    href: "#" },
-  { label: "Blog",     href: "#" },
-  { label: "Careers",  href: "#" },
   { label: "Contact",  href: "mailto:support@veldrixai.ca" },
 ] as const;

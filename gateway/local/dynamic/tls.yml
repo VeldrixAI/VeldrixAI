@@ -1,0 +1,20 @@
+# Traefik DYNAMIC TLS — LOCAL dev self-signed default store.
+#
+# Points Traefik at the mkcert-generated cert+key mounted at /certs (read-only).
+# Routers in routes.yml use `tls: {}`, which serves this default certificate.
+# Generate the cert (locally trusted via `mkcert -install`): `make dev-certs`
+#   -> writes gateway/local/certs/dev-cert.pem + dev-key.pem (both gitignored).
+#
+# The cert MUST cover both dev hostnames (SANs): dev.veldrixai.ca + api.dev.veldrixai.ca.
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/dev-cert.pem
+        keyFile: /certs/dev-key.pem
+  certificates:
+    - certFile: /certs/dev-cert.pem
+      keyFile: /certs/dev-key.pem
+      stores:
+        - default

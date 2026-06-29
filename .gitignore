@@ -6,6 +6,7 @@
 !.env.dev.example
 !.env.local.example
 !.env.production.example
+!.env.deploy.example
 # Explicit allow for checked-in example files
 !backend/.env.example
 !backend/.env.dev.example
@@ -13,6 +14,8 @@
 !backend/core/.env.production.example
 !backend/connectors/.env.production.example
 !frontend/.env.production.example
+!frontend/.env.dev.example
+!infra/compose/.env.deploy.example
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
@@ -37,6 +40,11 @@ Lib/
 Scripts/
 Include/
 pyvenv.cfg
+# NOTE: `Scripts/` above targets the Windows venv bin dir (already covered by
+# `.venv/`), but with core.ignorecase=true it also shadows real project dirs like
+# `infra/scripts/`. Re-include the infra scripts explicitly so they are tracked.
+!infra/scripts/
+!infra/scripts/**
 
 # ── Node / Next.js ────────────────────────────────────────────────────────────
 node_modules/
@@ -70,3 +78,14 @@ frontend/tests/reports/*.json
 *.tar.gz
 .DS_Store
 Thumbs.db
+
+# ── Editor / Windows junk ─────────────────────────────────────────────────────
+.vscode/
+nul
+**/nul
+
+# ── Design sources (kept locally for reference; NOT shipped to prod public/) ───
+# The extracted production assets (veldrix-logo.png, etc.) are what ship.
+frontend/public/Pillar Hero - standalone.html
+frontend/public/VeldrixAI_logo_voidbg_2x.png
+frontend/public/videoframe_23494.png

@@ -35,6 +35,7 @@ class ReportService:
         request: GenerateReportRequest,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
+        actor: Optional[str] = None,
     ) -> TrustReport:
         try:
             report_type_value = request.report_type
@@ -134,6 +135,12 @@ class ReportService:
             self.db.commit()
             self.db.refresh(report)
 
+            # Single source of truth for the create_report audit entry — the
+            # controllers (/generate and /generate-pdf) used to ALSO log this,
+            # which produced duplicate rows. log_type + related_request_id are
+            # carried here so the UI keeps showing it as REPORT_CREATED linked
+            # to its source evaluation.
+            source_request_id = (request.input_payload or {}).get("request_id")
             self.audit_service.log_action(
                 db=self.db,
                 user_id=user_id,
@@ -145,9 +152,13 @@ class ReportService:
                     "report_name":  report_name,
                     "vx_report_id": vx_report_id,
                     "title":        report.title,
+                    "source_request_id": source_request_id,
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,
+                log_type="REPORT_CREATED",
+                related_request_id=source_request_id,
+                actor=actor or str(user_id),
             )
 
             return report, pdf_content
@@ -199,6 +210,7 @@ class ReportService:
         user_id: UUID,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
+        actor: Optional[str] = None,
     ) -> dict:
         try:
             report = self.db.query(TrustReport).filter(
@@ -214,6 +226,9 @@ class ReportService:
             report.is_deleted = True
             report.deleted_at = datetime.utcnow()
 
+            # Single source of truth for the delete_report audit entry (the
+            # controller no longer logs this separately — avoids duplicate rows).
+            source_request_id = (report.input_payload or {}).get("request_id")
             self.audit_service.log_action(
                 db=self.db,
                 user_id=user_id,
@@ -224,9 +239,13 @@ class ReportService:
                     "report_type": report.report_type,
                     "title":       report.title,
                     "deleted_at":  report.deleted_at.isoformat(),
+                    "source_request_id": source_request_id,
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,
+                log_type="REPORT_DELETED",
+                related_request_id=source_request_id,
+                actor=actor or str(user_id),
             )
             self.db.commit()
             return {"success": True, "message": "Report deleted", "report_id": str(report_id)}
