@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# terraform.tfvars.example  —  copy to a gitignored real tfvars, fill in.
+#
+# This file holds CREDENTIALS only. Per-environment NON-secret values live in
+# environments/dev.tfvars.example and environments/prod.tfvars.example.
+#
+# Usage:
+#   cp terraform.tfvars.example secrets.auto.tfvars      # gitignored
+#   # fill in the four values below
+#   terraform plan  -var-file=environments/dev.tfvars
+#
+# NEVER commit a filled-in copy. .gitignore already excludes *.tfvars.
+# (No real secret values appear in this repo — placeholders only.)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# DigitalOcean API token (PAT). Create at: cloud.digitalocean.com/account/api
+do_token = "dop_v1_REPLACE_WITH_YOUR_DIGITALOCEAN_PAT"
+
+# Vercel API token. Create at: vercel.com/account/tokens
+vercel_api_token = "REPLACE_WITH_YOUR_VERCEL_API_TOKEN"
+
+# Vercel team id (leave "" for a personal account)
+vercel_team_id = ""
+
+# DO SSH key fingerprints with droplet access (doctl compute ssh-key list)
+ssh_key_fingerprints = [
+  "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+]

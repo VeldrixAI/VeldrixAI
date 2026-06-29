@@ -93,7 +93,7 @@ const IcoSearch = () => (
 );
 
 /* ── Brand V Mark ── */
-const VMark = () => <ShieldMark size={26} />;
+const VMark = () => <ShieldMark size={40} />;
 
 const navSections = [
   {
@@ -246,11 +246,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div style={{ padding: "28px 20px 20px" }}>
           <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
             <div style={{
-              width: "40px", height: "40px", borderRadius: "12px",
+              width: "40px", height: "40px",
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: "linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))",
-              border: "1px solid rgba(45,74,94,0.35)",
-              boxShadow: "0 4px 16px rgba(45,74,94,0.25)",
+              background: "radial-gradient(circle at 50% 45%, rgba(143,166,181,0.18), rgba(143,166,181,0) 70%)",
+              filter: "drop-shadow(0 0 5px rgba(143,166,181,0.28))",
               flexShrink: 0,
             }}>
               <VMark />

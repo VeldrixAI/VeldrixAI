@@ -109,6 +109,12 @@ function SignupForm() {
     window.location.href = `/api/auth/${provider}/start`;
   };
 
+  // OAuth needs configured client IDs/secrets; the local dev mirror has none, so
+  // hide the SSO buttons there rather than dead-ending in an error. See login page.
+  const oauthEnabled =
+    process.env.NEXT_PUBLIC_OAUTH_ENABLED !== 'false' &&
+    process.env.NEXT_PUBLIC_ENV !== 'localdev';
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -153,8 +159,8 @@ function SignupForm() {
       {/* ── Fixed Header ── */}
       <header style={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 100, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(10,16,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))', border: '1px solid rgba(45,74,94,0.3)', boxShadow: '0 4px 16px rgba(45,74,94,0.3)', flexShrink: 0 }}>
-            <VBrandMark suffix="signup-header" size={26} />
+          <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'radial-gradient(circle at 50% 45%, rgba(143,166,181,0.18), rgba(143,166,181,0) 70%)', filter: 'drop-shadow(0 0 5px rgba(143,166,181,0.28))' }}>
+            <VBrandMark suffix="signup-header" size={40} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.5px', color: 'white' }}>
             Veldrix
@@ -286,38 +292,42 @@ function SignupForm() {
               <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '15px', color: 'rgba(231,236,239,0.5)' }}>Secure your sovereign data environment.</p>
             </div>
 
-            {/* SSO options */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
-              <button
-                suppressHydrationWarning
-                type="button"
-                onClick={() => handleOAuth('google')}
-                onMouseEnter={() => setGoogleHovered(true)}
-                onMouseLeave={() => setGoogleHovered(false)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: googleHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
-              >
-                <GoogleIcon />
-                Google
-              </button>
-              <button
-                suppressHydrationWarning
-                type="button"
-                onClick={() => handleOAuth('github')}
-                onMouseEnter={() => setGithubHovered(true)}
-                onMouseLeave={() => setGithubHovered(false)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: githubHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
-              >
-                <GitHubIcon />
-                GitHub
-              </button>
-            </div>
+            {/* SSO options — hidden when OAuth isn't configured (e.g. local dev mirror) */}
+            {oauthEnabled && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
+                  <button
+                    suppressHydrationWarning
+                    type="button"
+                    onClick={() => handleOAuth('google')}
+                    onMouseEnter={() => setGoogleHovered(true)}
+                    onMouseLeave={() => setGoogleHovered(false)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: googleHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    <GoogleIcon />
+                    Google
+                  </button>
+                  <button
+                    suppressHydrationWarning
+                    type="button"
+                    onClick={() => handleOAuth('github')}
+                    onMouseEnter={() => setGithubHovered(true)}
+                    onMouseLeave={() => setGithubHovered(false)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '14px', borderRadius: '14px', background: githubHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#e7ecef', fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    <GitHubIcon />
+                    GitHub
+                  </button>
+                </div>
 
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', gap: '16px' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.3)' }}>Or Secure Email</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-            </div>
+                {/* Divider */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', gap: '16px' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: 'rgba(231,236,239,0.3)' }}>Or Secure Email</span>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                </div>
+              </>
+            )}
 
             {/* Registration form */}
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -477,8 +487,8 @@ function SignupForm() {
       {/* ── Footer ── */}
       <footer style={{ background: 'rgba(10,16,20,0.9)', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(45,74,94,0.3), rgba(170,184,192,0.2))', border: '1px solid rgba(45,74,94,0.3)', boxShadow: '0 2px 10px rgba(45,74,94,0.2)', flexShrink: 0 }}>
-            <VBrandMark suffix="signup-footer" size={20} />
+          <div style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: 'drop-shadow(0 0 4px rgba(143,166,181,0.25))' }}>
+            <VBrandMark suffix="signup-footer" size={30} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px', color: 'white' }}>
             Veldrix

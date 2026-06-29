@@ -1,0 +1,325 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# VeldrixAI — Environment-parameterized DEPLOY overlay (dev + prod from ONE file)
+#
+# Mirrors the prod topology from RECON Finding 1 EXACTLY: traefik v3.2,
+# postgres:16-alpine, redis:7-alpine, the three FastAPI services on 8000/8001/8002,
+# the Next.js UI on 5000, prometheus, grafana — same veldrix-network shape, same
+# named-volume shape. Everything that differs between dev and prod is an env var
+# (see .env.deploy.example), so the dev/prod difference is the variable diff only.
+#
+# Usage (on the droplet, from /opt/veldrixai):
+#   docker compose -f docker-compose.deploy.yml --profile stub up -d
+#
+# Volume + network names are suffixed with ${ENVIRONMENT} so dev and prod stores
+# (DB, redis, cert store) NEVER touch — the critical isolation guarantee.
+# ═════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── API GATEWAY — Traefik (TLS termination, Host()-pinned routing) ──────────
+  traefik:
+    image: traefik:v3.2
+    container_name: veldrix-${ENVIRONMENT}-gateway
+    restart: unless-stopped
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "touch /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json && exec traefik --configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"   # dashboard bound to loopback only — reach via SSH tunnel
+    volumes:
+      # These are the RENDERED gateway files (infra/gateway/render-gateway.sh):
+      # dev hosts + LE-staging resolver baked in for this environment.
+      - ./gateway/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./gateway/dynamic:/etc/traefik/dynamic:ro
+      - traefik-letsencrypt:/letsencrypt        # SEPARATE per-env acme store
+      - traefik-logs:/var/log/traefik
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Cache / sessions — Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: veldrix-${ENVIRONMENT}-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Metrics — Prometheus ─────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: veldrix-${ENVIRONMENT}-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"   # loopback only
+    networks:
+      - veldrix-network
+
+  # ── Dashboards — Grafana ─────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: veldrix-${ENVIRONMENT}-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://${VELDRIX_API_HOST}/grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3001:3000"   # loopback only
+    networks:
+      - veldrix-network
+    depends_on:
+      - prometheus
+      - redis
+
+  # ── Database — PostgreSQL (isolated per-env volume + creds) ──────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: veldrix-${ENVIRONMENT}-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # ── AUTH (8000) ──────────────────────────────────────────────────────────────
+  veldrix-auth:
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-auth:${IMAGE_TAG:-latest}
+    container_name: veldrix-${ENVIRONMENT}-auth
+    restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY required}
+      - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:-}
+      - STRIPE_CUSTOMER_HASH_KEY=${STRIPE_CUSTOMER_HASH_KEY:-}
+      # Notifications dispatch (core -> auth) is gated by VELDRIX_INTERNAL_API_KEY.
+      - VELDRIX_INTERNAL_API_KEY=${VELDRIX_INTERNAL_API_KEY:-}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_GROW_MONTHLY=${STRIPE_PRICE_GROW_MONTHLY:-}
+      - STRIPE_PRICE_GROW_ANNUAL=${STRIPE_PRICE_GROW_ANNUAL:-}
+      - STRIPE_PRICE_SCALE_MONTHLY=${STRIPE_PRICE_SCALE_MONTHLY:-}
+      - STRIPE_PRICE_SCALE_ANNUAL=${STRIPE_PRICE_SCALE_ANNUAL:-}
+      - VELDRIX_UI_URL=https://${VELDRIX_APP_HOST}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS:?VELDRIX_CORS_ORIGINS required}
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── CORE — Trust Evaluation Engine (8001) ────────────────────────────────────
+  veldrix-core:
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-core:${IMAGE_TAG:-latest}
+    container_name: veldrix-${ENVIRONMENT}-core
+    restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY required}
+      - VELDRIX_AUTH_URL=http://veldrix-auth:8000
+      - VELDRIX_CONNECTORS_URL=http://veldrix-connectors:8002
+      - CONNECTORS_URL=http://veldrix-connectors:8002
+      - REDIS_URL=redis://redis:6379/1
+      - CIRCUIT_BREAKER_BACKEND=redis
+      # TWO distinct internal tokens (see PARITY-CHECKLIST drift note):
+      #   VELDRIX_INTERNAL_API_KEY -> core API-key gating + core->auth notifications
+      #   INTERNAL_SERVICE_TOKEN   -> core->connectors (audit-write/chain-health/mode)
+      - VELDRIX_INTERNAL_API_KEY=${VELDRIX_INTERNAL_API_KEY:-}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      # ── Inference seam (stub by default; see VELDRIX_INFERENCE_MODE) ──────────
+      - VELDRIX_INFERENCE_MODE=${VELDRIX_INFERENCE_MODE:-stub}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-stub-key}
+      - NVIDIA_API_BASE_URL=${NVIDIA_API_BASE_URL:-http://mock-inference:9009/v1}
+      - GROQ_API_KEY=${GROQ_API_KEY:-stub-key}
+      - VELDRIX_PILLAR_CONTENT_MODEL=${VELDRIX_PILLAR_CONTENT_MODEL:-meta/llama-guard-4-12b}
+      - VELDRIX_PILLAR_HALLUCINATION_MODEL=${VELDRIX_PILLAR_HALLUCINATION_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_BIAS_MODEL=${VELDRIX_PILLAR_BIAS_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_POLICY_MODEL=${VELDRIX_PILLAR_POLICY_MODEL:-meta/llama-3.1-8b-instruct}
+      - VELDRIX_PILLAR_LEGAL_MODEL=${VELDRIX_PILLAR_LEGAL_MODEL:-meta/llama-3.1-8b-instruct}
+      - BEDROCK_PROXY_URL=${BEDROCK_PROXY_URL:-}
+      - OSS_INFERENCE_URL=${OSS_INFERENCE_URL:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS:?VELDRIX_CORS_ORIGINS required}
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── CONNECTORS — Analytics, Reports, Prompts, Audit (8002) ───────────────────
+  veldrix-connectors:
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-connectors:${IMAGE_TAG:-latest}
+    container_name: veldrix-${ENVIRONMENT}-connectors
+    restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY required}
+      # Connectors VERIFIES core's internal calls with INTERNAL_SERVICE_TOKEN.
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-stub-key}
+      - GROQ_API_KEY=${GROQ_API_KEY:-stub-key}
+      - REDIS_URL=redis://redis:6379/2
+      - CONNECTOR_ENCRYPTION_KEY=${CONNECTOR_ENCRYPTION_KEY:?CONNECTOR_ENCRYPTION_KEY required}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@dev.veldrixai.ca}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-VeldrixAI Dev}
+      - EMAIL_SUPPORT_ADDRESS=${EMAIL_SUPPORT_ADDRESS:-support@dev.veldrixai.ca}
+      - VELDRIX_UI_URL=https://${VELDRIX_APP_HOST}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS:?VELDRIX_CORS_ORIGINS required}
+    volumes:
+      # Seed script is mounted (not baked) so dev can re-seed/reset without a rebuild.
+      - ./seed:/seed:ro
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      veldrix-auth:
+        condition: service_healthy
+
+  # ── FRONTEND — Next.js (5000) ────────────────────────────────────────────────
+  veldrix-ui:
+    image: ${DOCKER_REGISTRY:-ghcr.io/veldrixai/veldrixai}-frontend:${IMAGE_TAG:-latest}
+    container_name: veldrix-${ENVIRONMENT}-ui
+    restart: unless-stopped
+    environment:
+      - PORT=5000
+      - HOSTNAME=0.0.0.0
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # DRIFT GUARD (RECON bonus finding): set EVERY public URL explicitly to the
+      # dev API host so veldrix-api.ts:10-14's prod fallback can never fire.
+      - NEXT_PUBLIC_VELDRIX_CORE_API_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_VELDRIX_CORE_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_VELDRIX_AUTH_URL=https://${VELDRIX_API_HOST}/auth
+      - NEXT_PUBLIC_VELDRIX_CONNECTORS_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_API_BASE=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_APP_URL=https://${VELDRIX_APP_HOST}
+      - NEXT_PUBLIC_ENV=${ENVIRONMENT}
+      - VELDRIX_AUTH_API_URL=http://veldrix-auth:8000
+      - VELDRIX_CORE_API_URL=http://veldrix-core:8001
+      - VELDRIX_CONNECTORS_API_URL=http://veldrix-connectors:8002
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      veldrix-core:
+        condition: service_healthy
+
+  # ── INFERENCE STUB (profile: stub) ───────────────────────────────────────────
+  # Deterministic, free, OpenAI-compatible mock. Started ONLY in stub mode
+  # (the default). core points NVIDIA_API_BASE_URL at it. Flip to live by
+  # setting VELDRIX_INFERENCE_MODE=live + real keys/URLs (DEV_ENVIRONMENT.md).
+  mock-inference:
+    build:
+      context: ./mock-inference
+      dockerfile: Dockerfile
+    image: veldrix-${ENVIRONMENT}-mock-inference
+    container_name: veldrix-${ENVIRONMENT}-mock-inference
+    restart: unless-stopped
+    profiles: ["stub"]
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:9009/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  veldrix-network:
+    driver: bridge
+    name: veldrix-${ENVIRONMENT}-network
+
+volumes:
+  postgres-data:
+    name: veldrix-${ENVIRONMENT}-postgres-data
+  redis-data:
+    name: veldrix-${ENVIRONMENT}-redis-data
+  prometheus-data:
+    name: veldrix-${ENVIRONMENT}-prometheus-data
+  grafana-data:
+    name: veldrix-${ENVIRONMENT}-grafana-data
+  traefik-letsencrypt:
+    name: veldrix-${ENVIRONMENT}-traefik-letsencrypt   # SEPARATE per-env cert store
+  traefik-logs:
+    name: veldrix-${ENVIRONMENT}-traefik-logs

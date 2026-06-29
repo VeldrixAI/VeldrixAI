@@ -32,7 +32,7 @@ async def generate_pdf_on_demand(
     and stream the bytes back to the browser immediately.
     """
     from src.modules.reports.schemas import GenerateReportRequest
-    from src.modules.reports.models import ReportType, AuditTrail
+    from src.modules.reports.models import ReportType
     user_id = UUID(current_user["id"])
     req = GenerateReportRequest(
         title=body.title or f"Trust Evaluation — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
@@ -46,6 +46,7 @@ async def generate_pdf_on_demand(
             request=req,
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
+            actor=current_user.get("email") or str(user_id),
         )
     except HTTPException:
         raise
@@ -53,27 +54,9 @@ async def generate_pdf_on_demand(
         # Don't save failed reports - just raise the error
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
-    # Emit REPORT_CREATED audit log
-    source_request_id = (body.input_payload or {}).get("request_id")
-    audit_entry = AuditTrail(
-        user_id=user_id,
-        action_type="create_report",
-        entity_type="trust_report",
-        entity_id=report.id,
-        action_metadata={
-            "report_id": str(report.id),
-            "vx_report_id": report.vx_report_id,
-            "format": "pdf",
-            "source_request_id": source_request_id,
-        },
-        log_type="REPORT_CREATED",
-        related_request_id=source_request_id,
-        actor=current_user.get("email") or str(user_id),
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
-    )
-    db.add(audit_entry)
-    db.commit()
+    # NOTE: the create_report audit entry is logged once, inside
+    # ReportService.generate_report (the single source of truth). Logging it
+    # here too produced duplicate rows in the audit trail.
 
     filename = f"veldrix-{report.vx_report_id or report.id}.pdf"
     return StreamingResponse(
@@ -96,6 +79,7 @@ async def generate_report(
         request=request_data,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
+        actor=current_user.get("email") or str(user_id),
     )
     return report
 
@@ -162,44 +146,17 @@ async def delete_report(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from src.modules.reports.models import AuditTrail, TrustReport
     user_id = UUID(current_user["id"])
 
-    # Capture source_request_id before deletion for the audit log
-    report_row = (
-        db.query(TrustReport)
-        .filter(TrustReport.id == report_id, TrustReport.user_id == user_id)
-        .first()
-    )
-    source_request_id = None
-    if report_row and report_row.input_payload:
-        source_request_id = (report_row.input_payload or {}).get("request_id")
-
+    # The delete_report audit entry is logged once, inside
+    # ReportService.soft_delete_report (single source of truth). Logging it here
+    # too produced duplicate rows in the audit trail.
     result = ReportService(db).soft_delete_report(
         report_id=report_id,
         user_id=user_id,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
-    )
-
-    # Emit REPORT_DELETED audit log
-    audit_entry = AuditTrail(
-        user_id=user_id,
-        action_type="delete_report",
-        entity_type="trust_report",
-        entity_id=report_id,
-        action_metadata={
-            "report_id": str(report_id),
-            "deleted_at": datetime.utcnow().isoformat(),
-            "source_request_id": source_request_id,
-        },
-        log_type="REPORT_DELETED",
-        related_request_id=source_request_id,
         actor=current_user.get("email") or str(user_id),
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
     )
-    db.add(audit_entry)
-    db.commit()
 
     return result

@@ -1,0 +1,146 @@
+# Traefik DYNAMIC routes TEMPLATE — rendered per-environment by render-gateway.sh.
+#
+# The router/service GRAPH is byte-for-byte identical to prod's
+# gateway/dynamic/routes.yml. The ONLY differences are the Host() strings and the
+# CORS origin list, both parameterized.
+# Render placeholders: ${VELDRIX_API_HOST} ${VELDRIX_APP_HOST}
+#
+# CRITICAL (carried from prod): all API routers are Host()-pinned to the API host.
+# Without it, Traefik intercepts ${VELDRIX_APP_HOST}/api/... and bypasses the
+# Next.js API routes, stripping the auth cookie.
+
+http:
+  routers:
+    auth-router:
+      rule: "Host(`${VELDRIX_API_HOST}`) && (PathPrefix(`/auth`) || PathPrefix(`/api-keys`) || PathPrefix(`/billing`) || PathPrefix(`/notifications`) || PathPrefix(`/users`))"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - cors
+        - rate-limit
+      service: auth-service
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+
+    core-router:
+      rule: "Host(`${VELDRIX_API_HOST}`) && (PathPrefix(`/api/v1`) || PathPrefix(`/trust`) || PathPrefix(`/health`) || PathPrefix(`/evaluate`) || PathPrefix(`/pillars`) || PathPrefix(`/policy`) || PathPrefix(`/reports`) || PathPrefix(`/audit`) || PathPrefix(`/ws`))"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - cors
+        - rate-limit
+      service: core-service
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+
+    connectors-router:
+      rule: "Host(`${VELDRIX_API_HOST}`) && (PathPrefix(`/api/analytics`) || PathPrefix(`/api/reports`) || PathPrefix(`/api/prompts`) || PathPrefix(`/api/audit`) || PathPrefix(`/api/latency`) || PathPrefix(`/api/models`) || PathPrefix(`/api/metrics`) || PathPrefix(`/connectors`) || PathPrefix(`/api/connectors`) || PathPrefix(`/api/audit-trails`))"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - cors
+        - rate-limit
+      service: connectors-service
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+
+    frontend-router:
+      rule: "Host(`${VELDRIX_APP_HOST}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - cors
+      service: frontend-service
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-auth:8000"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+        sticky:
+          cookie:
+            name: veldrix_auth_sticky
+            secure: true
+            httpOnly: true
+
+    core-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-core:8001"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+        responseForwarding:
+          flushInterval: "100ms"
+
+    connectors-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-connectors:8002"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://veldrix-ui:5000"
+        healthCheck:
+          path: /
+          interval: 60s
+          timeout: 10s
+
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+          - PATCH
+        # Dev origins ONLY — derived from the parameterized hosts (never prod).
+        accessControlAllowOriginList:
+          - "https://${VELDRIX_APP_HOST}"
+          - "https://${VELDRIX_API_HOST}"
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+          - "X-API-Key"
+          - "X-Veldrix-Key"
+          - "X-Requested-With"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400

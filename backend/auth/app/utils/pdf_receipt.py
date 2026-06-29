@@ -27,10 +27,11 @@ _MUTED   = "#7C8993"   # muted slate-grey
 _SURFACE = "#121D23"   # deep-audit raised surface
 _BORDER  = "#2A3A44"   # dark silver-grey divider
 
-# Shield asset (alpha PNG) shipped with the auth service.
+# Brand-logo asset (transparent swirl mark) shipped with the auth service.
+# Var name kept for compatibility; the shield art was replaced project-wide.
 _SHIELD_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "assets", "veldrix-shield.png",
+    "assets", "veldrix-logo.png",
 )
 
 W, H = (595.27, 841.89)  # A4 in points

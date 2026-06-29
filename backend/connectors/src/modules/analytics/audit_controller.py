@@ -174,12 +174,126 @@ async def _call_groq(prompt: str) -> dict:
         return json.loads(data["choices"][0]["message"]["content"])
 
 
+def _is_stub_mode() -> bool:
+    """True when the local dev mirror runs without a real Groq key.
+
+    The free local mirror has no external inference credentials (GROQ_API_KEY is a
+    placeholder like 'stub-key'), so we synthesize the intelligence locally instead
+    of calling Groq and getting a 401. Mirrors the VELDRIX_INFERENCE_MODE=stub seam
+    used by the core engine.
+    """
+    if os.getenv("VELDRIX_INFERENCE_MODE", "").lower() == "stub":
+        return True
+    key = os.getenv("GROQ_API_KEY", "")
+    return (not key) or ("stub" in key.lower()) or ("REPLACE" in key)
+
+
+def _stub_intelligence(record: AuditTrail) -> dict:
+    """Deterministic, well-formed forensic intelligence built from the record's own
+    data — the offline dev-mirror stand-in for the Groq call. No network, no key."""
+    meta: dict = record.action_metadata or {}
+    pillar_scores: dict = meta.get("pillar_scores", {})
+    overall = meta.get("overall_score")
+    verdict = meta.get("verdict") or record.action_type.upper()
+    flags = list(dict.fromkeys((meta.get("critical_flags", []) or []) + (meta.get("all_flags", []) or [])))
+
+    _LABELS = {
+        "safety": "Safety & Toxicity", "hallucination": "Hallucination",
+        "bias": "Bias & Fairness", "prompt_security": "Prompt Security",
+        "compliance": "PII / Compliance",
+    }
+    # Lowest pillar score (0-1, higher = safer) is the primary risk.
+    scored = {k: float(v) for k, v in pillar_scores.items() if isinstance(v, (int, float))}
+    if scored:
+        worst_key = min(scored, key=scored.get)
+        worst_label = _LABELS.get(worst_key, worst_key)
+        worst_val = scored[worst_key]
+    else:
+        worst_key, worst_label, worst_val = None, "N/A", None
+
+    # Severity from overall trust score (0-1) and verdict.
+    try:
+        trust = float(overall) if overall is not None else None
+        if trust is not None and trust > 1.0:  # serializer may send 0-100
+            trust = trust / 100.0
+    except (TypeError, ValueError):
+        trust = None
+    if verdict == "BLOCK" or (trust is not None and trust < 0.40):
+        severity = "CRITICAL"
+    elif trust is not None and trust < 0.60:
+        severity = "HIGH"
+    elif trust is not None and trust < 0.85:
+        severity = "MEDIUM"
+    else:
+        severity = "LOW"
+
+    pct = f"{round((worst_val or 0) * 100)}%" if worst_val is not None else "N/A"
+    trust_pct = f"{round(trust * 100)}%" if trust is not None else "N/A"
+    flags_txt = ", ".join(flags) if flags else "no critical flags"
+
+    narrative = (
+        f"This request was evaluated by the VeldrixAI trust platform and resolved to a "
+        f"{verdict} verdict at an overall trust score of {trust_pct}. The {worst_label} "
+        f"pillar carried the greatest concern (pillar score {pct}), making it the dominant "
+        f"driver of the enforcement decision. Flags observed: {flags_txt}. "
+        f"Given the score distribution, the {verdict} action appears proportionate to the "
+        f"measured risk rather than over- or under-enforcing. "
+        f"Treated in isolation this looks like a {('recurring drift signal' if severity in ('HIGH','CRITICAL') else 'contained incident')}; "
+        f"correlate it against the tenant's recent evaluations to confirm whether it is part "
+        f"of a broader pattern before escalating."
+    )
+
+    recs = [{
+        "priority": "IMMEDIATE" if severity in ("HIGH", "CRITICAL") else "MONITORING",
+        "pillar": worst_label,
+        "action": f"Review the {worst_label} configuration and confirm the threshold that produced the {pct} score.",
+        "rationale": f"{worst_label} was the lowest-scoring pillar and the primary driver of the {verdict} verdict.",
+    }]
+    if flags:
+        recs.append({
+            "priority": "SHORT_TERM",
+            "pillar": worst_label,
+            "action": f"Add a targeted monitor for the flags: {flags_txt}.",
+            "rationale": "These flags fired on this request and warrant trend tracking.",
+        })
+    recs.append({
+        "priority": "MONITORING",
+        "pillar": "Overall",
+        "action": "Track this tenant's trust-score trend to distinguish an isolated event from drift.",
+        "rationale": f"Overall trust score was {trust_pct}; a single sample is not yet a pattern.",
+    })
+
+    return {
+        "risk_thesis": {
+            "headline": f"{severity} risk — {worst_label} drove a {verdict} verdict at {trust_pct} trust.",
+            "severity_level": severity,
+            "narrative": narrative,
+            "primary_pillar_at_risk": worst_label,
+            "risk_pattern": "DRIFT_SIGNAL" if severity in ("HIGH", "CRITICAL") else "ISOLATED",
+        },
+        "recommendations": recs,
+        "confidence_assessment": {
+            "evaluation_confidence": "HIGH" if scored else "LOW",
+            "notes": "Generated locally by the dev-mirror stub (no external LLM). "
+                     "Set a real GROQ_API_KEY to enable live Groq analysis.",
+        },
+        "stub": True,
+    }
+
+
 async def _get_intelligence(request_id: str, record: AuditTrail, force: bool = False) -> dict:
     now = time.time()
     if not force and request_id in _intelligence_cache:
         cached, cached_at = _intelligence_cache[request_id]
         if now - cached_at < _CACHE_TTL:
             return {**cached, "cached": True}
+
+    # Local dev mirror: synthesize deterministic intelligence instead of calling
+    # Groq with a placeholder key (which 401s). See _is_stub_mode().
+    if _is_stub_mode():
+        result = _stub_intelligence(record)
+        _intelligence_cache[request_id] = (result, now)
+        return {**result, "cached": False}
 
     try:
         prompt = _build_intelligence_prompt(record)

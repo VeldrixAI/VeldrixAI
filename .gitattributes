@@ -1,0 +1,11 @@
+# Files that run in Linux / WSL2 / containers MUST keep LF line endings, even when
+# checked out on Windows (the local dev mirror runs the stack inside WSL2).
+*.sh        text eol=lf
+*.bash      text eol=lf
+Makefile    text eol=lf
+*.mk        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.py        text eol=lf
+Dockerfile  text eol=lf
+*.example   text eol=lf

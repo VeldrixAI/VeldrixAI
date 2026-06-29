@@ -1,0 +1,17 @@
+# Terraform state — may contain sensitive values; never commit.
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Real variable files (secrets + per-env values). Only *.example is committed.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+environments/*.tfvars
+!environments/*.tfvars.example
+
+# Plan artifacts
+*.tfplan

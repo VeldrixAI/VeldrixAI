@@ -1,0 +1,329 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# VeldrixAI — LOCAL dev stack (free WSL2 + Docker Desktop mirror of prod)
+#
+#   make dev-up          # full  (stub inference + observability)  ~6-8 GB RAM
+#   make dev-up-lean     # lean  (stub inference only)             ~3-4 GB RAM
+#   docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
+#
+# Faithful to the prod topology (RECON-DEV Finding 1 / RECON-LOCAL): traefik v3.2,
+# postgres:16-alpine, redis:7-alpine, the three FastAPI services on 8000/8001/8002,
+# Next.js UI on 5000, prometheus, grafana — same service graph, same router graph.
+#
+# What is LOCAL-SPECIFIC (RECON-LOCAL):
+#   • BUILDS every app image from source (target: development, hot-reload) — the
+#     cloud deploy.yml PULLS GHCR; locally we cannot, and we want local source.
+#   • Self-signed mkcert TLS (gateway/local/*) instead of Let's Encrypt — LE needs
+#     public DNS the local mirror does not have.
+#   • Resources are namespaced `veldrix-localdev-*` (network + volumes + containers)
+#     so they can NEVER touch prod, the cloud-dev droplet, or the legacy root
+#     docker-compose.yml dev stack. This is the isolation guarantee.
+# ═════════════════════════════════════════════════════════════════════════════
+name: veldrix-localdev
+
+services:
+
+  # ── API GATEWAY — Traefik (self-signed TLS termination, Host()-pinned routing) ─
+  traefik:
+    image: traefik:v3.2
+    container_name: veldrix-localdev-gateway
+    restart: unless-stopped
+    command: ["--configFile=/etc/traefik/traefik.yml"]
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+      - "127.0.0.1:${TRAEFIK_DASHBOARD_PORT:-8081}:8080"   # dashboard, loopback only (8081 dodges a local Apache on 8080)
+    volumes:
+      # Self-signed local gateway (no ACME). Router/service GRAPH identical to prod;
+      # only the cert mechanism + Host() strings differ. Regenerate certs: make dev-certs
+      - ./gateway/local/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./gateway/local/dynamic:/etc/traefik/dynamic:ro
+      - ./gateway/local/certs:/certs:ro
+      - traefik-logs:/var/log/traefik
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Cache / sessions — Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: veldrix-localdev-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Database — PostgreSQL 16 (isolated local volume + dev creds) ─────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: veldrix-localdev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required (copy .env.dev.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      # loopback only; default 55432 to dodge a native Postgres already on 5432.
+      # Internal services use postgres:5432 over the docker network regardless.
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── AUTH (8000) — built from source, hot-reload ──────────────────────────────
+  veldrix-auth:
+    build:
+      context: ./backend/auth
+      dockerfile: Dockerfile
+      target: development
+    image: veldrix-localdev-auth
+    container_name: veldrix-localdev-auth
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - VELDRIX_UI_URL=https://${VELDRIX_APP_HOST}
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS}
+    volumes:
+      - ./backend/auth:/app   # hot-reload (uvicorn --reload); deps stay in the image
+    ports:
+      - "${AUTH_HOST_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── CORE — Trust Evaluation Engine (8001), stateless ─────────────────────────
+  veldrix-core:
+    build:
+      context: ./backend/core
+      dockerfile: Dockerfile
+      target: development
+    image: veldrix-localdev-core
+    container_name: veldrix-localdev-core
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - VELDRIX_AUTH_URL=http://veldrix-auth:8000
+      - VELDRIX_CONNECTORS_URL=http://veldrix-connectors:8002
+      - CONNECTORS_URL=http://veldrix-connectors:8002
+      - REDIS_URL=redis://redis:6379/1
+      - CIRCUIT_BREAKER_BACKEND=redis
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS}
+      # Inference seam — stub by default; NVIDIA_API_BASE_URL points at the mock.
+      # route_inference()/pillar logic is UNTOUCHED — this is a boundary redirect.
+      - VELDRIX_INFERENCE_MODE=${VELDRIX_INFERENCE_MODE:-stub}
+      - NVIDIA_API_BASE_URL=${NVIDIA_API_BASE_URL:-http://mock-inference:9009/v1}
+    volumes:
+      - ./backend/core:/app
+    ports:
+      - "${CORE_HOST_PORT:-8001}:8001"
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── CONNECTORS — Analytics, Reports, Prompts, Audit (8002) ───────────────────
+  veldrix-connectors:
+    build:
+      context: ./backend/connectors
+      dockerfile: Dockerfile
+      target: development
+    image: veldrix-localdev-connectors
+    container_name: veldrix-localdev-connectors
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/2
+      - VELDRIX_UI_URL=https://${VELDRIX_APP_HOST}
+      - VELDRIX_CORS_ORIGINS=${VELDRIX_CORS_ORIGINS}
+    volumes:
+      - ./backend/connectors:/app
+      # Seed script mounted (not baked) so dev can re-seed/reset without a rebuild.
+      - ./infra/seed:/seed:ro
+    ports:
+      - "${CONNECTORS_HOST_PORT:-8002}:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      veldrix-auth:
+        condition: service_healthy
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── FRONTEND — Next.js dev server (5000) ─────────────────────────────────────
+  veldrix-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    image: veldrix-localdev-ui
+    container_name: veldrix-localdev-ui
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=5000
+      - HOSTNAME=0.0.0.0
+      # Server-side internal URLs (SSR / route handlers reach services in-network).
+      - VELDRIX_AUTH_API_URL=http://veldrix-auth:8000
+      - VELDRIX_CORE_API_URL=http://veldrix-core:8001
+      - VELDRIX_CONNECTORS_API_URL=http://veldrix-connectors:8002
+      # DRIFT GUARD (RECON-LOCAL caution #2 / veldrix-api.ts:10-14): set EVERY public
+      # URL explicitly to the dev API host so the hardcoded prod fallback can NEVER fire.
+      - NEXT_PUBLIC_VELDRIX_CORE_API_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_VELDRIX_CORE_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_VELDRIX_AUTH_URL=https://${VELDRIX_API_HOST}/auth
+      - NEXT_PUBLIC_VELDRIX_CONNECTORS_URL=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_API_BASE=https://${VELDRIX_API_HOST}
+      - NEXT_PUBLIC_APP_URL=https://${VELDRIX_APP_HOST}
+      - NEXT_PUBLIC_ENV=localdev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules   # keep the image's installed deps (don't shadow with host)
+      - /app/.next
+    ports:
+      - "${UI_HOST_PORT:-5000}:5000"
+    depends_on:
+      veldrix-auth:
+        condition: service_healthy
+      veldrix-core:
+        condition: service_healthy
+    networks:
+      - veldrix-network
+
+  # ── INFERENCE STUB (profile: stub — on by default) ───────────────────────────
+  # Deterministic, free, OpenAI-compatible mock. core points NVIDIA_API_BASE_URL
+  # here. Flip to live: VELDRIX_INFERENCE_MODE=live + real keys, drop the stub
+  # profile (COMPOSE_PROFILES=observability). See DEV_LOCAL.md "stub -> live".
+  mock-inference:
+    build:
+      context: ./infra/mock-inference
+      dockerfile: Dockerfile
+    image: veldrix-localdev-mock-inference
+    container_name: veldrix-localdev-mock-inference
+    restart: unless-stopped
+    profiles: ["stub"]
+    networks:
+      - veldrix-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:9009/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── OBSERVABILITY (profile: observability — on in full, off in lean) ─────────
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: veldrix-localdev-prometheus
+    restart: unless-stopped
+    profiles: ["observability"]
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}:9090"
+    networks:
+      - veldrix-network
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: veldrix-localdev-grafana
+    restart: unless-stopped
+    profiles: ["observability"]
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:${GRAFANA_HOST_PORT:-3001}:3000"
+    networks:
+      - veldrix-network
+    depends_on:
+      - prometheus
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: veldrix-localdev-postgres-exporter
+    restart: unless-stopped
+    profiles: ["observability"]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    networks:
+      - veldrix-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  veldrix-network:
+    driver: bridge
+    name: veldrix-localdev-network
+
+volumes:
+  postgres-data:
+    name: veldrix-localdev-postgres-data
+  redis-data:
+    name: veldrix-localdev-redis-data
+  prometheus-data:
+    name: veldrix-localdev-prometheus-data
+  grafana-data:
+    name: veldrix-localdev-grafana-data
+  traefik-logs:
+    name: veldrix-localdev-traefik-logs
