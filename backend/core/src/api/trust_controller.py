@@ -4,9 +4,10 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 
 from src.core.http_pool import get_internal_client
+from src.policy.shadow_integration import dispatch_shadow_eval
 from src.services.notification_dispatch import dispatch_notification
 
 from src.validators.schemas import (
@@ -152,6 +153,7 @@ router = APIRouter(prefix="/trust", tags=["ai-safety"])
 )
 async def evaluate_trust(
     request: TrustEvaluationRequest,
+    background_tasks: BackgroundTasks,
     user_id: str = Depends(verify_jwt_token),
     trust_service: TrustService = Depends(lambda: TrustService())
 ) -> SuccessResponse:
@@ -254,6 +256,19 @@ async def evaluate_trust(
         prompt_preview=request.prompt,
         response_preview=request.response,
     ))
+
+    # Phase-6 OUT-OF-BAND SHADOW engine evaluation (dev). Hands the already-computed
+    # PillarResults to the engine AFTER the response is finalized, via BackgroundTasks.
+    # Behind a request-time kill switch + sample gate (default OFF/0%); records what the
+    # engine WOULD decide (enforced:false, integration:shadow) and can never alter, delay,
+    # or fail this response. See src/policy/shadow_integration.py.
+    dispatch_shadow_eval(
+        background_tasks,
+        pillar_results=report.pillar_results,
+        composite_score=composite_trust_score,
+        tenant_id=user_id,
+        request_id=report.request_id,
+    )
 
     # Dispatch trust-violation notification (non-blocking, fire-and-forget)
     risk_level = report.final_score.risk_level.value if report.final_score.risk_level else "safe"

@@ -25,6 +25,7 @@ try:  # pragma: no cover - exercised by both branches across environments
     from prometheus_client import (
         CONTENT_TYPE_LATEST,
         Counter,
+        Gauge,
         Histogram,
         generate_latest,
     )
@@ -50,7 +51,7 @@ except Exception:  # ModuleNotFoundError in dev/test without the dep
         def set(self, *_a, **_k) -> None:
             pass
 
-    Counter = Histogram = _NoopMetric  # type: ignore[assignment]
+    Counter = Gauge = Histogram = _NoopMetric  # type: ignore[assignment]
 
     def generate_latest(*_a, **_k) -> bytes:  # type: ignore[misc]
         return b"# prometheus_client not installed; policy metrics are no-ops\n"
@@ -131,6 +132,50 @@ SHED = Counter(
 )
 
 
+# ── Phase-6 shadow-integration metrics (out-of-band, dev) ────────────────────────
+# These extend (do NOT replace) the runtime metrics above with the integration-layer
+# signals the RECON requires. Same closed-label / no-PII discipline.
+
+# THE METRIC THAT MATTERS MOST: latency the dispatch hand-off adds to the REQUEST PATH.
+# Measured around the in-handler gate-check + BackgroundTasks.add_task only — the worker
+# eval itself runs after the response and contributes nothing here. Buckets are tight
+# (sub-millisecond → a few ms) so a regression off ~0 is immediately visible.
+SHADOW_DISPATCH_HANDOFF = Histogram(
+    "veldrix_policy_shadow_dispatch_handoff_seconds",
+    "Latency added to the REQUEST PATH by the shadow dispatch hand-off (impact guard).",
+    buckets=(0.00001, 0.00005, 0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.05),
+)
+
+# What happened to each request's shadow opportunity — the full accounting, so dropped
+# work is never invisible. outcome ∈ {dispatched, skipped_kill_switch, skipped_unsampled,
+# dropped_backpressure, dropped_dispatch, worker_exception, written, write_failed}.
+SHADOW_OUTCOME = Counter(
+    "veldrix_policy_shadow_outcome_total",
+    "Shadow-integration outcomes by kind (dispatch gating + worker terminal states).",
+    ["outcome"],
+)
+
+# Dedicated worker-pool saturation — proves the worker is not starving the request path.
+SHADOW_WORKER_POOL_INFLIGHT = Gauge(
+    "veldrix_policy_shadow_worker_pool_inflight",
+    "In-flight requests on the DEDICATED shadow worker HTTP pool (saturation).",
+)
+
+# The sample rate actually in effect (request-time env), so the panel shows the live %.
+SHADOW_SAMPLE_PCT = Gauge(
+    "veldrix_policy_shadow_sample_pct",
+    "Configured shadow traffic sample percentage currently in effect (0-100).",
+)
+
+# Worker eval latency, separate from the runtime's EVAL_LATENCY so the integration view
+# is self-contained (covers gate→worker-return including the dedicated-pool write).
+SHADOW_WORKER_LATENCY = Histogram(
+    "veldrix_policy_shadow_worker_latency_seconds",
+    "Wall-clock latency of one shadow worker run (off the request path).",
+    buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5),
+)
+
+
 # ── Thin helpers the runtime calls (keeps prometheus surface in one place) ───────
 
 def observe_eval_latency(seconds: float) -> None:
@@ -164,6 +209,33 @@ def record_provider_fallback(tier: str) -> None:
 
 def record_shed() -> None:
     SHED.inc()
+
+
+# ── Phase-6 shadow-integration helpers ───────────────────────────────────────────
+
+def observe_shadow_handoff(seconds: float) -> None:
+    """Record the request-path latency added by one shadow dispatch hand-off."""
+    SHADOW_DISPATCH_HANDOFF.observe(seconds)
+
+
+def record_shadow_outcome(outcome: str) -> None:
+    """Count one shadow-integration outcome (gating decision or worker terminal state)."""
+    SHADOW_OUTCOME.labels(outcome=outcome).inc()
+
+
+def set_shadow_pool_inflight(n: int) -> None:
+    """Publish the dedicated worker pool's current in-flight count."""
+    SHADOW_WORKER_POOL_INFLIGHT.set(n)
+
+
+def set_shadow_sample_pct(pct: float) -> None:
+    """Publish the sample percentage currently in effect."""
+    SHADOW_SAMPLE_PCT.set(pct)
+
+
+def observe_shadow_worker_latency(seconds: float) -> None:
+    """Record the wall-clock latency of one (off-request-path) shadow worker run."""
+    SHADOW_WORKER_LATENCY.observe(seconds)
 
 
 def render() -> tuple[bytes, str]:

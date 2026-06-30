@@ -81,6 +81,12 @@ async def lifespan(app: FastAPI):
         await tuner_task
     except asyncio.CancelledError:
         pass
+    # Close the dedicated Phase-6 shadow-worker HTTP pool (lazily created; no-op if unused).
+    try:
+        from src.policy.shadow_pool import close_shadow_pool
+        await close_shadow_pool()
+    except Exception as exc:  # shutdown best-effort
+        logger.warning("shadow pool close skipped: %s", exc)
     await shutdown()
 
 
