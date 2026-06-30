@@ -45,6 +45,11 @@ pyvenv.cfg
 # `infra/scripts/`. Re-include the infra scripts explicitly so they are tracked.
 !infra/scripts/
 !infra/scripts/**
+# Likewise, `Lib/` above (Windows venv) shadows `frontend/lib/` on a
+# case-insensitive filesystem, silently ignoring new files under it (e.g. docs
+# content). Re-include it so the frontend lib modules stay tracked.
+!frontend/lib/
+!frontend/lib/**
 
 # ── Node / Next.js ────────────────────────────────────────────────────────────
 node_modules/
