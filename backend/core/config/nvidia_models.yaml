@@ -1,129 +1,86 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# VeldrixAI Core — NVIDIA NIM Model Configuration
+# VeldrixAI Core — Pillar Model Matrix (documentation)
 #
-# This file documents recommended NIM model slugs for each evaluation pillar.
-# Override any default by setting the corresponding environment variable;
-# see .env.example for the full list.
+# This file DOCUMENTS the per-pillar model matrix; the runtime source of truth
+# is backend/core/src/config/pillar_models.py. Override any default with the
+# canonical env pattern:
 #
-# All models are available via https://integrate.api.nvidia.com/v1
-# Browse and test models at: https://build.nvidia.com/explore/
+#   VELDRIX_PILLAR_MODEL__{SAFETY|HALLUCINATION|BIAS|PROMPT_SECURITY|COMPLIANCE}__{FIELD}
+#   FIELD ∈ PRIMARY | FALLBACK | GROQ | TEMPERATURE | TOP_P | SEED | MAX_TOKENS | TIMEOUT_SECONDS
+#
+# Design principles:
+#   - Five DISTINCT frontier models — one per pillar, matched to the evaluation task.
+#   - Deterministic decoding on every call: temperature=0.0, top_p=1.0, pinned seed
+#     (VELDRIX_INFERENCE_SEED, default 42).
+#   - Provider-complete: each pillar also names its model on Groq failover, so a
+#     provider switch never collapses the matrix onto one generic model.
+#
+# All NIM models are served via https://integrate.api.nvidia.com/v1
+# Browse and test models at: https://build.nvidia.com/models
 # ══════════════════════════════════════════════════════════════════════════════
 
 pillars:
 
-  # ── Pillar 1: Content Risk ──────────────────────────────────────────────────
-  # Env var: VELDRIX_PILLAR_CONTENT_MODEL
-  content_risk:
-    default: nvidia/llama-guard-4-12b
+  # ── Pillar 1: Content Risk (SAFETY) ─────────────────────────────────────────
+  safety_toxicity:
+    primary: meta/llama-guard-4-12b
+    fallback: meta/llama-guard-3-8b
+    groq: meta-llama/llama-guard-4-12b
     rationale: >
-      Llama Guard 4 is a purpose-built, Meta-developed content safety classifier
-      fine-tuned on the MLCommons Hazard Taxonomy. It produces structured safety
-      assessments across toxicity, harassment, violence, and regulatory-violation
-      categories. Its 12B parameter size balances accuracy with low p95 latency
-      (~200 ms on NIM endpoints).
-    alternatives:
-      - model: nvidia/aegis-content-safety-22b-v2
-        note: >
-          Higher recall for subtle harmful content; 22B parameters means
-          ~350 ms p95 — use when precision matters more than throughput.
-      - model: meta/llama-guard-3-8b
-        note: >
-          Lighter 8B variant; good for high-QPS deployments where
-          content risk is a secondary signal rather than primary gating.
+      Purpose-built safety classifier with a fixed taxonomy and a deterministic
+      safe/unsafe verdict format. A larger general model is strictly worse here —
+      the guard model's constrained output is what keeps this pillar reproducible.
 
-  # ── Pillar 2: Hallucination Risk ───────────────────────────────────────────
-  # Env var: VELDRIX_PILLAR_HALLUCINATION_MODEL
-  hallucination_risk:
-    default: nvidia/llama-3.1-nemotron-70b-instruct
+  # ── Pillar 2: Hallucination & Factual Integrity (HALLUCINATION) ─────────────
+  hallucination:
+    primary: nvidia/nemotron-3-ultra-550b-a55b
+    fallback: nvidia/llama-3.1-nemotron-ultra-253b-v1
+    groq: llama-3.3-70b-versatile
     rationale: >
-      Nemotron-70B is NVIDIA's instruction-tuned flagship optimised for
-      reasoning tasks, making it well-suited for cross-referencing the AI
-      response against the original prompt and assessing factual grounding.
-      Its structured JSON output adherence is reliable at temperature=0.
-    alternatives:
-      - model: meta/llama-3.1-70b-instruct
-        note: >
-          Meta's base 70B instruct model; slightly lower structured-output
-          consistency than Nemotron but identical latency profile.
-      - model: nvidia/llama-3.1-nemotron-51b-instruct
-        note: >
-          51B variant — good balance of speed and reasoning depth for
-          hallucination detection at higher QPS.
-      - model: mistralai/mixtral-8x22b-instruct-v0.1
-        note: >
-          MoE architecture; fast inference with strong factual grounding.
-          Good cost-per-token alternative.
+      Factuality assessment is the hardest reasoning task in the matrix. Nemotron 3
+      Ultra (550B MoE, 55B active, Mamba-Transformer hybrid, June 2026) is the
+      strongest reasoning model on the NIM catalogue.
 
-  # ── Pillar 3: Bias & Ethics ────────────────────────────────────────────────
-  # Env var: VELDRIX_PILLAR_BIAS_MODEL
-  bias_ethics:
-    default: nvidia/llama-3.1-nemotron-70b-instruct
+  # ── Pillar 3: Bias & Ethics (BIAS) ──────────────────────────────────────────
+  bias_fairness:
+    primary: mistralai/mistral-large-3-675b-instruct-2512
+    fallback: mistralai/mistral-medium-3-5-128b
+    groq: llama-3.3-70b-versatile
     rationale: >
-      Bias detection requires nuanced understanding of demographic context
-      and societal norms. Nemotron-70B's RLHF-optimised alignment makes it
-      sensitive to subtle discriminatory language without over-triggering on
-      neutral demographic mentions. The pillar already uses a regex fast-path
-      to skip NIM when no demographic terms are present (~60% of traffic).
-    alternatives:
-      - model: nvidia/llama-3.1-nemotron-nano-8b-v1
-        note: >
-          8B Nemotron variant; lower latency, suitable when demographic
-          fast-path absorbs most load and the residual NIM calls need speed.
-      - model: meta/llama-3.3-70b-instruct
-        note: >
-          Meta's latest 70B; comparable bias-detection quality with
-          slightly improved multilingual bias coverage.
+      Bias judgement rewards breadth of perspective. Mistral Large 3 (675B MoE,
+      41B active) is deliberately a different model family from the Nemotron
+      pillars — family diversity reduces correlated blind spots across pillars.
 
-  # ── Pillar 4: Policy Violation ─────────────────────────────────────────────
-  # Env var: VELDRIX_PILLAR_POLICY_MODEL
-  policy_violation:
-    default: nvidia/llama-3.1-nemotron-70b-instruct
+  # ── Pillar 4: Policy Violation & Prompt Security (PROMPT_SECURITY) ──────────
+  prompt_security:
+    primary: nvidia/llama-3.1-nemotron-ultra-253b-v1
+    fallback: nvidia/llama-3.3-nemotron-super-49b-v1.5
+    groq: llama-3.3-70b-versatile
     rationale: >
-      Policy violation detection requires instruction-following to evaluate
-      arbitrary business rules injected at runtime via `policy_context`.
-      Nemotron-70B handles long system prompts and in-context rule sets
-      reliably. The regex fast-path catches prompt injection patterns before
-      any NIM call, so the model only evaluates nuanced policy questions.
-    alternatives:
-      - model: nvidia/nemoguard-topic-control
-        note: >
-          Purpose-built for topic/policy compliance guardrails.
-          Recommended if policy violations dominate your use case.
-      - model: mistralai/mistral-large-2-instruct
-        note: >
-          Strong rule-following with 128k context window — useful when
-          policy documents are large and need full inclusion in the prompt.
+      Evaluates responses against long in-context business policy rule sets;
+      Nemotron Ultra 253B holds system-prompt constraints reliably at depth.
 
-  # ── Pillar 5: Legal Exposure ───────────────────────────────────────────────
-  # Env var: VELDRIX_PILLAR_LEGAL_MODEL
-  legal_exposure:
-    default: nvidia/llama-3.1-nemotron-70b-instruct
+  # ── Pillar 5: Legal Exposure & Compliance (COMPLIANCE) ──────────────────────
+  compliance_pii:
+    primary: meta/llama-3.1-405b-instruct
+    fallback: meta/llama-3.3-70b-instruct
+    groq: llama-3.3-70b-versatile
     rationale: >
-      Legal risk assessment requires broad knowledge of regulatory frameworks
-      (GDPR, HIPAA, CCPA, FINRA, etc.) and the ability to reason about
-      jurisdictional applicability. Nemotron-70B's training corpus covers
-      these domains adequately for a first-pass risk signal. For high-stakes
-      legal domains, consider pairing with a specialised legal LLM.
-    alternatives:
-      - model: meta/llama-3.1-405b-instruct
-        note: >
-          405B parameter model; highest legal-domain accuracy but ~600 ms
-          p95 on NIM. Reserve for async or batch evaluation workflows.
-      - model: mistralai/mistral-large-2-instruct
-        note: >
-          Strong EU/GDPR coverage from Mistral's European training focus.
-          Useful for GDPR-heavy deployments.
+      Legal exposure needs corpus breadth (jurisdictions, regulation text);
+      the 405B dense Llama has the widest stable knowledge coverage on NIM.
 
-# ── Latency reference (NVIDIA NIM hosted, p95 estimates) ─────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Reference — model size / typical NIM latency (indicative, July 2026)
+#   meta/llama-guard-4-12b                        | 12B         | ~200 ms
+#   nvidia/llama-3.3-nemotron-super-49b-v1.5      | 49B         | ~300 ms
+#   meta/llama-3.3-70b-instruct                   | 70B         | ~400 ms
+#   mistralai/mistral-medium-3-5-128b             | 128B (MoE)  | ~500 ms
+#   nvidia/llama-3.1-nemotron-ultra-253b-v1       | 253B dense  | ~1.5 s
+#   meta/llama-3.1-405b-instruct                  | 405B dense  | ~2.5 s
+#   nvidia/nemotron-3-ultra-550b-a55b             | 550B (55B active) | ~1.5 s
+#   mistralai/mistral-large-3-675b-instruct-2512  | 675B (41B active) | ~1.5 s
 #
-#  Model                                  | Parameters | p95 latency (512 tok)
-#  ─────────────────────────────────────────────────────────────────────────────
-#  nvidia/llama-guard-4-12b               | 12B        | ~200 ms
-#  nvidia/aegis-content-safety-22b-v2     | 22B        | ~350 ms
-#  nvidia/llama-3.1-nemotron-70b-instruct | 70B        | ~400 ms
-#  nvidia/llama-3.1-nemotron-51b-instruct | 51B        | ~300 ms
-#  nvidia/llama-3.1-nemotron-nano-8b-v1   | 8B         | ~100 ms
-#  meta/llama-3.1-405b-instruct           | 405B       | ~600 ms
-#
-#  All five pillars run concurrently — total latency ≈ slowest single pillar.
-#  Target: p95 ≤ 800 ms for the full five-pillar evaluation.
+# Latency note: the heavyweight matrix trades the old sub-500 ms SLA for verdict
+# quality; per-pillar TIMEOUT_SECONDS defaults (10–30 s) reflect that. Pin
+# smaller PRIMARY models per pillar if your deployment needs the old latency.
+# ══════════════════════════════════════════════════════════════════════════════

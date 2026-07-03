@@ -6,6 +6,7 @@ from veldrixai.middleware import VeldrixMiddleware
 
 app = FastAPI()
 
+
 # Add VeldrixAI middleware — evaluates all AI requests in background
 app.add_middleware(
     VeldrixMiddleware,

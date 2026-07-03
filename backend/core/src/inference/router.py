@@ -5,6 +5,12 @@ It selects an available provider based on priority and circuit-breaker state,
 attempts the call with exponential backoff, and returns the raw text response
 along with the provider name that served it.
 
+Determinism contract: with VELDRIX_DETERMINISTIC_ROUTING=true (default) the
+provider walk is strict priority order, each provider serves the caller's
+per-provider designated model (``provider_models``), and decoding is pinned
+via temperature / top_p / seed — so identical inputs produce identical routing
+and identical sampling parameters.
+
 On total failure (all providers exhausted), raises ``InferenceExhaustedError``.
 Callers should catch this and return their pillar's safe degraded result.
 
@@ -57,12 +63,25 @@ _HTTP_LIMITS = httpx.Limits(
 _PROBE_TIMEOUT_S: float = float(os.environ.get("VELDRIX_PROBE_TIMEOUT_S", "2.0"))
 _FALLBACK_TIMEOUT_S: float = float(os.environ.get("VELDRIX_FALLBACK_TIMEOUT_S", "1.5"))
 
-# Speculative execution: race primary (NIM) and fallback (Groq) simultaneously,
-# take the first successful response, cancel the other.
-# Enabled by default — this is the primary mechanism for sub-500ms p95 latency.
-# NIM typically wins accuracy races; Groq typically wins latency races.
-# Disable via VELDRIX_SPECULATIVE_EXECUTION=false if API cost is a constraint.
-_SPECULATIVE_ENABLED: bool = os.environ.get("VELDRIX_SPECULATIVE_EXECUTION", "true").lower() == "true"
+# ── Routing determinism ──────────────────────────────────────────────────────
+# Deterministic routing (default ON) walks providers in strict priority order so
+# the same request always reaches the same provider+model when the fleet is
+# healthy. The speculative race trades that guarantee for latency: it starts
+# primary and fallback simultaneously and keeps whichever answers first, which
+# makes the serving model a function of transient provider load. The race is
+# therefore only used when deterministic routing is explicitly disabled AND
+# speculative execution is explicitly enabled. Both flags are read at call time
+# so operators can flip them without a restart.
+
+
+def _deterministic_routing_enabled() -> bool:
+    return os.environ.get("VELDRIX_DETERMINISTIC_ROUTING", "true").lower() == "true"
+
+
+def _speculative_enabled() -> bool:
+    if _deterministic_routing_enabled():
+        return False
+    return os.environ.get("VELDRIX_SPECULATIVE_EXECUTION", "true").lower() == "true"
 
 # ── Module-level connection pool (one client per provider) ───────────────────
 _clients: dict[str, httpx.AsyncClient] = {}
@@ -118,6 +137,27 @@ async def close_router() -> None:
     _clients.clear()
 
 
+def _resolve_model(
+    provider: ProviderConfig,
+    model_override: Optional[str],
+    provider_models: Optional[dict],
+) -> str:
+    """
+    Deterministic model resolution for a provider, in precedence order:
+      1. provider_models[provider.name] — the pillar's per-provider model map,
+         so every provider serves the pillar's designated model.
+      2. model_override, NVIDIA NIM only (legacy call sites).
+      3. provider.model_id — the provider's env-configured default.
+    """
+    if provider_models:
+        mapped = provider_models.get(provider.name)
+        if mapped:
+            return mapped
+    if model_override and provider.name == "nvidia_nim":
+        return model_override
+    return provider.model_id
+
+
 async def _call_provider(
     provider: ProviderConfig,
     messages: list[dict],
@@ -126,9 +166,17 @@ async def _call_provider(
     model_override: Optional[str],
     pillar_name: str,
     attempt: int,
+    top_p: Optional[float] = None,
+    seed: Optional[int] = None,
+    provider_models: Optional[dict] = None,
+    timeout_seconds: Optional[float] = None,
 ) -> str:
     """
     Make a single POST /chat/completions call to a provider.
+
+    Decoding parameters (temperature / top_p / seed) are forwarded verbatim so
+    verdicts are reproducible; ``timeout_seconds`` overrides the client default
+    for pillars running heavyweight models.
 
     Returns the raw assistant message content string.
 
@@ -138,18 +186,24 @@ async def _call_provider(
         httpx.TimeoutException: On request timeout.
     """
     client = _get_or_create_client(provider)
+    model = _resolve_model(provider, model_override, provider_models)
 
-    # Use model_override only for NVIDIA NIM — fallback providers have their own slugs.
-    model = (
-        model_override
-        if (model_override and provider.name == "nvidia_nim")
-        else provider.model_id
-    )
+    payload: dict = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if top_p is not None:
+        payload["top_p"] = top_p
+    if seed is not None:
+        payload["seed"] = seed
 
     logger.info(
-        "[VELDRIX ROUTER] pillar=%s provider=%s attempt=%d status=attempting",
+        "[VELDRIX ROUTER] pillar=%s provider=%s model=%s attempt=%d status=attempting",
         pillar_name,
         provider.name,
+        model,
         attempt,
     )
 
@@ -157,12 +211,8 @@ async def _call_provider(
     try:
         resp = await client.post(
             "/chat/completions",
-            json={
-                "model": model,
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            },
+            json=payload,
+            timeout=timeout_seconds if timeout_seconds is not None else httpx.USE_CLIENT_DEFAULT,
         )
     except httpx.RequestError as exc:
         logger.error(
@@ -266,28 +316,40 @@ async def route_inference(
     temperature: float = 0.0,
     model_override: Optional[str] = None,
     max_tokens: int = 256,
+    top_p: Optional[float] = None,
+    seed: Optional[int] = None,
+    provider_models: Optional[dict] = None,
+    timeout_seconds: Optional[float] = None,
 ) -> tuple[str, str]:
     """
     Route an inference request to the highest-priority available provider.
 
-    SPECULATIVE EXECUTION (default enabled):
-        When both primary (NIM) and fallback (Groq) are available, we race them
-        simultaneously and take the first response. This guarantees sub-200ms
-        p99 latency even when NIM is degraded.
+    DETERMINISTIC ROUTING (default):
+        Providers are walked in strict priority order — the same request always
+        reaches the same provider+model when the fleet is healthy. Combined with
+        pinned decoding (temperature/top_p/seed) this makes pillar verdicts
+        reproducible end-to-end.
 
-    FALLBACK MODE:
-        Iterates providers in priority order, skipping those whose circuit breaker
-        is OPEN. Applies exponential backoff within each provider's retry budget.
+    SPECULATIVE EXECUTION (opt-in via VELDRIX_DETERMINISTIC_ROUTING=false +
+    VELDRIX_SPECULATIVE_EXECUTION=true):
+        Races primary and fallback simultaneously and takes the first response.
+        Lower latency, but the serving provider becomes load-dependent.
 
     Args:
-        messages:       OpenAI-compatible messages list (may include system message).
-        pillar_name:    Used in log messages for traceability.
-        require_json:   If True, callers expect a JSON-parseable response.
-                        The router does not enforce this — callers handle parse errors.
-        temperature:    Sampling temperature forwarded to the model.
-        model_override: If set, overrides the model_id for NVIDIA NIM only.
-                        Fallback providers use their own configured model.
-        max_tokens:     Maximum tokens to request from the model.
+        messages:        OpenAI-compatible messages list (may include system message).
+        pillar_name:     Used in log messages for traceability.
+        require_json:    If True, callers expect a JSON-parseable response.
+                         The router does not enforce this — callers handle parse errors.
+        temperature:     Sampling temperature forwarded to the model.
+        model_override:  If set, overrides the model_id for NVIDIA NIM only
+                         (legacy call sites — prefer provider_models).
+        max_tokens:      Maximum tokens to request from the model.
+        top_p:           Nucleus sampling bound; pin to 1.0 for determinism.
+        seed:            Sampling seed forwarded to providers that support it.
+        provider_models: Per-provider model map ({provider_name: model_id}) so
+                         every provider serves the pillar's designated model.
+        timeout_seconds: Per-request timeout override for heavyweight models;
+                         falls back to each provider's configured timeout.
 
     Returns:
         Tuple of (raw_text_response, provider_name_used).
@@ -296,13 +358,11 @@ async def route_inference(
         InferenceExhaustedError: When all providers are exhausted or unavailable.
     """
     providers = get_active_providers()
-    
-    # ── SPECULATIVE EXECUTION: Race primary and fallback simultaneously ──
+
+    # ── SPECULATIVE EXECUTION (opt-in): race primary and fallback ──
     # Start both providers at t=0 and return whichever responds first.
     # The losing task is cancelled immediately — it does not run to completion.
-    # This delivers sub-500ms p95: Groq (LPU) typically wins in ~300ms;
-    # NIM wins when Groq is saturated.  Both failures fall through to sequential.
-    if _SPECULATIVE_ENABLED and len(providers) >= 2:
+    if _speculative_enabled() and len(providers) >= 2:
         primary = providers[0]
         fallback = providers[1]
 
@@ -314,14 +374,22 @@ async def route_inference(
 
             task_primary = asyncio.create_task(
                 asyncio.wait_for(
-                    _call_provider(primary, messages, temperature, max_tokens, model_override, pillar_name, 1),
-                    timeout=_PROBE_TIMEOUT_S,
+                    _call_provider(
+                        primary, messages, temperature, max_tokens, model_override,
+                        pillar_name, 1, top_p=top_p, seed=seed,
+                        provider_models=provider_models, timeout_seconds=timeout_seconds,
+                    ),
+                    timeout=timeout_seconds if timeout_seconds is not None else _PROBE_TIMEOUT_S,
                 )
             )
             task_fallback = asyncio.create_task(
                 asyncio.wait_for(
-                    _call_provider(fallback, messages, temperature, max_tokens, model_override, pillar_name, 1),
-                    timeout=_FALLBACK_TIMEOUT_S,
+                    _call_provider(
+                        fallback, messages, temperature, max_tokens, model_override,
+                        pillar_name, 1, top_p=top_p, seed=seed,
+                        provider_models=provider_models, timeout_seconds=timeout_seconds,
+                    ),
+                    timeout=timeout_seconds if timeout_seconds is not None else _FALLBACK_TIMEOUT_S,
                 )
             )
 
@@ -390,13 +458,20 @@ async def route_inference(
                     model_override=model_override,
                     pillar_name=pillar_name,
                     attempt=attempt,
+                    top_p=top_p,
+                    seed=seed,
+                    provider_models=provider_models,
+                    timeout_seconds=timeout_seconds,
                 )
-                # Use the provider's configured timeout_seconds as the asyncio budget.
-                # The httpx client already enforces this at the socket level; the outer
+                # asyncio budget: the caller's per-request timeout when given
+                # (heavyweight pillar models need more than the provider default),
+                # otherwise the provider's configured timeout_seconds. The httpx
+                # client enforces the same value at the socket level; the outer
                 # wait_for is a safety guard against stalled coroutines.
-                # Never override with the global probe/fallback values here — those are
+                # Never use the global probe/fallback values here — those are
                 # only for speculative-execution fast-fail and are intentionally short.
-                content = await asyncio.wait_for(_call, timeout=provider.timeout_seconds)
+                budget = timeout_seconds if timeout_seconds is not None else provider.timeout_seconds
+                content = await asyncio.wait_for(_call, timeout=budget)
                 await _cb_record_success(provider.name)
                 return content, provider.name
 

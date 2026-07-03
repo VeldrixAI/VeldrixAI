@@ -1,19 +1,26 @@
-"""AI Safety pillar implementations — multi-provider inference routing for LLM output governance.
+"""AI Safety pillar implementations — deterministic multi-model inference for LLM output governance.
 
-Model stack (configurable via environment variables):
-  Pillar 1 – Content Risk:       VELDRIX_PILLAR_CONTENT_MODEL
-  Pillar 2 – Hallucination Risk: VELDRIX_PILLAR_HALLUCINATION_MODEL
-  Pillar 3 – Bias & Ethics:      VELDRIX_PILLAR_BIAS_MODEL
-  Pillar 4 – Policy Violation:   VELDRIX_PILLAR_POLICY_MODEL
-  Pillar 5 – Legal Exposure:     VELDRIX_PILLAR_LEGAL_MODEL
+Each pillar runs its own purpose-aligned frontier model, defined in
+``src/config/pillar_models.py`` (five distinct primaries by default: Llama Guard 4,
+Nemotron 3 Ultra 550B, Mistral Large 3 675B, Nemotron Ultra 253B, Llama 3.1 405B).
 
 Architecture:
-  - route_inference(): provider-agnostic routing through NVIDIA NIM → Groq → Bedrock → OSS
+  - _pillar_inference(): the single inference service every pillar calls. It
+    forwards the pillar's full model contract — per-provider model map plus
+    pinned decoding (temperature / top_p / seed / max_tokens / timeout) — and
+    retries once with the pillar's fallback model when all providers are
+    exhausted on the primary.
+  - route_inference(): provider-agnostic routing through NVIDIA NIM → Groq →
+    Bedrock → OSS, deterministic priority order by default.
   - All five pillars execute concurrently via asyncio.gather() — no thread pool needed
   - Regex fast-paths run before inference calls where applicable (< 2 ms)
   - Circuit breaker per provider: trips OPEN after CIRCUIT_FAILURE_THRESHOLD failures
   - Degraded PillarResult (score=50, confidence=0.3) returned on any failure — never raises
   - All scores are in the 0–100 range (higher = safer) as required by PillarResult contract
+
+Determinism contract: identical (prompt, response) inputs produce identical
+routing, identical model selection, and identical sampling parameters; each
+result records the model, provider and seed that produced it in ``details``.
 """
 
 from __future__ import annotations
@@ -26,6 +33,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
+from src.inference.exceptions import InferenceExhaustedError
 from src.inference.router import route_inference
 from src.pillars.pillar_engine import PillarEngine
 from src.pillars.types import PillarError, PillarMetadata, PillarResult, PillarStatus
@@ -39,13 +47,6 @@ logger = logging.getLogger(__name__)
 # All models and per-pillar parameters are configurable via environment variables.
 # See backend/core/src/config/pillar_models.py for the full matrix and override syntax.
 # No hardcoded model strings in this file — every model reference goes through PILLAR_MODELS.
-
-# Backwards-compatibility aliases for any legacy references (will be removed in a future release)
-_MODEL_CONTENT       = PILLAR_MODELS.safety_toxicity.primary
-_MODEL_HALLUCINATION = PILLAR_MODELS.hallucination.primary
-_MODEL_BIAS          = PILLAR_MODELS.bias_fairness.primary
-_MODEL_POLICY        = PILLAR_MODELS.prompt_security.primary
-_MODEL_LEGAL         = PILLAR_MODELS.compliance_pii.primary
 
 # Input truncation: first-half + last-half strategy preserves both intro and conclusion
 VELDRIX_MAX_INPUT_CHARS: int = int(os.environ.get("VELDRIX_MAX_INPUT_CHARS", "2000"))
@@ -114,24 +115,24 @@ def _risk_from_score(score: float, confidence: float) -> RiskLevel:
     return RiskLevel.CRITICAL
 
 
-async def _route_with_model_fallback(
+async def _pillar_inference(
     cfg: PillarModelConfig,
     messages: List[Dict],
     pillar_name: str,
     require_json: bool = True,
     max_tokens: Optional[int] = None,
-) -> tuple[str, str, bool]:
+) -> tuple[str, str, str, bool]:
     """
-    Route inference with per-pillar primary → fallback model logic.
+    The single inference service every pillar calls.
 
-    Tries cfg.primary first. On InferenceExhaustedError or model-not-found (404),
+    Forwards the pillar's full model contract: per-provider model map plus
+    pinned decoding (temperature / top_p / seed / max_tokens / timeout).
+    Tries cfg.primary first; when every provider is exhausted on the primary,
     retries once with cfg.fallback and logs the substitution.
 
     Returns:
-        (raw_content, provider_name, fallback_used)
+        (raw_content, provider_name, model_used, fallback_used)
     """
-    from src.inference.exceptions import InferenceExhaustedError  # noqa: PLC0415
-
     _max_tokens = max_tokens or cfg.max_tokens
 
     try:
@@ -140,10 +141,14 @@ async def _route_with_model_fallback(
             pillar_name=pillar_name,
             require_json=require_json,
             temperature=cfg.temperature,
+            top_p=cfg.top_p,
+            seed=cfg.seed,
             model_override=cfg.primary,
+            provider_models=cfg.primary_model_map(),
             max_tokens=_max_tokens,
+            timeout_seconds=cfg.timeout_seconds,
         )
-        return content, provider, False
+        return content, provider, cfg.resolve_model(provider), False
     except InferenceExhaustedError:
         logger.warning(
             "[%s] Primary model %r exhausted all providers — retrying with fallback %r",
@@ -155,14 +160,31 @@ async def _route_with_model_fallback(
         pillar_name=f"{pillar_name}/fallback",
         require_json=require_json,
         temperature=cfg.temperature,
+        top_p=cfg.top_p,
+        seed=cfg.seed,
         model_override=cfg.fallback,
+        provider_models=cfg.fallback_model_map(),
         max_tokens=_max_tokens,
+        timeout_seconds=cfg.timeout_seconds,
     )
+    model_used = cfg.resolve_model(provider, fallback_used=True)
     logger.info(
         "[%s] pillar_model_used=%r fallback_used=true provider=%s",
-        pillar_name, cfg.fallback, provider,
+        pillar_name, model_used, provider,
     )
-    return content, provider, True
+    return content, provider, model_used, True
+
+
+def _decision_trace(cfg: PillarModelConfig, provider: str, model: str, fallback_used: bool) -> Dict[str, Any]:
+    """Reproducibility record attached to every model-served pillar result."""
+    return {
+        "provider": provider,
+        "model": model,
+        "fallback_model_used": fallback_used,
+        "seed": cfg.seed,
+        "temperature": cfg.temperature,
+        "top_p": cfg.top_p,
+    }
 
 
 def _degraded(
@@ -199,11 +221,18 @@ def _degraded(
     )
 
 
+# Per-pillar latency SLA. The heavyweight model matrix trades the old 500 ms
+# budget for verdict quality; 10 s covers the 550B/675B primaries with headroom.
+_PILLAR_SLA_MS: float = float(os.environ.get("VELDRIX_PILLAR_LATENCY_SLA_MS", "10000"))
+
+
 def _log_latency(pillar_name: str, elapsed_ms: float) -> None:
-    """Log per-pillar timing at the appropriate level for sub-500ms SLA."""
-    if elapsed_ms > 500:
-        logger.error("[%s] Latency BREACHED 500ms SLA: %.1f ms", pillar_name, elapsed_ms)
-    elif elapsed_ms > 300:
+    """Log per-pillar timing against the configured SLA budget."""
+    if elapsed_ms > _PILLAR_SLA_MS:
+        logger.error(
+            "[%s] Latency BREACHED %.0fms SLA: %.1f ms", pillar_name, _PILLAR_SLA_MS, elapsed_ms
+        )
+    elif elapsed_ms > _PILLAR_SLA_MS * 0.6:
         logger.warning("[%s] Latency approaching SLA: %.1f ms", pillar_name, elapsed_ms)
     else:
         logger.debug("[%s] Evaluation completed in %.1f ms", pillar_name, elapsed_ms)
@@ -309,10 +338,10 @@ def compute_composite_trust_score(pillar_results: Dict[str, "PillarResult"]) -> 
 
 class SafetyToxicityPillar(PillarEngine):
     """
-    Content Risk Analysis via NVIDIA NIM.
+    Content Risk Analysis — dedicated guard-model classification.
 
     Fast-path: curated regex detects explicit slurs/threats → score 5, skip NIM.
-    Primary:   NIM chat completions using ``VELDRIX_PILLAR_CONTENT_MODEL``.
+    Primary:   ``PILLAR_MODELS.safety_toxicity`` (llama-guard-4-12b, guard-class on every provider).
     Output:    JSON with ``risk_score`` (0–1), ``categories``, ``explanation``.
     Score:     ``(1.0 − risk_score) × 100``  (higher = safer).
     """
@@ -355,9 +384,9 @@ class SafetyToxicityPillar(PillarEngine):
 
             # ── Inference call — llama-guard returns plain text: "safe" or "unsafe\nS1\nS2" ──
             # No system prompt needed; llama-guard uses its own built-in safety taxonomy.
-            # On NVIDIA NIM the llama-guard model slug is forwarded via model_override.
-            # Fallback providers (Groq, Bedrock, OSS) receive this prompt and use their
-            # own model, which will also follow the safe/unsafe instruction format.
+            # The per-provider model map keeps a guard-class model on every provider
+            # (Groq hosts llama-guard-4 natively), so the verdict format holds on failover.
+            cfg = PILLAR_MODELS.safety_toxicity
             user_message = (
                 f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"
                 f"{input_data.prompt[:500]}<|eot_id|>"
@@ -365,11 +394,11 @@ class SafetyToxicityPillar(PillarEngine):
                 f"{text}<|eot_id|>"
             )
 
-            raw_content, _provider = await route_inference(
+            raw_content, provider, model_used, fallback_used = await _pillar_inference(
+                cfg,
                 messages=[{"role": "user", "content": user_message}],
                 pillar_name="ContentRisk",
                 require_json=False,
-                model_override=_MODEL_CONTENT,
                 max_tokens=32,
             )
             raw_content = raw_content.strip()
@@ -400,10 +429,10 @@ class SafetyToxicityPillar(PillarEngine):
                 flags=flags,
                 details={
                     "method": "nim_api",
-                    "model": _MODEL_CONTENT,
                     "nim_risk_score": risk_score,
                     "llama_guard_verdict": raw_content[:100],
                     "violated_categories": violated_cats,
+                    **_decision_trace(cfg, provider, model_used, fallback_used),
                 },
             )
 
@@ -416,9 +445,9 @@ class SafetyToxicityPillar(PillarEngine):
 
 class HallucinationPillar(PillarEngine):
     """
-    Hallucination & Factual Integrity via NVIDIA NIM.
+    Hallucination & Factual Integrity — frontier-reasoning factuality assessment.
 
-    Primary:  NIM chat completions using ``VELDRIX_PILLAR_HALLUCINATION_MODEL``.
+    Primary:  ``PILLAR_MODELS.hallucination`` (Nemotron 3 Ultra 550B by default).
     Output:   JSON with ``hallucination_risk``, ``confidence``,
               ``uncertain_claims``, ``grounded``.
     Score:    ``(1.0 − hallucination_risk) × 100``.
@@ -461,14 +490,15 @@ class HallucinationPillar(PillarEngine):
                 f"AI RESPONSE: {response_text}"
             )
 
-            raw_content, _provider = await route_inference(
+            cfg = PILLAR_MODELS.hallucination
+            raw_content, provider, model_used, fallback_used = await _pillar_inference(
+                cfg,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="HallucinationRisk",
                 require_json=True,
-                model_override=_MODEL_HALLUCINATION,
             )
             parsed = _parse_nim_json(raw_content, "HallucinationRisk")
             if parsed is None:
@@ -506,10 +536,10 @@ class HallucinationPillar(PillarEngine):
                 flags=flags,
                 details={
                     "method": "nim_api",
-                    "model": _MODEL_HALLUCINATION,
                     "nim_risk_score": hallucination_risk,
                     "uncertain_claims": uncertain_claims,
                     "grounded": grounded,
+                    **_decision_trace(cfg, provider, model_used, fallback_used),
                 },
             )
 
@@ -522,10 +552,10 @@ class HallucinationPillar(PillarEngine):
 
 class BiasFairnessPillar(PillarEngine):
     """
-    Bias & Ethics Analysis via NVIDIA NIM.
+    Bias & Ethics Analysis — cross-family frontier model for perspective diversity.
 
     Fast-path: no demographic terms in response → score 92, skip NIM (~60 % of traffic).
-    Primary:   NIM chat completions using ``VELDRIX_PILLAR_BIAS_MODEL``.
+    Primary:   ``PILLAR_MODELS.bias_fairness`` (Mistral Large 3 675B by default).
     Output:    JSON with ``bias_score``, ``bias_types``, ``ethical_flags``, ``severity``.
     Score:     ``(1.0 − bias_score) × 100``.
     """
@@ -592,14 +622,15 @@ class BiasFairnessPillar(PillarEngine):
                 f"RESPONSE: {text}"
             )
 
-            raw_content, _provider = await route_inference(
+            cfg = PILLAR_MODELS.bias_fairness
+            raw_content, provider, model_used, fallback_used = await _pillar_inference(
+                cfg,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="BiasEthics",
                 require_json=True,
-                model_override=_MODEL_BIAS,
             )
             parsed = _parse_nim_json(raw_content, "BiasEthics")
             if parsed is None:
@@ -635,12 +666,12 @@ class BiasFairnessPillar(PillarEngine):
                 flags=flags,
                 details={
                     "method": "nim_api",
-                    "model": _MODEL_BIAS,
                     "nim_risk_score": bias_score,
                     "bias_types": bias_types,
                     "ethical_flags": ethical_flags,
                     "severity": severity,
                     "demographics_found": len(demo_matches),
+                    **_decision_trace(cfg, provider, model_used, fallback_used),
                 },
             )
 
@@ -653,10 +684,10 @@ class BiasFairnessPillar(PillarEngine):
 
 class PromptSecurityPillar(PillarEngine):
     """
-    Policy Violation & Prompt Security via NVIDIA NIM.
+    Policy Violation & Prompt Security — long rule-set adherence evaluation.
 
     Fast-path: curated injection regex on prompt → score 0, skip NIM.
-    Primary:   NIM chat completions using ``VELDRIX_PILLAR_POLICY_MODEL``.
+    Primary:   ``PILLAR_MODELS.prompt_security`` (Nemotron Ultra 253B by default).
     Input:     Injects ``policy_context`` from ``TrustEvaluationInput.context``
                if the caller provides it (Policy Engine integration point).
     Output:    JSON with ``violation_detected``, ``severity``,
@@ -737,14 +768,15 @@ class PromptSecurityPillar(PillarEngine):
                 f"RESPONSE: {response_text}"
             )
 
-            raw_content, _provider = await route_inference(
+            cfg = PILLAR_MODELS.prompt_security
+            raw_content, provider, model_used, fallback_used = await _pillar_inference(
+                cfg,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="PolicyViolation",
                 require_json=True,
-                model_override=_MODEL_POLICY,
             )
             parsed = _parse_nim_json(raw_content, "PolicyViolation")
             if parsed is None:
@@ -782,12 +814,12 @@ class PromptSecurityPillar(PillarEngine):
                 flags=flags,
                 details={
                     "method": "nim_api",
-                    "model": _MODEL_POLICY,
                     "nim_risk_score": nim_risk,
                     "violation_detected": violation_detected,
                     "severity": severity,
                     "violated_rules": violated_rules,
                     "recommendation": recommendation,
+                    **_decision_trace(cfg, provider, model_used, fallback_used),
                 },
             )
 
@@ -800,9 +832,9 @@ class PromptSecurityPillar(PillarEngine):
 
 class CompliancePolicyPillar(PillarEngine):
     """
-    Legal Exposure & Compliance via NVIDIA NIM.
+    Legal Exposure & Compliance — broad-corpus regulatory risk assessment.
 
-    Primary:  NIM chat completions using ``VELDRIX_PILLAR_LEGAL_MODEL``.
+    Primary:  ``PILLAR_MODELS.compliance_pii`` (Llama 3.1 405B by default).
     Output:   JSON with ``legal_risk_score``, ``exposure_types``,
               ``jurisdictions_affected``, ``requires_disclaimer``.
     Score:    ``(1.0 − legal_risk_score) × 100``.
@@ -843,14 +875,15 @@ class CompliancePolicyPillar(PillarEngine):
                 f"RESPONSE: {text}"
             )
 
-            raw_content, _provider = await route_inference(
+            cfg = PILLAR_MODELS.compliance_pii
+            raw_content, provider, model_used, fallback_used = await _pillar_inference(
+                cfg,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 pillar_name="LegalExposure",
                 require_json=True,
-                model_override=_MODEL_LEGAL,
             )
             parsed = _parse_nim_json(raw_content, "LegalExposure")
             if parsed is None:
@@ -886,11 +919,11 @@ class CompliancePolicyPillar(PillarEngine):
                 flags=flags,
                 details={
                     "method": "nim_api",
-                    "model": _MODEL_LEGAL,
                     "nim_risk_score": legal_risk_score,
                     "exposure_types": exposure_types,
                     "jurisdictions_affected": jurisdictions,
                     "requires_disclaimer": requires_disclaimer,
+                    **_decision_trace(cfg, provider, model_used, fallback_used),
                 },
             )
 

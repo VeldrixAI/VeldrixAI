@@ -15,29 +15,35 @@ from src.core.middleware.auth import get_current_user
 router = APIRouter(prefix="/api/models", tags=["models"])
 
 
+# Default heavyweight pillar matrix — mirrors backend/core/src/config/pillar_models.py.
+_PILLAR_MATRIX_DEFAULTS = [
+    "meta/llama-guard-4-12b",                       # safety / content risk
+    "nvidia/nemotron-3-ultra-550b-a55b",            # hallucination
+    "mistralai/mistral-large-3-675b-instruct-2512", # bias & ethics
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1",      # prompt security / policy
+    "meta/llama-3.1-405b-instruct",                 # legal / compliance
+]
+
+
 def _nim_models() -> list[str]:
     """
-    Return the NIM models wired in this deployment.
-    Always includes the five pillar env-var values if set,
-    plus a baseline of common NIM-hosted models.
+    Return the NIM models wired in this deployment: the five-pillar heavyweight
+    matrix (env-overridable via VELDRIX_PILLAR_MODEL__{PILLAR}__PRIMARY), plus
+    a baseline of common NIM-hosted models.
     """
-    configured: set[str] = set()
-    for var in (
-        "VELDRIX_PILLAR_CONTENT_MODEL",
-        "VELDRIX_PILLAR_HALLUCINATION_MODEL",
-        "VELDRIX_PILLAR_BIAS_MODEL",
-        "VELDRIX_PILLAR_POLICY_MODEL",
-        "VELDRIX_PILLAR_LEGAL_MODEL",
-    ):
-        val = os.getenv(var)
+    configured: set[str] = set(_PILLAR_MATRIX_DEFAULTS)
+    for pillar in ("SAFETY", "HALLUCINATION", "BIAS", "PROMPT_SECURITY", "COMPLIANCE"):
+        val = os.getenv(f"VELDRIX_PILLAR_MODEL__{pillar}__PRIMARY")
         if val:
             configured.add(val)
 
     baseline = [
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "mistralai/mistral-medium-3-5-128b",
         "meta/llama-3.3-70b-instruct",
         "meta/llama-3.1-70b-instruct",
         "meta/llama-3.1-8b-instruct",
-        "meta/llama-guard-4-12b",
+        "meta/llama-guard-3-8b",
         "mistralai/mixtral-8x7b-instruct",
         "mistralai/mistral-7b-instruct-v0.3",
         "microsoft/phi-3-medium-128k-instruct",
