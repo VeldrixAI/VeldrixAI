@@ -18,6 +18,8 @@ Timeout-aware trust property
 If the background worker timed out, the trust property returns a degraded
 TrustResult instead of PENDING — _eval_timed_out flag.
 
+
+
 Fix — GuardedStream._fire_sync raw thread spawning:
   Previously spawned a raw daemon threading.Thread per stream with no cap.
   Under high-throughput sync streaming (Django + streaming responses) this
