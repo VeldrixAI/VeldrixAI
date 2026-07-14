@@ -1,7 +1,10 @@
-"""Internal observability endpoints — not exposed to SDK callers.
+"""Internal observability + control endpoints — not exposed to SDK callers.
 
-GET /internal/latency-stats   — per-pillar p50/p95/p99 + active tier slots
-GET /internal/background-queue — background worker queue depth
+GET    /internal/latency-stats    — per-pillar p50/p95/p99 + active tier slots
+GET    /internal/background-queue — background worker queue depth
+GET    /internal/shadow-flags     — effective shadow-engine runtime flags (fresh read)
+POST   /internal/shadow-flags     — flip the shadow-engine attach/sample flags (hot; NO restart)
+DELETE /internal/shadow-flags     — clear the runtime flags (env defaults rule again)
 
 Authentication: requires the X-Veldrix-Internal-Key header to match
 VELDRIX_INTERNAL_API_KEY env var.  If the env var is unset the service is
@@ -11,10 +14,13 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
+from pydantic import BaseModel, Field
 
 from src.config.latency_tiers import LATENCY_TIERS
+from src.policy import shadow_flags
 
 logger = logging.getLogger("veldrix.internal")
 router = APIRouter(prefix="/internal", tags=["Internal"])
@@ -96,3 +102,76 @@ async def background_queue(
         "active_tasks": count,
         "status": "healthy" if count < 500 else "backpressure",
     }
+
+
+# ── Phase-6 hot-detach: the shadow-engine runtime flag control ─────────────────────
+# Flipping these takes effect with NO restart/recreate/deploy: the value lands in
+# core's Redis and every worker converges within one flag-cache TTL. This endpoint
+# changes only HOW the (already out-of-band, zero-actuation) engine is attached —
+# it cannot enforce anything; enforced:false remains structural.
+
+class ShadowFlagsUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    sample_pct: Optional[float] = Field(None, ge=0.0, le=100.0)
+
+
+def _flag_state_body(state: shadow_flags.FlagState) -> dict:
+    ttl = float(os.getenv("ENGINE_SHADOW_FLAG_CACHE_TTL_S", "2"))
+    timeout = float(os.getenv("ENGINE_SHADOW_FLAG_REDIS_TIMEOUT_S", "0.5"))
+    return {
+        "enabled": state.enabled,
+        "sample_pct": state.sample_pct,
+        "source": state.source,  # redis | env | failsafe
+        "cache_ttl_s": ttl,
+        "max_propagation_s": ttl + timeout,
+    }
+
+
+@router.get(
+    "/shadow-flags",
+    summary="Effective shadow-engine runtime flags (fresh flag-store read)",
+)
+async def get_shadow_flags(_: None = Depends(_require_internal_key)) -> dict:
+    state = await shadow_flags.refresh()  # fresh read; failsafe posture reported honestly
+    return _flag_state_body(state)
+
+
+@router.post(
+    "/shadow-flags",
+    summary="Flip the shadow-engine attach/sample flags at runtime (no restart)",
+)
+async def set_shadow_flags(
+    update: ShadowFlagsUpdate,
+    _: None = Depends(_require_internal_key),
+) -> dict:
+    if update.enabled is None and update.sample_pct is None:
+        raise HTTPException(status_code=400, detail="Provide enabled and/or sample_pct")
+    try:
+        state = await shadow_flags.set_flags(
+            enabled=update.enabled, sample_pct=update.sample_pct
+        )
+    except Exception as exc:
+        # Unwritable flag store ≠ attached engine: readers are already fail-safe detached.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Flag store unreachable ({type(exc).__name__}) — engine is "
+                   "fail-safe DETACHED on all workers until the store recovers.",
+        )
+    logger.info("shadow-flags flipped: %s", _flag_state_body(state))
+    return _flag_state_body(state)
+
+
+@router.delete(
+    "/shadow-flags",
+    summary="Clear the runtime flags — env defaults become effective again",
+)
+async def delete_shadow_flags(_: None = Depends(_require_internal_key)) -> dict:
+    try:
+        state = await shadow_flags.clear_flags()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Flag store unreachable ({type(exc).__name__}) — engine is "
+                   "fail-safe DETACHED on all workers until the store recovers.",
+        )
+    return _flag_state_body(state)

@@ -26,9 +26,14 @@ is provably one-directional and after-the-fact:
     ``SignalContext.from_pillar_results`` adapter (via the runtime). It never triggers
     new inference / ``route_inference()``.
 
-Controls (all read at request/dispatch time — no restart needed):
-  * ``ENGINE_SHADOW_ENABLED``     — global kill switch (default OFF). Detaches ALL traffic.
-  * ``ENGINE_SHADOW_SAMPLE_PCT``  — 0-100 traffic sample rate (default 0 → first-run 0%).
+Controls (read per-request at dispatch time — Phase-6 closeout: TRUE hot-detach):
+  * Runtime flags in core's existing Redis (``veldrix:shadow:engine_enabled``,
+    ``veldrix:shadow:sample_pct``), flippable with NO restart/recreate/deploy via
+    ``POST /internal/shadow-flags`` or ``redis-cli`` — see :mod:`src.policy.shadow_flags`.
+  * Env vars ``ENGINE_SHADOW_ENABLED`` / ``ENGINE_SHADOW_SAMPLE_PCT`` remain the static
+    defaults when the runtime keys are absent (first-run posture unchanged: OFF / 0%).
+  * Fail-safe: flag store unreachable → engine DETACHED (never attached), counted as the
+    ``skipped_failsafe`` outcome.
 Per-tenant enforcement mode is resolved (fail-safe ``shadow``) from connectors, but the
 record is forced non-enforcing regardless — the mode is recorded only for honesty.
 """
@@ -44,7 +49,7 @@ from typing import Any, Dict, Mapping, Optional
 
 from fastapi import BackgroundTasks
 
-from src.policy import runtime
+from src.policy import runtime, shadow_flags
 from src.policy.default_shadow_policy import get_default_shadow_policy
 from src.policy.runtime import BackpressureError
 from src.policy.schema import DEFAULT_ENFORCEMENT_MODE, EnforcementMode
@@ -68,24 +73,16 @@ _mode_cache: Dict[tuple, tuple] = {}
 _INFLIGHT: "set[asyncio.Task]" = set()
 
 
-# ── request-time controls ─────────────────────────────────────────────────────────
-
-def _truthy(value: Optional[str]) -> bool:
-    return (value or "").strip().lower() in ("1", "true", "yes", "on")
-
+# ── request-time controls (backed by the runtime flag store — hot-detach) ──────────
 
 def shadow_enabled() -> bool:
     """Global kill switch, read at dispatch time. Default OFF (first-run 0% posture)."""
-    return _truthy(os.getenv("ENGINE_SHADOW_ENABLED"))
+    return shadow_flags.current_flags().enabled
 
 
 def sample_pct() -> float:
     """Configured sample percentage [0, 100], read at dispatch time. Default 0."""
-    try:
-        pct = float(os.getenv("ENGINE_SHADOW_SAMPLE_PCT", "0"))
-    except (TypeError, ValueError):
-        return 0.0
-    return max(0.0, min(100.0, pct))
+    return shadow_flags.current_flags().sample_pct
 
 
 def _should_sample(pct: float) -> bool:
@@ -115,11 +112,16 @@ def dispatch_shadow_eval(
     """
     t0 = time.perf_counter()
     try:
-        if not shadow_enabled():
-            metrics.record_shadow_outcome("skipped_kill_switch")
+        flags = shadow_flags.current_flags()  # cached local read (~0 cost; never awaits)
+        if not flags.enabled:
+            # Distinguish a deliberate detach from the fail-safe posture (flag store
+            # unreachable → forced detached) so the fail-safe is visible as a metric.
+            metrics.record_shadow_outcome(
+                "skipped_failsafe" if flags.source == "failsafe" else "skipped_kill_switch"
+            )
             return
 
-        pct = sample_pct()
+        pct = flags.sample_pct
         metrics.set_shadow_sample_pct(pct)
         if not _should_sample(pct):
             metrics.record_shadow_outcome("skipped_unsampled")

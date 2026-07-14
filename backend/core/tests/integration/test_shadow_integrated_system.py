@@ -72,7 +72,6 @@ def _reset(monkeypatch):
     yield
     runtime.configure(max_concurrent=64)
     si.invalidate_mode_cache()
-    asyncio.get_event_loop()  # keep loop ref tidy
 
 
 @pytest.fixture
@@ -351,8 +350,11 @@ async def test_hang_past_budget_is_severed_and_recorded_degraded():
 
 
 def test_kill_switch_flip_mid_stream_detaches_instantly(monkeypatch):
-    """Flipping the request-time kill switch detaches the engine from the next request
-    with no restart — the proof of instant-detach."""
+    """The ENV-DEFAULT gate path: with no runtime flag set, the env kill switch still
+    gates dispatch at request time. NOTE (Phase-6 closeout): this is the static-default
+    path only — env is frozen at container creation, so this alone is "detach via
+    restart". The TRUE hot-detach proof (runtime flag, same process, no restart, drain,
+    fail-safe) lives in tests/test_shadow_flags.py."""
     from fastapi import BackgroundTasks
     monkeypatch.setattr(si, "_shadow_evaluate", lambda **_: None)
     monkeypatch.setenv("ENGINE_SHADOW_SAMPLE_PCT", "100")

@@ -65,6 +65,16 @@ async def warmup() -> None:
     from src.inference.circuit_breaker import initialize_backend  # noqa: PLC0415
     await initialize_backend()
 
+    # Warm the shadow-engine runtime-flag cache so the process's attach posture
+    # reflects the flag store from the very first request (never raises; a down
+    # flag store resolves to the fail-safe: engine detached).
+    from src.policy import shadow_flags  # noqa: PLC0415
+    flags = await shadow_flags.refresh()
+    logger.info(
+        "[Startup] Shadow engine flags: enabled=%s sample_pct=%s source=%s",
+        flags.enabled, flags.sample_pct, flags.source,
+    )
+
     logger.info("[Startup] VeldrixAI inference router and internal HTTP pool ready.")
 
 
@@ -75,7 +85,11 @@ async def shutdown() -> None:
     Safe to call even if the router was never initialised (no-op).
     """
     from src.inference.router import close_router  # noqa: PLC0415
+    from src.policy import shadow_flags  # noqa: PLC0415
+    from src.policy.shadow_pool import close_shadow_pool  # noqa: PLC0415
 
     await close_router()
     await close_internal_pool()
-    logger.info("[Shutdown] Inference router and internal HTTP pool closed cleanly.")
+    await close_shadow_pool()
+    await shadow_flags.close()
+    logger.info("[Shutdown] Inference router, internal HTTP pool, and shadow pool/flags closed cleanly.")
