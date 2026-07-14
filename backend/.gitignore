@@ -4,7 +4,12 @@ __pycache__/
 .env
 .venv/
 venv/
+# `Scripts/` targets stray Windows venv bin dirs, but Windows' case-insensitive FS
+# makes it swallow real `scripts/` source dirs too (the Phase-5 footgun, again).
+# Re-include the tracked tooling dirs explicitly.
 Scripts/
+!core/scripts/
+!core/scripts/**
 Include/
 pyvenv.cfg
 *.egg-info/

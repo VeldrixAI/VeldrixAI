@@ -148,7 +148,8 @@ SHADOW_DISPATCH_HANDOFF = Histogram(
 
 # What happened to each request's shadow opportunity — the full accounting, so dropped
 # work is never invisible. outcome ∈ {dispatched, skipped_kill_switch, skipped_unsampled,
-# dropped_backpressure, dropped_dispatch, worker_exception, written, write_failed}.
+# skipped_failsafe (flag store unreachable → forced detach), dropped_backpressure,
+# dropped_dispatch, worker_exception, written, write_failed}.
 SHADOW_OUTCOME = Counter(
     "veldrix_policy_shadow_outcome_total",
     "Shadow-integration outcomes by kind (dispatch gating + worker terminal states).",
