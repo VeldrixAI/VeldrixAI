@@ -1,94 +1,216 @@
 {
-  "dashboard": {
-    "title": "VeldrixAI Policy Engine — Shadow on Dev Traffic (Phase 6)",
-    "tags": ["veldrix", "policy", "governance", "shadow", "phase6"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "title": "IMPACT GUARD — request-path dispatch hand-off latency (must stay ~0)",
-        "type": "timeseries",
-        "gridPos": {"x": 0, "y": 0, "w": 16, "h": 8},
-        "description": "THE metric that matters most: latency the out-of-band dispatch adds to the REQUEST PATH (gate check + add_task only; the worker runs after the response). p99 should sit in the sub-millisecond buckets. A rise here means the out-of-band promise is breaking — investigate before ramping.",
-        "fieldConfig": {"defaults": {"unit": "s"}},
-        "targets": [
-          {"expr": "histogram_quantile(0.50, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))", "legendFormat": "p50", "refId": "A"},
-          {"expr": "histogram_quantile(0.95, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))", "legendFormat": "p95", "refId": "B"},
-          {"expr": "histogram_quantile(0.99, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))", "legendFormat": "p99", "refId": "C"}
-        ]
+  "title": "VeldrixAI Policy Engine \u2014 Shadow on Dev Traffic (Phase 6)",
+  "tags": [
+    "veldrix",
+    "policy",
+    "governance",
+    "shadow",
+    "phase6"
+  ],
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "IMPACT GUARD \u2014 request-path dispatch hand-off latency (must stay ~0)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 8
       },
-      {
-        "title": "Sample % in effect",
-        "type": "stat",
-        "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
-        "description": "The live ENGINE_SHADOW_SAMPLE_PCT. 0 = detached/un-ramped. Reconfigurable at request time (no restart).",
-        "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100}},
-        "targets": [
-          {"expr": "max(veldrix_policy_shadow_sample_pct)", "legendFormat": "sample %", "refId": "A"}
-        ]
+      "description": "THE metric that matters most: latency the out-of-band dispatch adds to the REQUEST PATH (gate check + add_task only; the worker runs after the response). p99 should sit in the sub-millisecond buckets. A rise here means the out-of-band promise is breaking \u2014 investigate before ramping.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
       },
-      {
-        "title": "What the engine WOULD decide on dev traffic (by verb)",
-        "type": "timeseries",
-        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
-        "description": "The shadow-on-dev-traffic artifact: the distribution of decided actions the engine reaches on real requests, recorded enforced:false. This is what later seeds the prod enforce-mode conversation.",
-        "targets": [
-          {"expr": "sum by (action) (rate(veldrix_policy_decisions_total{mode=~\"shadow|enforce|enforce_critical_only\"}[5m]))", "legendFormat": "{{action}}", "refId": "A"}
-        ]
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(veldrix_policy_shadow_dispatch_handoff_seconds_bucket[5m])))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "title": "Sample % in effect",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
       },
-      {
-        "title": "Shadow dispatch outcomes (rate)",
-        "type": "timeseries",
-        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
-        "description": "Full accounting of every request's shadow opportunity: dispatched / skipped_kill_switch / skipped_unsampled / dropped_backpressure / dropped_dispatch / worker_exception / written / write_failed. Dropped work is never invisible.",
-        "targets": [
-          {"expr": "sum by (outcome) (rate(veldrix_policy_shadow_outcome_total[5m]))", "legendFormat": "{{outcome}}", "refId": "A"}
-        ]
+      "description": "The live ENGINE_SHADOW_SAMPLE_PCT. 0 = detached/un-ramped. Reconfigurable at request time (no restart).",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
       },
-      {
-        "title": "Dedicated worker pool — in-flight (saturation)",
-        "type": "timeseries",
-        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
-        "description": "In-flight requests on the DEDICATED shadow worker HTTP pool (isolated from the request-path pool). Proves the worker is not consuming request-path connections. If this pins at the pool ceiling, writes shed (see write_failed) — that is the isolation working, not a request-path problem.",
-        "targets": [
-          {"expr": "veldrix_policy_shadow_worker_pool_inflight", "legendFormat": "in-flight", "refId": "A"}
-        ]
+      "targets": [
+        {
+          "expr": "max(veldrix_policy_shadow_sample_pct)",
+          "legendFormat": "sample %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "What the engine WOULD decide on dev traffic (by verb)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
       },
-      {
-        "title": "Worker eval latency p50 / p95 / p99 (off the request path)",
-        "type": "timeseries",
-        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
-        "fieldConfig": {"defaults": {"unit": "s"}},
-        "targets": [
-          {"expr": "histogram_quantile(0.50, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))", "legendFormat": "p50", "refId": "A"},
-          {"expr": "histogram_quantile(0.95, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))", "legendFormat": "p95", "refId": "B"},
-          {"expr": "histogram_quantile(0.99, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))", "legendFormat": "p99", "refId": "C"}
-        ]
+      "description": "The shadow-on-dev-traffic artifact: the distribution of decided actions the engine reaches on real requests, recorded enforced:false. This is what later seeds the prod enforce-mode conversation.",
+      "targets": [
+        {
+          "expr": "sum by (action) (rate(veldrix_policy_decisions_total{mode=~\"shadow|enforce|enforce_critical_only\"}[5m]))",
+          "legendFormat": "{{action}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Shadow dispatch outcomes (rate)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
       },
-      {
-        "title": "Dropped / failed / exception (the fault counters)",
-        "type": "timeseries",
-        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
-        "description": "Shed + failure accounting. Under deliberate fault injection (and real overload) these rise while the IMPACT GUARD stays ~0 — that combination is the proof package for prod promotion.",
-        "targets": [
-          {"expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"dropped_backpressure\"}[5m]))", "legendFormat": "dropped_backpressure", "refId": "A"},
-          {"expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"write_failed\"}[5m]))", "legendFormat": "write_failed", "refId": "B"},
-          {"expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"worker_exception\"}[5m]))", "legendFormat": "worker_exception", "refId": "C"},
-          {"expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"dropped_dispatch\"}[5m]))", "legendFormat": "dropped_dispatch", "refId": "D"}
-        ]
+      "description": "Full accounting of every request's shadow opportunity: dispatched / skipped_kill_switch / skipped_unsampled / dropped_backpressure / dropped_dispatch / worker_exception / written / write_failed. Dropped work is never invisible.",
+      "targets": [
+        {
+          "expr": "sum by (outcome) (rate(veldrix_policy_shadow_outcome_total[5m]))",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Dedicated worker pool \u2014 in-flight (saturation)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
       },
-      {
-        "title": "Runtime backpressure shed (shared primitive)",
-        "type": "timeseries",
-        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
-        "description": "The Phase-2 runtime concurrency gate sheds rather than queues. The worker maps these to dropped_backpressure.",
-        "targets": [
-          {"expr": "sum(rate(veldrix_policy_shed_total[5m]))", "legendFormat": "shed", "refId": "A"}
-        ]
-      }
-    ],
-    "schemaVersion": 38,
-    "version": 1,
-    "refresh": "30s"
-  },
-  "overwrite": true
+      "description": "In-flight requests on the DEDICATED shadow worker HTTP pool (isolated from the request-path pool). Proves the worker is not consuming request-path connections. If this pins at the pool ceiling, writes shed (see write_failed) \u2014 that is the isolation working, not a request-path problem. The peak series is the process high-water mark: saturation bursts are sub-second, so the instantaneous gauge alone can slip between 15s scrapes.",
+      "targets": [
+        {
+          "expr": "veldrix_policy_shadow_worker_pool_inflight",
+          "legendFormat": "in-flight",
+          "refId": "A"
+        },
+        {
+          "expr": "veldrix_policy_shadow_worker_pool_inflight_peak",
+          "legendFormat": "peak (high-water since start)",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Worker eval latency p50 / p95 / p99 (off the request path)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(veldrix_policy_shadow_worker_latency_seconds_bucket[5m])))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "title": "Dropped / failed / exception (the fault counters)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "description": "Shed + failure accounting. Under deliberate fault injection (and real overload) these rise while the IMPACT GUARD stays ~0 \u2014 that combination is the proof package for prod promotion.",
+      "targets": [
+        {
+          "expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"dropped_backpressure\"}[5m]))",
+          "legendFormat": "dropped_backpressure",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"write_failed\"}[5m]))",
+          "legendFormat": "write_failed",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"worker_exception\"}[5m]))",
+          "legendFormat": "worker_exception",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(veldrix_policy_shadow_outcome_total{outcome=\"dropped_dispatch\"}[5m]))",
+          "legendFormat": "dropped_dispatch",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "title": "Runtime backpressure shed (shared primitive)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "description": "The Phase-2 runtime concurrency gate sheds rather than queues. The worker maps these to dropped_backpressure.",
+      "targets": [
+        {
+          "expr": "sum(rate(veldrix_policy_shed_total[5m]))",
+          "legendFormat": "shed",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s"
 }
