@@ -53,7 +53,7 @@ from src.policy import runtime, shadow_flags
 from src.policy.default_shadow_policy import get_default_shadow_policy
 from src.policy.runtime import BackpressureError
 from src.policy.schema import DEFAULT_ENFORCEMENT_MODE, EnforcementMode
-from src.policy.shadow_pool import get_shadow_client, track_in_flight
+from src.policy.shadow_pool import get_shadow_client, note_pool_outcome, track_in_flight
 from src.telemetry import policy_metrics as metrics
 
 logger = logging.getLogger("veldrix.policy.shadow")
@@ -230,6 +230,7 @@ async def _write_shadow_record(record: Dict[str, Any], request_id: Optional[str]
         async with track_in_flight():
             client = get_shadow_client()
             resp = await client.post(target, json=payload)
+        note_pool_outcome(None)
         if resp.status_code >= 400:
             metrics.record_shadow_outcome("write_failed")
             logger.error(
@@ -239,9 +240,13 @@ async def _write_shadow_record(record: Dict[str, Any], request_id: Optional[str]
         else:
             metrics.record_shadow_outcome("written")
     except Exception as exc:  # dedicated-pool exhaustion / connectors down → count, swallow
+        note_pool_outcome(exc)  # wedge detector: consecutive PoolTimeouts w/o a success
         metrics.record_shadow_outcome("write_failed")
+        # httpx timeout classes stringify to "" — log the type so a PoolTimeout shed
+        # is distinguishable from a down connectors in the evidence trail.
         logger.error(
-            "policy.shadow.write_exception request_id=%s url=%s: %s", request_id, target, exc
+            "policy.shadow.write_exception request_id=%s url=%s: %s(%s)",
+            request_id, target, type(exc).__name__, exc,
         )
 
 
@@ -277,6 +282,7 @@ async def _resolve_mode(tenant_id: Optional[str], policy_id: str) -> Enforcement
                 f"{CONNECTORS_URL}{_MODE_PATH}",
                 params={"tenant_id": tenant_id or "", "policy_id": policy_id},
             )
+        note_pool_outcome(None)
         if resp.status_code == 200:
             mode = _coerce_mode(resp.json().get("mode"))
         elif resp.status_code != 404:
@@ -285,6 +291,7 @@ async def _resolve_mode(tenant_id: Optional[str], policy_id: str) -> Enforcement
                 resp.status_code, tenant_id,
             )
     except Exception as exc:  # connectors unreachable / dedicated-pool exhausted → shadow
+        note_pool_outcome(exc)
         logger.warning(
             "policy.shadow.mode_lookup_failed tenant=%s: %s → shadow", tenant_id, exc
         )

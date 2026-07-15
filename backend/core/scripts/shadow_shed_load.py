@@ -49,6 +49,7 @@ import re
 import statistics
 import sys
 import time
+import uuid
 
 import httpx
 
@@ -57,13 +58,16 @@ OUTCOME = "veldrix_policy_shadow_outcome_total"
 INFLIGHT = "veldrix_policy_shadow_worker_pool_inflight"
 
 
-# ── minimal HS256 JWT (dev-only; avoids a python-jose dependency) ───────────────────
+# -- minimal HS256 JWT (dev-only; avoids a python-jose dependency) -------------------
 
 def _b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
 
-def mint_jwt(secret: str, sub: str = "shed-load-driver", ttl_s: int = 3600) -> str:
+def mint_jwt(secret: str, sub: str | None = None, ttl_s: int = 3600) -> str:
+    # sub must be a UUID: it becomes the tenant/user id on the shadow audit record,
+    # and connectors' internal audit route rejects non-UUID user ids (500).
+    sub = sub or str(uuid.uuid4())
     header = _b64url(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
     payload = _b64url(json.dumps({"sub": sub, "exp": int(time.time()) + ttl_s}).encode())
     signing_input = f"{header}.{payload}".encode()
@@ -71,7 +75,7 @@ def mint_jwt(secret: str, sub: str = "shed-load-driver", ttl_s: int = 3600) -> s
     return f"{header}.{payload}.{sig}"
 
 
-# ── Prometheus text-format helpers ───────────────────────────────────────────────────
+# -- Prometheus text-format helpers ---------------------------------------------------
 
 def parse_metrics(text: str) -> dict:
     """{metric_name{labels} : float} for the metrics we care about."""
@@ -112,7 +116,7 @@ def handoff_quantile(before: dict, after: dict, q: float) -> float | None:
     return buckets[-1][0]
 
 
-# ── the load ─────────────────────────────────────────────────────────────────────────
+# -- the load -------------------------------------------------------------------------
 
 async def drive(base_url: str, token: str, n_requests: int, concurrency: int):
     """Fire n_requests at /trust/evaluate with `concurrency` true concurrent lanes."""
@@ -129,7 +133,7 @@ async def drive(base_url: str, token: str, n_requests: int, concurrency: int):
                     return
                 counter["i"] = i + 1
                 payload = {
-                    # Unique prompts defeat the response cache → every eval is real.
+                    # Unique prompts defeat the response cache -> every eval is real.
                     "prompt": f"shed-load probe {i} lane {lane_id}: summarize policy X",
                     "response": f"synthetic governed output {i}",
                     "model": "gpt-4",
@@ -164,7 +168,7 @@ async def poll_inflight(base_url: str, stop: asyncio.Event, samples: list):
             await asyncio.sleep(0.1)
 
 
-# ── main ─────────────────────────────────────────────────────────────────────────────
+# -- main -----------------------------------------------------------------------------
 
 async def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -199,7 +203,7 @@ async def main() -> int:
                 json={"enabled": True, "sample_pct": 100}, headers=ikey,
             )
             r.raise_for_status()
-            print(f"[attach] runtime flags → {r.json()} (was enabled={prev['enabled']} "
+            print(f"[attach] runtime flags -> {r.json()} (was enabled={prev['enabled']} "
                   f"pct={prev['sample_pct']} source={prev['source']})")
             await asyncio.sleep(prev["cache_ttl_s"] + 0.6)  # let every worker converge
 
@@ -209,7 +213,7 @@ async def main() -> int:
     samples: list[float] = []
     poller = asyncio.create_task(poll_inflight(args.base_url, stop, samples))
 
-    print(f"[drive] {args.requests} requests, {args.concurrency} concurrent lanes → "
+    print(f"[drive] {args.requests} requests, {args.concurrency} concurrent lanes -> "
           f"{args.base_url}/trust/evaluate")
     t0 = time.perf_counter()
     latencies, failures = await drive(args.base_url, token, args.requests, args.concurrency)
@@ -228,9 +232,9 @@ async def main() -> int:
                 json={"enabled": prev["enabled"], "sample_pct": prev["sample_pct"]},
                 headers=ikey,
             )
-            print(f"[restore] runtime flags → {r.json()}")
+            print(f"[restore] runtime flags -> {r.json()}")
 
-    # ── the report ────────────────────────────────────────────────────────────────
+    # -- the report ----------------------------------------------------------------
     deltas = outcome_delta(before, after)
     peak = max(samples) if samples else 0.0
     p99 = handoff_quantile(before, after, 0.99)
@@ -238,7 +242,7 @@ async def main() -> int:
     client_p50 = statistics.median(lat_ms) if lat_ms else 0.0
     client_p99 = lat_ms[int(0.99 * (len(lat_ms) - 1))] if lat_ms else 0.0
 
-    print(f"\n── LIVE SHED PROOF ── ({args.requests} req in {wall:.1f}s, "
+    print(f"\n-- LIVE SHED PROOF -- ({args.requests} req in {wall:.1f}s, "
           f"{args.requests / wall:.0f} rps)")
     print(f"outcome deltas:            {deltas}")
     print(f"pool in-flight peak:       {peak:g} (cap {args.pool_cap}; "
@@ -255,7 +259,7 @@ async def main() -> int:
         print(("  PASS  " if cond else "  FAIL  ") + label)
         ok = ok and cond
 
-    print("\n── assertions ──")
+    print("\n-- assertions --")
     check(peak >= args.pool_cap,
           f"pool saturated live: in-flight peak {peak:g} >= cap {args.pool_cap}")
     check(deltas.get("write_failed", 0) >= 1,
