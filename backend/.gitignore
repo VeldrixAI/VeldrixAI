@@ -10,6 +10,7 @@ venv/
 Scripts/
 !core/scripts/
 !core/scripts/**
+core/scripts/__pycache__/
 Include/
 pyvenv.cfg
 *.egg-info/
