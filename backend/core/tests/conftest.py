@@ -19,3 +19,17 @@ def pytest_configure(config):
         "markers",
         "integration: tests that require external services (Redis, DB, network)"
     )
+
+
+@pytest.fixture(autouse=True)
+def _reset_shadow_flag_store():
+    """Hermetic shadow runtime-flag state (Phase-6 hot-detach).
+
+    Drops the flag cache/client around every test so no test observes another's
+    attach posture. In the reset (cold) state, with no event loop running, the
+    env defaults rule — exactly the pre-closeout gating the older tests assert.
+    """
+    from src.policy import shadow_flags
+    shadow_flags.reset_for_tests()
+    yield
+    shadow_flags.reset_for_tests()

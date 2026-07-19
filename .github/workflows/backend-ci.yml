@@ -93,7 +93,13 @@ jobs:
           ENVIRONMENT: test
           APP_ENV: test
           REDIS_URL: redis://localhost:6379/0
-        run: pytest tests/ -v --tb=short -k "not integration"
+        # Phase 7 green-integrity: the old -k "not integration" KEYWORD filter
+        # silently excluded the entire Phase 6 proof suite (tests/integration/
+        # test_shadow_integrated_system.py, test_shadow_integration.py) from PR
+        # gating. Run the FULL suite: the proof package is in-process (fakeredis,
+        # via requirements.txt) and the @pytest.mark.integration real-Redis tests
+        # use the Redis service container above.
+        run: pytest tests/ -v --tb=short
 
   # ── Connectors Service ────────────────────────────────────────────────────────
   connectors-service:

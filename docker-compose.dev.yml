@@ -287,6 +287,10 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
       - GF_USERS_ALLOW_SIGN_UP=false
+      # Server-side PNG render of dashboards (evidence capture, e.g. Phase-6 closeout):
+      #   GET /render/d/<uid>/<slug>?width=&height=&from=&to=&kiosk=1
+      - GF_RENDERING_SERVER_URL=http://grafana-renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
     volumes:
       - grafana-data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -297,6 +301,17 @@ services:
       - veldrix-network
     depends_on:
       - prometheus
+      - grafana-renderer
+
+  # Headless renderer Grafana calls back into for /render (official sidecar; the
+  # alpine grafana image cannot run the bundled-plugin chromium).
+  grafana-renderer:
+    image: grafana/grafana-image-renderer:3.11.6
+    container_name: veldrix-localdev-grafana-renderer
+    restart: unless-stopped
+    profiles: ["observability"]
+    networks:
+      - veldrix-network
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0

@@ -148,7 +148,8 @@ SHADOW_DISPATCH_HANDOFF = Histogram(
 
 # What happened to each request's shadow opportunity — the full accounting, so dropped
 # work is never invisible. outcome ∈ {dispatched, skipped_kill_switch, skipped_unsampled,
-# dropped_backpressure, dropped_dispatch, worker_exception, written, write_failed}.
+# skipped_failsafe (flag store unreachable → forced detach), dropped_backpressure,
+# dropped_dispatch, worker_exception, written, write_failed}.
 SHADOW_OUTCOME = Counter(
     "veldrix_policy_shadow_outcome_total",
     "Shadow-integration outcomes by kind (dispatch gating + worker terminal states).",
@@ -160,6 +161,15 @@ SHADOW_WORKER_POOL_INFLIGHT = Gauge(
     "veldrix_policy_shadow_worker_pool_inflight",
     "In-flight requests on the DEDICATED shadow worker HTTP pool (saturation).",
 )
+
+# High-water mark of the above (since process start). The instantaneous gauge spikes for
+# sub-second bursts that a 15s Prometheus scrape can miss entirely; the peak makes
+# saturation VISIBLE in dashboards (closeout evidence: the pool really hit its cap).
+SHADOW_WORKER_POOL_INFLIGHT_PEAK = Gauge(
+    "veldrix_policy_shadow_worker_pool_inflight_peak",
+    "High-water mark of dedicated shadow-pool in-flight requests (since process start).",
+)
+_inflight_peak = 0
 
 # The sample rate actually in effect (request-time env), so the panel shows the live %.
 SHADOW_SAMPLE_PCT = Gauge(
@@ -224,8 +234,12 @@ def record_shadow_outcome(outcome: str) -> None:
 
 
 def set_shadow_pool_inflight(n: int) -> None:
-    """Publish the dedicated worker pool's current in-flight count."""
+    """Publish the dedicated worker pool's current in-flight count (+ high-water mark)."""
+    global _inflight_peak
     SHADOW_WORKER_POOL_INFLIGHT.set(n)
+    if n > _inflight_peak:
+        _inflight_peak = n
+        SHADOW_WORKER_POOL_INFLIGHT_PEAK.set(n)
 
 
 def set_shadow_sample_pct(pct: float) -> None:
