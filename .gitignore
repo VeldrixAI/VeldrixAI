@@ -94,3 +94,6 @@ nul
 frontend/public/Pillar Hero - standalone.html
 frontend/public/VeldrixAI_logo_voidbg_2x.png
 frontend/public/videoframe_23494.png
+
+# Downloaded videos must never enter the repo (522MB > GitHub 100MB limit)
+frontend/public/FSaver.com_*
