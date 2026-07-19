@@ -15,7 +15,6 @@ app.add_middleware(
     exclude_paths=["/health"],   # always skip health check
 )
 
-
 @app.post("/api/chat")
 async def chat(body: dict):
     import openai
