@@ -21,7 +21,7 @@ _PILLAR_MATRIX_DEFAULTS = [
     "nvidia/nemotron-3-ultra-550b-a55b",            # hallucination
     "mistralai/mistral-large-3-675b-instruct-2512", # bias & ethics
     "nvidia/llama-3.1-nemotron-ultra-253b-v1",      # prompt security / policy
-    "meta/llama-3.1-405b-instruct",                 # legal / compliance
+    "meta/llama-4-maverick-17b-128e-instruct",      # legal / compliance (405B retired from NIM)
 ]
 
 

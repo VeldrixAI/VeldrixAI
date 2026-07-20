@@ -164,6 +164,7 @@ services:
       - APP_ENV=production
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY (or JWT_SECRET) required}}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
       - VELDRIX_VAULT_KEY=${VELDRIX_VAULT_KEY:-}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
@@ -212,6 +213,11 @@ services:
     environment:
       - APP_ENV=production
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY required}}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      # NIM retired meta/llama-3.1-405b-instruct (404) — compliance pillar primary
+      # must be a model NIM still hosts; non-empty default guards against a blank
+      # env value wiping the model id.
+      - VELDRIX_PILLAR_MODEL__COMPLIANCE__PRIMARY=${VELDRIX_PILLAR_MODEL__COMPLIANCE__PRIMARY:-meta/llama-4-maverick-17b-128e-instruct}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - VELDRIX_AUTH_URL=http://veldrix-auth:8000
@@ -255,6 +261,7 @@ services:
       - APP_ENV=production
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-veldrix}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-veldrix}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${JWT_SECRET:?JWT_SECRET_KEY required}}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - REDIS_URL=redis://redis:6379/2

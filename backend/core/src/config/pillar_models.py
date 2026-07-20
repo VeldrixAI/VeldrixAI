@@ -170,7 +170,9 @@ def build_pillar_model_matrix() -> PillarModelMatrix:
         compliance_pii=PillarModelConfig(
             # Legal exposure needs corpus breadth (jurisdictions, regulation text);
             # the 405B dense Llama has the widest stable knowledge coverage on NIM.
-            primary=_env("COMPLIANCE", "PRIMARY", "meta/llama-3.1-405b-instruct"),
+            # NIM retired meta/llama-3.1-405b-instruct mid-2026 (404) — Llama 4
+            # Maverick (~400B MoE) is the heavyweight Meta successor it hosts.
+            primary=_env("COMPLIANCE", "PRIMARY", "meta/llama-4-maverick-17b-128e-instruct"),
             fallback=_env("COMPLIANCE", "FALLBACK", "meta/llama-3.3-70b-instruct"),
             provider_models={"groq": _env("COMPLIANCE", "GROQ", _GROQ_REASONING_MODEL)},
             temperature=_env_float("COMPLIANCE", "TEMPERATURE", 0.0),
